@@ -1,0 +1,9 @@
+# Exact versions used for the generated-data audit/remediation gate, Python 3.12.
+# Install into a project venv; never update the user's FSL environment in place.
+numpy==2.1.3
+scipy==1.18.0
+nibabel==5.4.2
+scikit-image==0.26.0
+matplotlib==3.9.4
+pytest==9.1.1
+defusedxml==0.7.1

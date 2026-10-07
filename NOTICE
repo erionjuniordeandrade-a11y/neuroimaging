@@ -1,0 +1,12 @@
+Neuroimaging
+Copyright 2026 Erion De Andrade
+
+This product is licensed under the Apache License, Version 2.0.
+
+This product includes third-party software and data references under their own
+licences, including NiiVue (BSD-2-Clause, capsule/vendor/NIIVUE_LICENSE.txt),
+three.js (MIT) and the Inter typeface (SIL OFL 1.1). See
+tractlab/THIRD_PARTY_NOTICES.md for details.
+
+This software is for research and teaching only. It is not a medical device
+and is not intended for clinical use.

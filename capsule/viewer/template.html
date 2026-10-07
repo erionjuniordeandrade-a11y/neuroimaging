@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src data: blob:; worker-src blob:; font-src data:">
+<title>Case Capsule</title>
+<style>:root{color-scheme:dark;--gold:#C9A84C;--bg:#0c1119;--panel:#17202bbc;--line:#37414c;--text:#f0eee8;--muted:#aeb8c4}.patient #gpu-badge,.patient #version-badge,.patient #case-label{display:none}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 75% -15%,#26384b,#0c1119 55%);color:var(--text);font:14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button,select,input,textarea{background:#111923;color:var(--text);border:1px solid var(--line);border-radius:6px}button{cursor:pointer;padding:7px 10px}button:hover{border-color:var(--gold)}button:disabled{opacity:.45;cursor:default}input[type=number]{width:74px;padding:5px}input[type=range]{accent-color:var(--gold);max-width:115px}select{padding:6px;max-width:180px}textarea{width:100%;min-height:70px;padding:8px}input[type=text]{padding:6px;min-width:0}label{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}h1,h2,h3,p{margin:0}h1{font-size:17px;letter-spacing:.03em}h2{font-size:13px;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin:0 0 9px}h3{font-size:13px}header{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--line);background:#0d1520d9;gap:12px}header .brand,header .actions,.badges,.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.brand svg{color:var(--gold)}.badges span{font-size:11px;border:1px solid #58616c;border-radius:99px;color:var(--muted);padding:3px 8px}.gold{background:var(--gold);color:#10151e;border-color:var(--gold);font-weight:700}.shell{height:calc(100vh - 60px);display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-rows:minmax(0,1fr) auto}.workspace{min-width:0;min-height:0;padding:12px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px}.view{position:relative;min-width:0;min-height:0;border:1px solid #405064;border-radius:10px;overflow:hidden;background:#070a0e;box-shadow:0 12px 30px #0006}.view canvas{width:100%;height:100%;display:block;touch-action:none}.view .tag{position:absolute;top:9px;left:10px;color:#e8edf2;background:#101923bb;border-radius:4px;padding:3px 7px;font-size:11px;letter-spacing:.08em;pointer-events:none}.view .orient{position:absolute;color:var(--gold);font-weight:700;pointer-events:none;font-size:12px;text-shadow:0 1px 3px #000}.orient.left{left:9px;top:50%}.orient.right{right:9px;top:50%}.orient.top{top:8px;left:50%}.orient.bottom{bottom:8px;left:50%}.maximize{position:absolute;right:8px;top:8px;padding:2px 7px;background:#101923a8}.workspace.single .view{display:none}.workspace.single .view.active{display:block;grid-column:1/-1;grid-row:1/-1}.side{min-height:0;overflow:auto;border-left:1px solid var(--line);padding:13px;background:#101923b8}.group{padding:11px 0;border-bottom:1px solid #34404b}.group:first-child{padding-top:0}.group .row{margin:7px 0}.group label{font-size:12px}.group input[type=range]{flex:1}.fill{width:100%}.hint{font-size:11px;color:var(--muted)}.stack{display:grid;gap:7px}.chip{padding:4px 7px;background:#27313d;border-radius:4px;color:var(--muted);font-size:11px}#histogram{width:100%;height:36px;background:#0a0d13;border-radius:4px}.readout{grid-column:1/-1;border-top:1px solid var(--line);padding:8px 14px;color:var(--muted);background:#101923;min-height:34px}#status{position:fixed;inset:60px 0 0;z-index:10;display:grid;place-content:center;text-align:center;background:#0c1119}#status.hidden{display:none}#status h2{font-size:18px}#status p{color:var(--muted);margin-top:8px}.patient .shell{grid-template-columns:minmax(0,1fr) minmax(290px,380px)}.patient .workspace{display:block;padding:20px}.patient .view{display:none;width:100%;height:100%}.patient .view.active{display:block}.patient .side{padding:30px}.patient .group{border:0}.patient .surgeon-only{display:none!important}.patient #tour-panel{display:block}.patient .tour-text{font-size:19px;line-height:1.6;white-space:pre-wrap;margin:22px 0;color:#eef0f0}.patient #step-title{font-size:28px;color:var(--gold)}#tour-panel{display:none}.step-card{border:1px solid var(--line);border-radius:7px;padding:7px;margin:6px 0}.step-card .row{justify-content:space-between}#mask-list .row{justify-content:space-between}#mask-list input[type=checkbox]{accent-color:var(--gold)}@media(max-width:900px){.shell{grid-template-columns:1fr;grid-template-rows:minmax(380px,65vh) auto auto}.side{border-left:0;border-top:1px solid var(--line)}.patient .shell{grid-template-columns:1fr}.patient .side{padding:20px}header{height:auto;min-height:60px;flex-wrap:wrap;padding:10px}.workspace{padding:6px;gap:5px}}
+</style>
+<!--CAPSULE_PAYLOAD-->
+</head>
+<body>
+<header><div class="brand"><svg width="29" height="29" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="13" stroke="currentColor"/><path d="M16 5v22M5 16h22M9 9l14 14" stroke="currentColor" stroke-width="1.3"/></svg><div><h1>CASE CAPSULE</h1><div class="hint" id="case-label"></div></div></div><div class="badges"><span id="anonymous">Anonimizado</span><span>Offline</span><span id="gpu-badge">GPU</span><span id="version-badge">v1</span></div><div class="actions"><button id="mode-button" class="gold" type="button">Paciente</button><button id="save-button" class="surgeon-only" type="button">Salvar cápsula</button><button id="shot-button" class="surgeon-only" type="button">PNG</button></div></header>
+<main class="shell"><section id="workspace" class="workspace" aria-label="Imagens">
+<div class="view active" data-view="axial"><canvas id="axial-canvas" aria-label="Axial"></canvas><span class="tag">AXIAL</span><span class="orient left">R</span><span class="orient right">L</span><span class="orient top">A</span><span class="orient bottom">P</span><button class="maximize surgeon-only" data-max="axial" type="button" aria-label="Maximizar axial">⤢</button></div>
+<div class="view" data-view="coronal"><canvas id="coronal-canvas" aria-label="Coronal"></canvas><span class="tag">CORONAL</span><span class="orient left">R</span><span class="orient right">L</span><span class="orient top">S</span><span class="orient bottom">I</span><button class="maximize surgeon-only" data-max="coronal" type="button" aria-label="Maximizar coronal">⤢</button></div>
+<div class="view" data-view="sagittal"><canvas id="sagittal-canvas" aria-label="Sagital"></canvas><span class="tag">SAGITAL</span><span class="orient left">A</span><span class="orient right">P</span><span class="orient top">S</span><span class="orient bottom">I</span><button class="maximize surgeon-only" data-max="sagittal" type="button" aria-label="Maximizar sagital">⤢</button></div>
+<div class="view" data-view="three"><canvas id="three-canvas" aria-label="Reconstrução tridimensional"></canvas><span class="tag">3D</span><button class="maximize surgeon-only" data-max="three" type="button" aria-label="Maximizar 3D">⤢</button></div>
+</section><aside class="side"><div id="surgeon-panel" class="surgeon-only">
+<section class="group"><h2>Volumes e fusão</h2><div class="row"><label>Base <select id="base-volume"></select></label><label>Sobreposição <select id="overlay-volume"></select></label></div><div class="row"><label>Opacidade <input id="fusion-opacity" type="range" min="0" max="100" value="35"></label><select id="colormap" aria-label="Mapa de cores"><option value="grey">Cinza</option><option value="hot">Quente</option><option value="cool">Frio</option></select></div></section>
+<section class="group"><h2>Janela</h2><div class="row"><select id="preset" aria-label="Janela"></select><label><input id="invert" type="checkbox"> Inverter</label></div><canvas id="histogram" width="260" height="36"></canvas><div class="row"><label>Nível <input id="level" type="range" min="-1200" max="2000"><input id="level-number" type="number"></label></div><div class="row"><label>Largura <input id="width" type="range" min="1" max="4000"><input id="width-number" type="number" min="1"></label></div></section>
+<section class="group"><h2>Planos</h2><div class="row"><label>Laje <select id="slab-mode"><option value="thin">Fina</option><option value="mip">MIP</option><option value="minip">MinIP</option><option value="mean">Média</option></select></label><label>mm <input id="slab-mm" type="number" value="1" min="1" max="40"></label></div><div class="row"><label>Oblíquo ° <input id="oblique" type="range" min="-60" max="60" value="0"></label><button id="reset-view" type="button">Redefinir</button></div><p class="hint">Arraste o ponto dourado no axial para girar os planos.</p></section>
+<section class="group"><h2>3D</h2><div class="row"><select id="mode3d"><option value="bone">Osso</option><option value="skin">Pele + osso</option><option value="mip">MIP</option></select><label>Corte <select id="cut3d"><option value="off">Desligado</option><option value="axial">Axial</option><option value="coronal">Coronal</option><option value="sagittal">Sagital</option></select></label></div><div class="row"><label>Limiar <input id="threshold3d" type="range" min="-1000" max="2000" value="300"></label><label>Opacidade <input id="opacity3d" type="range" min="1" max="100" value="45"></label></div><label><input id="planes3d" type="checkbox" checked> Planos de corte</label></section>
+<section class="group"><h2>Ferramentas</h2><div class="row"><select id="tool"><option value="crosshair">Cursor</option><option value="distance">Distância</option><option value="angle">Ângulo</option><option value="point">Ponto</option><option value="trajectory">Trajetória</option><option value="roi">ROI circular</option><option value="grow">Crescimento 3D</option><option value="brush">Pincel +</option><option value="erase">Pincel −</option></select><label>Raio <input id="tool-radius" type="number" value="4" min="1" max="80"></label></div><div class="row"><label>Tolerância <input id="grow-tolerance" type="number" value="5" min="1" max="500"></label><label>Raio máx. <input id="grow-radius" type="number" value="30" min="1" max="100"></label></div><p class="hint">Clique para marcar; distância, trajetória e ROI usam 2 pontos; ângulo usa 3.</p><div id="annotation-list" class="stack"></div></section>
+<section class="group"><h2>Máscaras</h2><div id="mask-list" class="stack"></div></section><section class="group"><h2>Roteiro</h2><div id="step-list"></div><input id="new-step-title" class="fill" type="text" placeholder="Título do passo"><textarea id="new-step-text" placeholder="Explicação em português"></textarea><button id="add-step" type="button">Adicionar passo</button></section></div>
+<section id="tour-panel" class="group"><div class="hint" id="step-count"></div><h2 id="step-title"></h2><p class="tour-text" id="step-text"></p><div class="row"><button id="prev-step" type="button">Anterior</button><button id="next-step" class="gold" type="button">Próximo</button></div></section></aside><div class="readout" id="readout" role="status">—</div></main>
+<div id="status"><h2>Carregando cápsula</h2><p id="status-detail">Preparando volumes…</p></div>
+<script>
+'use strict';
+// All interface copy is kept here. Patient mode always uses pt-BR.
+const STRINGS={
+  'pt-BR':{loading:'Carregando cápsula',empty:'Esta cápsula não contém volumes.',bad:'Não foi possível abrir a cápsula.',gpu:'WebGL2 indisponível neste navegador.',noTour:'O cirurgião ainda não preparou a explicação deste caso.',step:'Passo',readout:'Cursor',reviewed:'Revisado pelo cirurgião',save:'Salvar cápsula',patient:'Paciente',surgeon:'Cirurgião'},
+  en:{loading:'Loading capsule',empty:'This capsule has no volumes.',bad:'Could not open capsule.',gpu:'WebGL2 is unavailable in this browser.',noTour:'The surgeon has not prepared this explanation yet.',step:'Step',readout:'Cursor',reviewed:'Surgeon reviewed',save:'Save capsule',patient:'Patient',surgeon:'Surgeon'}
+};
+function tr(key){return STRINGS[state.mode==='patient'?'pt-BR':(state.manifest?.locale==='en'?'en':'pt-BR')][key]}
+const UI_COPY={
+  'pt-BR':{volumes:'Volumes e fusão',base:'Base',overlay:'Sobreposição',opacity:'Opacidade',grey:'Cinza',hot:'Quente',cool:'Frio',window:'Janela',invert:'Inverter',level:'Nível',width:'Largura',planes:'Planos',slab:'Laje',thin:'Fina',mean:'Média',oblique:'Oblíquo °',reset:'Redefinir',obliqueHint:'Arraste o ponto dourado no axial para girar os planos.',bone:'Osso',skin:'Pele + osso',cut:'Corte',off:'Desligado',threshold:'Limiar',cutPlanes:'Planos de corte',tools:'Ferramentas',cursor:'Cursor',distance:'Distância',angle:'Ângulo',point:'Ponto',trajectory:'Trajetória',roi:'ROI circular',grow:'Crescimento 3D',brush:'Pincel +',erase:'Pincel −',radius:'Raio',maxRadius:'Raio máx.',tolerance:'Tolerância',toolHint:'Clique para marcar; distância, trajetória e ROI usam 2 pontos; ângulo usa 3.',masks:'Máscaras',tour:'Roteiro',addStep:'Adicionar passo',previous:'Anterior',next:'Próximo',none:'Nenhuma',manual:'Manual',delete:'Excluir',titlePlaceholder:'Título do passo',textPlaceholder:'Explicação em português'},
+  en:{volumes:'Volumes and fusion',base:'Base',overlay:'Overlay',opacity:'Opacity',grey:'Grey',hot:'Hot',cool:'Cool',window:'Window',invert:'Invert',level:'Level',width:'Width',planes:'Planes',slab:'Slab',thin:'Thin',mean:'Mean',oblique:'Oblique °',reset:'Reset',obliqueHint:'Drag the gold handle in the axial view to rotate planes.',bone:'Bone',skin:'Skin + bone',cut:'Cut',off:'Off',threshold:'Threshold',cutPlanes:'Slice planes',tools:'Tools',cursor:'Cursor',distance:'Distance',angle:'Angle',point:'Point',trajectory:'Trajectory',roi:'Circular ROI',grow:'3D region grow',brush:'Brush +',erase:'Brush −',radius:'Radius',maxRadius:'Max radius',tolerance:'Tolerance',toolHint:'Click to mark; distance, trajectory, and ROI use 2 points; angle uses 3.',masks:'Masks',tour:'Tour',addStep:'Add step',previous:'Previous',next:'Next',none:'None',manual:'Manual',delete:'Delete',titlePlaceholder:'Step title',textPlaceholder:'Explanation in Portuguese'}
+};
+function localizeStatic(){
+  const locale=state.mode==='patient'?'pt-BR':state.manifest?.locale==='en'?'en':'pt-BR';
+  const keys=Object.keys(UI_COPY['pt-BR']),mapping=new Map();
+  for(const key of keys){mapping.set(UI_COPY['pt-BR'][key],UI_COPY[locale][key]);mapping.set(UI_COPY.en[key],UI_COPY[locale][key])}
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;
+  while((node=walker.nextNode())){if(node.parentElement?.closest('script,style,#tour-panel,#step-list,#mask-list,#annotation-list,#readout,#case-label'))continue;const raw=node.textContent,trimmed=raw.trim();if(mapping.has(trimmed))node.textContent=raw.replace(trimmed,mapping.get(trimmed))}
+  for(const el of document.querySelectorAll('[placeholder]'))if(mapping.has(el.placeholder))el.placeholder=mapping.get(el.placeholder);
+}
+
+// Mutable document and linked-view state. The manifest object itself is retained to preserve unknown fields.
+const $=id=>document.getElementById(id);
+const state={manifest:null,volumes:new Map(),masks:new Map(),gl:null,glData:null,mode:'surgeon',activeView:'axial',maximized:null,crosshair:[0,0,0],base:null,overlay:null,overlayOpacity:.35,colormap:'grey',window:{center:40,width:80},invert:false,slab:'thin',slabMm:1,oblique:0,zoom:{axial:1,coronal:1,sagittal:1,three:1},pan:{axial:[0,0],coronal:[0,0],sagittal:[0,0]},camera:{yaw:.45,pitch:.2},mode3d:'bone',cut3d:'off',planes3d:true,threshold3d:300,opacity3d:.45,tool:'crosshair',pending:[],tourIndex:0,tourMaskFilter:null,tourAnnotationFilter:null,status:'loading'};
+let readyResolve,readyReject;
+const ready=new Promise((resolve,reject)=>{readyResolve=resolve;readyReject=reject});
+const api={setCrosshairRAS,valueAtRAS,growRegionRAS,addAnnotation,setMode,applyTourStep,save,render:renderAll,createMask,brushAtRAS};
+window.__capsule={ready,state,api};
+function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+function norm(v){return Math.hypot(...v)}
+function status(kind,message){state.status=kind;$('status').classList.toggle('hidden',kind==='ready');$('status').querySelector('h2').textContent=message;$('status-detail').textContent=kind==='loading'?'':message}
+function affinePoint(i,j,k){const a=state.manifest.grid.affine_ras;return [a[0][0]*i+a[0][1]*j+a[0][2]*k+a[0][3],a[1][0]*i+a[1][1]*j+a[1][2]*k+a[1][3],a[2][0]*i+a[2][1]*j+a[2][2]*k+a[2][3]]}
+function inverse3(m){const [a,b,c,d,e,f,g,h,i]=m,det=a*(e*i-f*h)-b*(d*i-f*g)+c*(d*h-e*g);if(Math.abs(det)<1e-10)throw Error('Affine singular');return [(e*i-f*h)/det,(c*h-b*i)/det,(b*f-c*e)/det,(f*g-d*i)/det,(a*i-c*g)/det,(c*d-a*f)/det,(d*h-e*g)/det,(b*g-a*h)/det,(a*e-b*d)/det]}
+let inverseAffine;
+function rasToVoxel(x,y,z){const a=state.manifest.grid.affine_ras,p=[x-a[0][3],y-a[1][3],z-a[2][3]],m=inverseAffine;return [dot(m.slice(0,3),p),dot(m.slice(3,6),p),dot(m.slice(6,9),p)]}
+function voxelToIndex(i,j,k){const [nx,ny,nz]=state.manifest.grid.dims;i=Math.round(i);j=Math.round(j);k=Math.round(k);return i<0||j<0||k<0||i>=nx||j>=ny||k>=nz?-1:(k*ny+j)*nx+i}
+function indexToVoxel(n){const [nx,ny]=state.manifest.grid.dims;return [n%nx,Math.floor(n/nx)%ny,Math.floor(n/(nx*ny))]}
+function scalarAt(vol,i,j,k){const n=voxelToIndex(i,j,k);return n<0?NaN:vol.data[n]*vol.meta.slope+vol.meta.intercept}
+function valueAtRAS(volId,x,y,z){const vol=state.volumes.get(volId);if(!vol)return null;const value=scalarAt(vol,...rasToVoxel(x,y,z));return Number.isNaN(value)?null:value}
+function setCrosshairRAS(x,y,z){if(!state.manifest)return;const p=rasToVoxel(x,y,z),d=state.manifest.grid.dims;state.crosshair=affinePoint(...p.map((v,i)=>clamp(v,0,d[i]-1)));renderAll();return state.crosshair}
+function voxelVolumeML(){const a=state.manifest.grid.affine_ras,m=[a[0][0],a[0][1],a[0][2],a[1][0],a[1][1],a[1][2],a[2][0],a[2][1],a[2][2]];return Math.abs(m[0]*(m[4]*m[8]-m[5]*m[7])-m[1]*(m[3]*m[8]-m[5]*m[6])+m[2]*(m[3]*m[7]-m[4]*m[6]))/1000}
+function visibleMasks(){return state.manifest.masks.filter(m=>state.masks.has(m.id)&&(state.mode!=='patient'||m.reviewed)&&(!state.tourMaskFilter||state.tourMaskFilter.includes(m.id)))}
+function visibleAnnotations(){return state.manifest.annotations.filter(a=>state.mode!=='patient'||(state.tourAnnotationFilter||[]).includes(a.id))}
+function renderAll(){if(state.status==='error'||!state.manifest?.volumes?.length)return;for(const view of ['axial','coronal','sagittal'])renderMPR(view);render3D();renderReadout()}
+
+// Payload decoding and grid validation. C-order payloads use x as the fastest axis.
+function bytesFrom64(s){const raw=atob(s.trim().replace(/\s/g,'')),data=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)data[i]=raw.charCodeAt(i);return data}
+function base64FromBytes(bytes){let out='';for(let i=0;i<bytes.length;i+=32768)out+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(out)}
+async function gunzip(encoded){const stream=new Blob([bytesFrom64(encoded)]).stream().pipeThrough(new DecompressionStream('gzip'));return new Uint8Array(await new Response(stream).arrayBuffer())}
+async function gzip(data){const stream=new Blob([data]).stream().pipeThrough(new CompressionStream('gzip'));return new Uint8Array(await new Response(stream).arrayBuffer())}
+async function loadCapsule(){
+  try{
+    const node=$('capsule-manifest');if(!node)throw Error('manifest missing');
+    const manifest=JSON.parse(node.textContent);if(manifest.schema!=='case-capsule/1')throw Error('schema');
+    state.manifest=manifest;manifest.masks??=[];manifest.annotations??=[];manifest.tour??=[];
+    if(!manifest.volumes?.length){status('empty',tr('empty'));readyResolve(state);return}
+    const [nx,ny,nz]=manifest.grid.dims,total=nx*ny*nz;
+    if(!Number.isSafeInteger(total)||total<=0||total>150000000)throw Error('grid');
+    const a=manifest.grid.affine_ras;
+    inverseAffine=inverse3([a[0][0],a[0][1],a[0][2],a[1][0],a[1][1],a[1][2],a[2][0],a[2][1],a[2][2]]);
+    for(let i=0;i<manifest.volumes.length;i++){
+      const meta=manifest.volumes[i],blob=$('capsule-blob-'+meta.blob);if(!blob)throw Error('missing volume blob');
+      status('loading',`${tr('loading')} ${i+1}/${manifest.volumes.length}`);await new Promise(r=>setTimeout(r,0));
+      const bytes=await gunzip(blob.textContent);if(bytes.length!==total*2)throw Error('volume length');
+      const aligned=bytes.slice().buffer;
+      const data=meta.dtype==='int16'?new Int16Array(aligned):meta.dtype==='uint16'?new Uint16Array(aligned):null;
+      if(!data)throw Error('volume dtype');state.volumes.set(meta.id,{meta,data});
+    }
+    for(const meta of manifest.masks){
+      const blob=$('capsule-blob-'+meta.blob);if(!blob)throw Error('missing mask blob');
+      const bytes=await gunzip(blob.textContent);if(bytes.length!==total)throw Error('mask length');state.masks.set(meta.id,bytes);
+    }
+    state.base=manifest.volumes[0].id;state.crosshair=affinePoint((nx-1)/2,(ny-1)/2,(nz-1)/2);
+    const preset=manifest.volumes[0].window_presets?.[0],s=manifest.volumes[0].stats;
+    state.window=preset?{center:preset.center,width:preset.width}:{center:((s?.p01??0)+(s?.p99??1000))/2,width:Math.max(1,(s?.p99??1000)-(s?.p01??0))};
+    initGL();initUI();status('ready','');renderAll();readyResolve(state);
+  }catch(err){status('error',err.message==='WebGL2 unavailable'?tr('gpu'):tr('bad')+' '+err.message);readyReject(err)}
+}
+
+// MPR canvases: pixel coordinates are mapped through RAS before sampling the common grid.
+function planeFrame(view,canvas){
+  const d=state.manifest.grid.dims,s=state.manifest.grid.spacing_mm,c=affinePoint((d[0]-1)/2,(d[1]-1)/2,(d[2]-1)/2),p=state.crosshair;
+  const angle=state.oblique*Math.PI/180,co=Math.cos(angle),si=Math.sin(angle);
+  let origin,h,v,extentH,extentV;
+  if(view==='axial'){origin=[c[0]+state.pan.axial[0],c[1]+state.pan.axial[1],p[2]];h=[-1,0,0];v=[0,-1,0];extentH=d[0]*s[0];extentV=d[1]*s[1]}
+  else if(view==='coronal'){origin=[p[0]+state.pan.coronal[0],p[1]+state.pan.coronal[1],p[2]];h=[-co,si,0];v=[0,0,-1];extentH=d[0]*s[0];extentV=d[2]*s[2]}
+  else{origin=[p[0]+state.pan.sagittal[0],p[1]+state.pan.sagittal[1],p[2]];h=[si,-co,0];v=[0,0,-1];extentH=d[1]*s[1];extentV=d[2]*s[2]}
+  const scale=Math.min(canvas.width/(extentH*1.12),canvas.height/(extentV*1.12))*state.zoom[view];
+  return {origin,h,v,scale};
+}
+function pixelToRAS(view,x,y,canvas){const f=planeFrame(view,canvas),u=(x-canvas.width/2)/f.scale,w=(y-canvas.height/2)/f.scale;return f.origin.map((n,i)=>n+f.h[i]*u+f.v[i]*w)}
+function rasToPixel(view,p,canvas){const f=planeFrame(view,canvas),r=p.map((n,i)=>n-f.origin[i]);return [canvas.width/2+dot(r,f.h)*f.scale,canvas.height/2+dot(r,f.v)*f.scale]}
+function sampleSlab(vol,p,view){
+  if(state.slab==='thin'||state.slabMm<=1)return valueAtRAS(vol.meta.id,...p);
+  const count=Math.min(40,Math.max(1,Math.round(state.slabMm))),axis=view==='axial'?2:view==='coronal'?1:0;
+  let lo=Infinity,hi=-Infinity,sum=0,n=0;
+  for(let t=0;t<count;t++){const q=p.slice();q[axis]+=(t-(count-1)/2)*(state.slabMm/count);const val=valueAtRAS(vol.meta.id,...q);if(val===null)continue;lo=Math.min(lo,val);hi=Math.max(hi,val);sum+=val;n++}
+  return n?(state.slab==='mip'?hi:state.slab==='minip'?lo:sum/n):null;
+}
+function windowValue(value,center,width){return clamp((value-center)/Math.max(width,1)+.5,0,1)}
+function colorMap(g,mode){if(mode==='hot')return [255*clamp(g*1.6,0,1),255*clamp((g-.28)*2,0,1),255*clamp((g-.65)*3,0,1)];if(mode==='cool')return [255*g*.25,255*g*.85,255*g];return [255*g,255*g,255*g]}
+function renderMPR(view){
+  const canvas=$(view+'-canvas'),box=canvas.getBoundingClientRect();if(!box.width||!box.height)return;
+  const w=Math.max(1,Math.min(520,Math.round(box.width))),h=Math.max(1,Math.min(420,Math.round(box.height)));
+  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+  const ctx=canvas.getContext('2d',{willReadFrequently:true}),img=ctx.createImageData(w,h),px=img.data,base=state.volumes.get(state.base),overlay=state.volumes.get(state.overlay),masks=visibleMasks().map(m=>({meta:m,data:state.masks.get(m.id)}));
+  const f=planeFrame(view,canvas),a=state.manifest.grid.affine_ras,m=inverseAffine,ox=a[0][3],oy=a[1][3],oz=a[2][3];
+  const stepH=f.h.map(n=>n/f.scale),stepV=f.v.map(n=>n/f.scale);
+  let row=f.origin.map((n,i)=>n-stepH[i]*w/2-stepV[i]*h/2);
+  for(let y=0;y<h;y++){
+    let p=row.slice();for(let x=0;x<w;x++){
+      const rx=p[0]-ox,ry=p[1]-oy,rz=p[2]-oz;
+      const i=m[0]*rx+m[1]*ry+m[2]*rz,j=m[3]*rx+m[4]*ry+m[5]*rz,k=m[6]*rx+m[7]*ry+m[8]*rz,n=voxelToIndex(i,j,k),idx=(y*w+x)*4;
+      if(n>=0){
+        let value=state.slab==='thin'?base.data[n]*base.meta.slope+base.meta.intercept:sampleSlab(base,p,view);
+        let grey=windowValue(value,state.window.center,state.window.width);if(state.invert)grey=1-grey;
+        let rgb=[grey*255,grey*255,grey*255];
+        if(overlay){value=overlay.data[n]*overlay.meta.slope+overlay.meta.intercept;const st=overlay.meta.stats||{};const g=windowValue(value,((st.p01??0)+(st.p99??1000))/2,Math.max(1,(st.p99??1000)-(st.p01??0))),col=colorMap(g,state.colormap),alpha=state.overlayOpacity;rgb=rgb.map((v,t)=>v*(1-alpha)+col[t]*alpha)}
+        for(const mask of masks)if(mask.data[n]){const hex=mask.meta.color||'#E4572E',col=[1,3,5].map(t=>parseInt(hex.slice(t,t+2),16));rgb=rgb.map((v,t)=>v*.25+col[t]*.75)}
+        px[idx]=rgb[0];px[idx+1]=rgb[1];px[idx+2]=rgb[2];px[idx+3]=255;
+      }else{px[idx]=6;px[idx+1]=10;px[idx+2]=16;px[idx+3]=255}
+      p[0]+=stepH[0];p[1]+=stepH[1];p[2]+=stepH[2];
+    }row[0]+=stepV[0];row[1]+=stepV[1];row[2]+=stepV[2];
+  }
+  ctx.putImageData(img,0,0);
+  if(state.mode==='surgeon'){
+    const [cx,cy]=rasToPixel(view,state.crosshair,canvas);ctx.strokeStyle='#C9A84C88';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,h);ctx.moveTo(0,cy);ctx.lineTo(w,cy);ctx.stroke();ctx.fillStyle='#C9A84C';ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fill();
+    if(view==='axial'){const [hx,hy]=rasToPixel(view,state.crosshair,canvas);ctx.fillStyle='#C9A84C';ctx.beginPath();ctx.arc(hx+35*Math.cos(state.oblique*Math.PI/180),hy-35*Math.sin(state.oblique*Math.PI/180),6,0,Math.PI*2);ctx.fill()}
+  }
+  drawAnnotations(ctx,view,canvas);
+}
+function drawAnnotations(ctx,view,canvas){
+  ctx.lineWidth=2;ctx.font='12px system-ui';
+  for(const item of visibleAnnotations()){
+    const pts=item.points_ras||[];if(!pts.length)continue;const xy=pts.map(p=>rasToPixel(view,p,canvas));
+    ctx.strokeStyle=item.type==='trajectory'?'#64d9e6':'#C9A84C';ctx.fillStyle=ctx.strokeStyle;
+    ctx.beginPath();xy.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));if(item.subtype==='roi'&&xy.length>1){ctx.moveTo(xy[0][0]+Math.hypot(xy[1][0]-xy[0][0],xy[1][1]-xy[0][1]),xy[0][1]);ctx.arc(xy[0][0],xy[0][1],Math.hypot(xy[1][0]-xy[0][0],xy[1][1]-xy[0][1]),0,Math.PI*2)}ctx.stroke();
+    for(const [x,y] of xy){ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill()}
+    if(state.mode==='surgeon'&&item.label)ctx.fillText(item.label,xy[0][0]+7,xy[0][1]-7);
+  }
+}
+
+// WebGL2 ray marcher. int16/uint16 payloads become R32F textures after slope/intercept.
+// R32F preserves signed HU and scaled MR values in one sampler3D shader.
+const VERTEX_SHADER=`#version 300 es
+in vec2 aPos;out vec2 vUV;void main(){vUV=aPos*.5+.5;gl_Position=vec4(aPos,0.,1.);}`;
+const FRAGMENT_SHADER=`#version 300 es
+precision highp float;precision highp sampler3D;
+in vec2 vUV;out vec4 frag;
+uniform sampler3D uVolume;uniform sampler3D uMask;
+uniform vec3 uCross;uniform vec2 uWindow;uniform vec2 uAngles;uniform float uZoom;
+uniform float uThreshold;uniform float uOpacity;uniform int uMode;uniform int uCut;uniform int uPlanes;
+vec3 rotate(vec3 p){float cy=cos(uAngles.x),sy=sin(uAngles.x),cp=cos(uAngles.y),sp=sin(uAngles.y);p=vec3(cy*p.x+sy*p.z,p.y,-sy*p.x+cy*p.z);return vec3(p.x,cp*p.y-sp*p.z,sp*p.y+cp*p.z);}
+void main(){vec2 uv=(vUV-.5)*vec2(1.2,1.2)/uZoom;vec3 origin=rotate(vec3(uv,.0))+.5;vec3 dir=rotate(vec3(0.,0.,1.));vec3 color=vec3(.025,.039,.060);float alpha=0.;float maximum=0.;
+  for(int s=0;s<112;s++){vec3 p=origin+dir*(float(s)-56.)/63.;
+    if(any(lessThan(p,vec3(0.)))||any(greaterThan(p,vec3(1.))))continue;
+    if(uCut==1&&p.z>uCross.z)continue;if(uCut==2&&p.y>uCross.y)continue;if(uCut==3&&p.x>uCross.x)continue;
+    float val=texture(uVolume,p).r;vec4 mask=texture(uMask,p);float g=clamp((val-uWindow.x)/max(1.,uWindow.y)+.5,0.,1.);
+    if(uMode==2){maximum=max(maximum,g);continue;}
+    float a=0.;vec3 col=vec3(g);
+    if(uMode==0){if(val>uThreshold){a=uOpacity*.23;col=mix(vec3(.55,.65,.72),vec3(1.,.85,.57),g);}}
+    else{if(val>-.55e3&&val<uThreshold){a=uOpacity*.065;col=vec3(.45,.58,.65);}else if(val>=uThreshold){a=uOpacity*.20;col=vec3(.94,.82,.60);}}
+    if(mask.a>.1){a=max(a,uOpacity*.55);col=mix(col,mask.rgb,.85);}
+    if(uPlanes==1&&min(min(abs(p.x-uCross.x),abs(p.y-uCross.y)),abs(p.z-uCross.z))<.003){a=max(a,.025);col=mix(col,vec3(.79,.66,.30),.7);}
+    color+=(1.-alpha)*a*col;alpha+=(1.-alpha)*a;if(alpha>.98)break;
+  }
+  if(uMode==2)color=vec3(maximum);frag=vec4(color,1.);
+}`;
+function compileShader(gl,type,source){const shader=gl.createShader(type);gl.shaderSource(shader,source);gl.compileShader(shader);if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(shader));return shader}
+function initGL(){
+  const gl=$('three-canvas').getContext('webgl2',{preserveDrawingBuffer:true,antialias:false});if(!gl)throw Error('WebGL2 unavailable');state.gl=gl;
+  const program=gl.createProgram();gl.attachShader(program,compileShader(gl,gl.VERTEX_SHADER,VERTEX_SHADER));gl.attachShader(program,compileShader(gl,gl.FRAGMENT_SHADER,FRAGMENT_SHADER));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
+  const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);gl.useProgram(program);const loc=gl.getAttribLocation(program,'aPos');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  state.glData={program,volumeTextures:new Map(),maskTexture:null,maskDirty:true};
+  for(const [id,vol] of state.volumes){const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_3D,tex);gl.texParameteri(gl.TEXTURE_3D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_3D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_3D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_3D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_3D,gl.TEXTURE_WRAP_R,gl.CLAMP_TO_EDGE);const values=new Float32Array(vol.data.length);for(let i=0;i<values.length;i++)values[i]=vol.data[i]*vol.meta.slope+vol.meta.intercept;gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);gl.texImage3D(gl.TEXTURE_3D,0,gl.R32F,...state.manifest.grid.dims,0,gl.RED,gl.FLOAT,values);state.glData.volumeTextures.set(id,tex)}
+  const mask=gl.createTexture();gl.bindTexture(gl.TEXTURE_3D,mask);for(const param of [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER])gl.texParameteri(gl.TEXTURE_3D,param,gl.NEAREST);for(const param of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T,gl.TEXTURE_WRAP_R])gl.texParameteri(gl.TEXTURE_3D,param,gl.CLAMP_TO_EDGE);state.glData.maskTexture=mask;
+  $('gpu-badge').textContent=gl.getParameter(gl.RENDERER)||'WebGL2';
+}
+function uploadMaskTexture(){const gl=state.gl,{maskTexture}=state.glData,total=state.manifest.grid.dims.reduce((a,b)=>a*b,1),rgba=new Uint8Array(total*4);for(const meta of visibleMasks()){const bytes=state.masks.get(meta.id),hex=meta.color||'#E4572E',rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));for(let i=0;i<total;i++)if(bytes[i]){const n=i*4;rgba[n]=rgb[0];rgba[n+1]=rgb[1];rgba[n+2]=rgb[2];rgba[n+3]=255}}gl.bindTexture(gl.TEXTURE_3D,maskTexture);gl.texImage3D(gl.TEXTURE_3D,0,gl.RGBA8,...state.manifest.grid.dims,0,gl.RGBA,gl.UNSIGNED_BYTE,rgba);state.glData.maskDirty=false}
+function render3D(){
+  const gl=state.gl;if(!gl||!state.base)return;const canvas=$('three-canvas'),box=canvas.getBoundingClientRect();if(!box.width||!box.height)return;
+  const w=Math.min(300,Math.max(1,Math.round(box.width))),h=Math.min(250,Math.max(1,Math.round(box.height)));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+  if(state.glData.maskDirty)uploadMaskTexture();const p=state.glData.program;gl.viewport(0,0,w,h);gl.useProgram(p);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_3D,state.glData.volumeTextures.get(state.base));gl.uniform1i(gl.getUniformLocation(p,'uVolume'),0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_3D,state.glData.maskTexture);gl.uniform1i(gl.getUniformLocation(p,'uMask'),1);
+  const q=rasToVoxel(...state.crosshair),d=state.manifest.grid.dims;gl.uniform3f(gl.getUniformLocation(p,'uCross'),q[0]/(d[0]-1),q[1]/(d[1]-1),q[2]/(d[2]-1));gl.uniform2f(gl.getUniformLocation(p,'uWindow'),state.window.center,state.window.width);gl.uniform2f(gl.getUniformLocation(p,'uAngles'),state.camera.yaw,state.camera.pitch);gl.uniform1f(gl.getUniformLocation(p,'uZoom'),state.zoom.three);gl.uniform1f(gl.getUniformLocation(p,'uThreshold'),state.threshold3d);gl.uniform1f(gl.getUniformLocation(p,'uOpacity'),state.opacity3d);gl.uniform1i(gl.getUniformLocation(p,'uMode'),{bone:0,skin:1,mip:2}[state.mode3d]);gl.uniform1i(gl.getUniformLocation(p,'uCut'),{off:0,axial:1,coronal:2,sagittal:3}[state.cut3d]);gl.uniform1i(gl.getUniformLocation(p,'uPlanes'),state.planes3d?1:0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+}
+
+// Six-connected seeded growing and slice brush. Volumes use affine determinant (mm³).
+function countMask(mask){let n=0;for(const b of mask)n+=b?1:0;return n}
+function updateMaskVolume(meta){const arr=state.masks.get(meta.id);meta.volume_ml=Number((countMask(arr)*voxelVolumeML()).toFixed(3));state.glData.maskDirty=true;renderMaskList();renderAll();return meta.volume_ml}
+function createMask(label='Nova máscara',color='#E4572E'){
+  const id='mask-'+crypto.randomUUID(),blob='mask_'+id,total=state.manifest.grid.dims.reduce((a,b)=>a*b,1);
+  const meta={id,blob,label,color,volume_ml:0,source:'surgeon',reviewed:false};state.manifest.masks.push(meta);state.masks.set(id,new Uint8Array(total));state.glData.maskDirty=true;renderMaskList();return meta;
+}
+function growRegionRAS(x,y,z,options={}){
+  const volumeId=options.volumeId||state.base,vol=state.volumes.get(volumeId);if(!vol)throw Error('Volume não encontrado');
+  const seed=rasToVoxel(x,y,z).map(Math.round),dims=state.manifest.grid.dims,seedIndex=voxelToIndex(...seed);if(seedIndex<0)throw Error('Semente fora do volume');
+  const tolerance=Number(options.tolerance??$('grow-tolerance').value),radius=Number(options.radiusMm??$('grow-radius').value);
+  if(!(tolerance>0&&radius>0))throw Error('Tolerância ou raio inválido');
+  const neighbours=[];for(let dk=-1;dk<=1;dk++)for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){const n=voxelToIndex(seed[0]+di,seed[1]+dj,seed[2]+dk);if(n>=0)neighbours.push(vol.data[n]*vol.meta.slope+vol.meta.intercept)}neighbours.sort((a,b)=>a-b);
+  const center=neighbours[Math.floor(neighbours.length/2)],total=vol.data.length,seen=new Uint8Array(total),queue=new Uint32Array(total),mask=new Uint8Array(total),spacing=state.manifest.grid.spacing_mm;
+  let head=0,tail=0;queue[tail++]=seedIndex;seen[seedIndex]=1;
+  while(head<tail){
+    const n=queue[head++],[i,j,k]=indexToVoxel(n),dx=(i-seed[0])*spacing[0],dy=(j-seed[1])*spacing[1],dz=(k-seed[2])*spacing[2];
+    if(dx*dx+dy*dy+dz*dz>radius*radius)continue;
+    const value=vol.data[n]*vol.meta.slope+vol.meta.intercept;if(Math.abs(value-center)>tolerance)continue;mask[n]=1;
+    for(const q of [[i-1,j,k],[i+1,j,k],[i,j-1,k],[i,j+1,k],[i,j,k-1],[i,j,k+1]]){const idx=voxelToIndex(...q);if(idx>=0&&!seen[idx]){seen[idx]=1;queue[tail++]=idx}}
+  }
+  const meta=options.maskId?state.manifest.masks.find(m=>m.id===options.maskId):createMask(options.label||'Crescimento 3D');if(!meta)throw Error('Máscara não encontrada');
+  state.masks.set(meta.id,mask);const volume_ml=updateMaskVolume(meta);return {id:meta.id,volume_ml,voxel_count:countMask(mask)};
+}
+function brushAtRAS(x,y,z,erase=false,radiusMm=Number($('tool-radius').value),view=state.activeView){
+  let meta=state.manifest.masks.at(-1);if(!meta)meta=createMask('Pincel');const mask=state.masks.get(meta.id),ijk=rasToVoxel(x,y,z),r=Math.max(1,Math.ceil(radiusMm/Math.min(...state.manifest.grid.spacing_mm))),dims=state.manifest.grid.dims;
+  const axis=view==='axial'?2:view==='coronal'?1:0,fixed=Math.round(ijk[axis]);
+  for(let k=Math.max(0,Math.floor(ijk[2]-r));k<=Math.min(dims[2]-1,Math.ceil(ijk[2]+r));k++)for(let j=Math.max(0,Math.floor(ijk[1]-r));j<=Math.min(dims[1]-1,Math.ceil(ijk[1]+r));j++)for(let i=Math.max(0,Math.floor(ijk[0]-r));i<=Math.min(dims[0]-1,Math.ceil(ijk[0]+r));i++){
+    const q=[i,j,k];if(q[axis]!==fixed)continue;const p=affinePoint(i,j,k);if(norm(p.map((v,t)=>v-[x,y,z][t]))<=radiusMm)mask[voxelToIndex(i,j,k)]=erase?0:1;
+  }
+  return updateMaskVolume(meta);
+}
+
+// Measurement models and direct canvas gestures.
+function addAnnotation(type,points,label=''){
+  if(state.mode==='patient')throw Error('Ferramentas indisponíveis no modo paciente');
+  if(typeof type==='object'){const item=type;type=item.type;points=item.points_ras;label=item.label||''}
+  if(!['distance','angle','point','trajectory','roi'].includes(type))throw Error('Tipo de anotação inválido');
+  const p=points.map(q=>q.map(Number)),distance=(a,b)=>norm(a.map((v,i)=>v-b[i]));let value=null,units='';
+  if(type==='distance'||type==='trajectory'){value=distance(p[0],p[1]);units='mm'}
+  if(type==='angle'){const a=p[0].map((v,i)=>v-p[1][i]),b=p[2].map((v,i)=>v-p[1][i]);value=Math.acos(clamp(dot(a,b)/(norm(a)*norm(b)),-1,1))*180/Math.PI;units='°'}
+  if(type==='roi'){const center=p[0],radius=distance(p[0],p[1]),vol=state.volumes.get(state.base),q=rasToVoxel(...center),spacing=state.manifest.grid.spacing_mm,rr=Math.ceil(radius/Math.min(...spacing)),samples=[],axis=state.activeView==='axial'?2:state.activeView==='coronal'?1:0,axes=[0,1,2].filter(n=>n!==axis);for(let u=Math.floor(q[axes[0]]-rr);u<=q[axes[0]]+rr;u++)for(let v=Math.floor(q[axes[1]]-rr);v<=q[axes[1]]+rr;v++){const ijk=q.map(Math.round);ijk[axes[0]]=u;ijk[axes[1]]=v;const pos=affinePoint(...ijk);if(distance(center,pos)<=radius){const scalar=scalarAt(vol,...ijk);if(Number.isFinite(scalar))samples.push(scalar)}}const mean=samples.reduce((a,b)=>a+b,0)/samples.length,sd=Math.sqrt(samples.reduce((a,b)=>a+(b-mean)**2,0)/samples.length);value={mean:Number(mean.toFixed(2)),sd:Number(sd.toFixed(2))};units=vol.meta.units||'a.u.'}
+  const item={id:'annotation-'+crypto.randomUUID(),type:type==='roi'?'point':type,points_ras:p,label:label||({distance:'Distância',angle:'Ângulo',point:'Ponto',trajectory:'Trajetória',roi:'ROI'}[type]),value:typeof value==='number'?Number(value.toFixed(2)):value,units};if(type==='roi')item.subtype='roi';
+  state.manifest.annotations.push(item);renderAnnotationList();renderAll();return item;
+}
+function renderReadout(p=state.crosshair){
+  if(state.mode==='patient'){$('readout').textContent='';return}
+  const ijk=rasToVoxel(...p).map(Math.round),base=state.volumes.get(state.base),value=valueAtRAS(state.base,...p),overlay=state.overlay?state.volumes.get(state.overlay):null,other=overlay?valueAtRAS(state.overlay,...p):null;
+  $('readout').textContent=`RAS ${p.map(x=>x.toFixed(1)).join(', ')} mm · voxel ${ijk.join(', ')} · ${base.meta.label}: ${value===null?'—':value.toFixed(1)} ${base.meta.units||''}`+(overlay?` · ${overlay.meta.label}: ${other===null?'—':other.toFixed(1)} ${overlay.meta.units||''}`:'');
+}
+function renderAnnotationList(){const list=$('annotation-list');list.replaceChildren();for(const item of state.manifest.annotations){const div=document.createElement('div');div.className='chip';const value=typeof item.value==='object'?`${item.value.mean} ± ${item.value.sd}`:item.value;div.textContent=`${item.label}: ${value??''} ${item.units||''}`;list.append(div)}}
+function canvasPoint(event,canvas){const rect=canvas.getBoundingClientRect();return [(event.clientX-rect.left)*canvas.width/rect.width,(event.clientY-rect.top)*canvas.height/rect.height]}
+function handleCanvasTool(view,event,canvas){
+  const [x,y]=canvasPoint(event,canvas),p=pixelToRAS(view,x,y,canvas),tool=state.tool;state.activeView=view;renderReadout(p);
+  if(tool==='crosshair'){setCrosshairRAS(...p);return}
+  if(tool==='grow'){growRegionRAS(...p);return}
+  if(tool==='brush'||tool==='erase'){brushAtRAS(...p,tool==='erase',Number($('tool-radius').value),view);return}
+  state.pending.push(p);const need=tool==='angle'?3:tool==='point'?1:2;
+  if(state.pending.length>=need){addAnnotation(tool,state.pending);state.pending=[]}
+}
+function installCanvasGestures(){
+  for(const view of ['axial','coronal','sagittal','three']){
+    const canvas=$(view+'-canvas');let drag=null;
+    canvas.addEventListener('contextmenu',e=>e.preventDefault());
+    canvas.addEventListener('pointerdown',e=>{
+      if(state.mode==='patient')return;canvas.setPointerCapture(e.pointerId);const xy=canvasPoint(e,canvas);
+      let kind=view==='three'?'rotate':e.button===2?'window':e.button===1||e.shiftKey?'pan':'select';
+      if(view==='axial'&&kind==='select'){const [cx,cy]=rasToPixel(view,state.crosshair,canvas),hx=cx+35*Math.cos(state.oblique*Math.PI/180),hy=cy-35*Math.sin(state.oblique*Math.PI/180);if(Math.hypot(xy[0]-hx,xy[1]-hy)<13)kind='oblique'}
+      drag={kind,xy,last:xy};if(kind==='select')handleCanvasTool(view,e,canvas);
+    });
+    canvas.addEventListener('pointermove',e=>{
+      if(state.mode==='patient')return;const xy=canvasPoint(e,canvas);if(view!=='three')renderReadout(pixelToRAS(view,...xy,canvas));
+      if(!drag)return;const dx=xy[0]-drag.last[0],dy=xy[1]-drag.last[1];drag.last=xy;
+      if(drag.kind==='rotate'){state.camera.yaw+=dx*.009;state.camera.pitch=clamp(state.camera.pitch+dy*.009,-1.5,1.5);render3D()}
+      else if(drag.kind==='window'){state.window.center+=dx;state.window.width=clamp(state.window.width+dy*2,1,10000);syncWindow();renderAll()}
+      else if(drag.kind==='pan'){const f=planeFrame(view,canvas);state.pan[view][0]-=dx/f.scale;state.pan[view][1]-=dy/f.scale;renderMPR(view)}
+      else if(drag.kind==='oblique'){const [cx,cy]=rasToPixel(view,state.crosshair,canvas);state.oblique=clamp(-Math.atan2(xy[1]-cy,xy[0]-cx)*180/Math.PI,-60,60);$('oblique').value=state.oblique;renderAll()}
+      else if(drag.kind==='select'&&state.tool==='crosshair')setCrosshairRAS(...pixelToRAS(view,...xy,canvas));
+      else if(drag.kind==='select'&&['brush','erase'].includes(state.tool))brushAtRAS(...pixelToRAS(view,...xy,canvas),state.tool==='erase',Number($('tool-radius').value),view);
+    });
+    canvas.addEventListener('pointerup',()=>drag=null);canvas.addEventListener('pointercancel',()=>drag=null);
+    canvas.addEventListener('wheel',e=>{if(state.mode==='patient')return;e.preventDefault();if(view==='three'||e.ctrlKey||e.metaKey||e.altKey){state.zoom[view]=clamp(state.zoom[view]*(e.deltaY<0?1.1:.9),.3,6);renderAll();return}const q=rasToVoxel(...state.crosshair),axis=view==='axial'?2:view==='coronal'?1:0;q[axis]=clamp(Math.round(q[axis])+Math.sign(e.deltaY),0,state.manifest.grid.dims[axis]-1);setCrosshairRAS(...affinePoint(...q))},{passive:false});
+  }
+}
+
+// Surgeon-authored pt-BR tour; patient mode applies only saved, reviewed content.
+function captureView(){return {layout:state.maximized||state.activeView,crosshair_ras:state.crosshair.slice(),window:{volume:state.base,center:state.window.center,width:state.window.width},camera:{...state.camera,zoom:state.zoom.three},visible_masks:visibleMasks().map(m=>m.id),visible_annotations:visibleAnnotations().map(a=>a.id)}}
+function addTourStep(title,text){if(state.mode==='patient')throw Error('Edição indisponível');const step={id:'step-'+crypto.randomUUID(),title,text,view:captureView()};state.manifest.tour.push(step);renderStepList();return step}
+function applyTourStep(index){
+  const tour=state.manifest.tour;if(!tour.length){state.tourIndex=0;renderTourPanel();return}
+  state.tourIndex=clamp(index,0,tour.length-1);const step=tour[state.tourIndex],view=step.view||{};
+  if(view.crosshair_ras)state.crosshair=view.crosshair_ras.slice();if(view.window){if(state.volumes.has(view.window.volume))state.base=view.window.volume;state.window={center:view.window.center,width:view.window.width}}
+  if(view.camera){state.camera={yaw:view.camera.yaw??state.camera.yaw,pitch:view.camera.pitch??state.camera.pitch};state.zoom.three=view.camera.zoom??state.zoom.three}
+  state.tourMaskFilter=view.visible_masks??null;state.tourAnnotationFilter=view.visible_annotations??[];
+  const layout=view.layout==='3d'?'three':view.layout||'three';state.activeView=['axial','coronal','sagittal','three'].includes(layout)?layout:'three';
+  for(const el of document.querySelectorAll('.view'))el.classList.toggle('active',el.dataset.view===state.activeView);
+  state.glData.maskDirty=true;renderTourPanel();requestAnimationFrame(renderAll);return step;
+}
+function setMode(mode){if(!['patient','surgeon'].includes(mode))throw Error('Modo inválido');state.mode=mode;localizeStatic();document.body.classList.toggle('patient',mode==='patient');$('mode-button').textContent=mode==='patient'?tr('surgeon'):tr('patient');$('workspace').classList.toggle('single',mode==='surgeon'&&!!state.maximized);if(mode==='patient'){applyTourStep(state.tourIndex)}else{state.tourMaskFilter=null;state.tourAnnotationFilter=null;for(const el of document.querySelectorAll('.view'))el.classList.toggle('active',!state.maximized||el.dataset.view===state.maximized);state.glData.maskDirty=true;renderAll()}return mode}
+function renderTourPanel(){const tour=state.manifest.tour,step=tour[state.tourIndex];$('step-count').textContent=step?'● '.repeat(state.tourIndex+1)+'○ '.repeat(tour.length-state.tourIndex-1):'';$('step-title').textContent=step?step.title:'';$('step-text').textContent=step?step.text:tr('noTour');$('prev-step').disabled=!step||state.tourIndex===0;$('next-step').disabled=!step||state.tourIndex>=tour.length-1}
+function renderStepList(){const list=$('step-list');list.replaceChildren();for(const [i,step] of state.manifest.tour.entries()){const div=document.createElement('div');div.className='step-card';const title=document.createElement('span');title.textContent=`${i+1}. ${step.title}`;const row=document.createElement('div');row.className='row';row.append(title);for(const [text,delta] of [['↑',-1],['↓',1]]){const b=document.createElement('button');b.textContent=text;b.disabled=i+delta<0||i+delta>=state.manifest.tour.length;b.onclick=()=>{const t=state.manifest.tour;[t[i],t[i+delta]]=[t[i+delta],t[i]];renderStepList()};row.append(b)}const del=document.createElement('button');del.textContent=UI_COPY[state.manifest.locale==='en'?'en':'pt-BR'].delete;del.onclick=()=>{state.manifest.tour.splice(i,1);renderStepList()};row.append(del);div.append(row);list.append(div)}}
+
+// Save is a new blob download; the opened file is never overwritten.
+function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+async function save(){
+  if(state.mode==='patient')throw Error('Salvamento indisponível no modo paciente');
+  const next=Number(state.manifest.version||0)+1,manifest=structuredClone(state.manifest),clone=document.documentElement.cloneNode(true);
+  manifest.version=next;
+  for(const meta of manifest.masks){const data=state.masks.get(meta.id),node=clone.querySelector('#capsule-blob-'+CSS.escape(meta.blob));if(!data)throw Error('Máscara não encontrada');const encoded=base64FromBytes(await gzip(data));if(node)node.textContent=encoded;else{const script=document.createElement('script');script.id='capsule-blob-'+meta.blob;script.type='application/octet-stream';script.dataset.encoding='gzip+base64';script.textContent=encoded;clone.querySelector('head').append(script)}}
+  clone.querySelector('#capsule-manifest').textContent=JSON.stringify(manifest).replace(/</g,'\\u003c');
+  const html='<!doctype html>\n'+clone.outerHTML,blob=new Blob([html],{type:'text/html;charset=utf-8'}),stem=decodeURIComponent(location.pathname.split('/').pop()||'case').replace(/(?:\.v\d+)?\.capsule\.html$|\.html$/,'');
+  const filename=`${stem}.v${next}.capsule.html`;downloadBlob(blob,filename);state.manifest.version=next;$('version-badge').textContent='v'+next;return {filename,blob};
+}
+function screenshot(){const canvas=$(state.activeView+'-canvas');canvas.toBlob(blob=>{if(blob)downloadBlob(blob,`case-capsule-${state.activeView}.png`)},'image/png')}
+
+// Controls, loading states, and event wiring.
+const CT_PRESETS=[['Cérebro',40,80],['Subdural',75,215],['AVC',35,40],['Partes moles',40,400],['Osso',600,2800],['Osso temporal',700,4000]];
+function option(select,value,label){const el=document.createElement('option');el.value=value;el.textContent=label;select.append(el)}
+function updatePresets(){const vol=state.volumes.get(state.base),select=$('preset');select.replaceChildren();let presets=vol.meta.window_presets||[];if(vol.meta.kind==='CT'){const names=new Set(presets.map(p=>p.name));presets=[...presets,...CT_PRESETS.filter(p=>!names.has(p[0])).map(([name,center,width])=>({name,center,width}))]}else{const s=vol.meta.stats||{};presets=[{name:'Auto',center:((s.p01??0)+(s.p99??65535))/2,width:Math.max(1,(s.p99??65535)-(s.p01??0))},...presets]}const s=vol.meta.stats||{},span=Math.max(100,(s.max??65535)-(s.min??0));$('level').min=Math.min(-1200,s.min??0);$('level').max=Math.max(2000,s.max??65535);$('width').max=Math.max(4000,span*2);for(const [i,p] of presets.entries())option(select,String(i),p.name);option(select,'manual',UI_COPY[state.manifest.locale==='en'?'en':'pt-BR'].manual);select._presets=presets;select.value='manual';syncWindow();renderHistogram()}
+function syncWindow(){$('level').value=state.window.center;$('level-number').value=Number(state.window.center.toFixed(1));$('width').value=state.window.width;$('width-number').value=Number(state.window.width.toFixed(1));$('preset').value='manual'}
+function renderHistogram(){const canvas=$('histogram'),ctx=canvas.getContext('2d'),vol=state.volumes.get(state.base),values=vol.data,stats=vol.meta.stats||{},min=stats.p01??stats.min??0,max=stats.p99??stats.max??65535,bins=new Uint32Array(100);for(let i=0;i<values.length;i+=Math.max(1,Math.floor(values.length/50000))){const v=values[i]*vol.meta.slope+vol.meta.intercept,index=clamp(Math.floor((v-min)/Math.max(1,max-min)*bins.length),0,bins.length-1);bins[index]++}const top=Math.max(...bins,1);ctx.fillStyle='#0a0d13';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#C9A84C';for(let i=0;i<bins.length;i++)ctx.fillRect(i*canvas.width/bins.length,canvas.height-bins[i]/top*canvas.height,canvas.width/bins.length,canvas.height)}
+function renderMaskList(){const list=$('mask-list');list.replaceChildren();for(const meta of state.manifest.masks){const row=document.createElement('div');row.className='row';const label=document.createElement('span');label.textContent=`${meta.label} · ${Number(meta.volume_ml||0).toFixed(2)} mL`;const toggle=document.createElement('label');const box=document.createElement('input');box.type='checkbox';box.checked=!!meta.reviewed;box.onchange=()=>{meta.reviewed=box.checked;state.glData.maskDirty=true;renderAll()};toggle.append(box,document.createTextNode(tr('reviewed')));row.append(label,toggle);list.append(row)}}
+function initUI(){
+  localizeStatic();
+  $('case-label').textContent=state.manifest.case?.label||'Caso';$('anonymous').textContent='Anonimizado';$('version-badge').textContent='v'+state.manifest.version;
+  for(const meta of state.manifest.volumes){option($('base-volume'),meta.id,meta.label);option($('overlay-volume'),meta.id,meta.label)}$('base-volume').value=state.base;$('overlay-volume').insertBefore(new Option(UI_COPY[state.manifest.locale==='en'?'en':'pt-BR'].none,''),$('overlay-volume').firstChild);$('overlay-volume').value='';
+  updatePresets();renderMaskList();renderAnnotationList();renderStepList();installCanvasGestures();
+  $('base-volume').onchange=e=>{state.base=e.target.value;const vol=state.volumes.get(state.base),p=vol.meta.window_presets?.[0],s=vol.meta.stats||{};state.window=p?{center:p.center,width:p.width}:{center:((s.p01??0)+(s.p99??65535))/2,width:Math.max(1,(s.p99??65535)-(s.p01??0))};updatePresets();renderAll()};
+  $('overlay-volume').onchange=e=>{state.overlay=e.target.value||null;renderAll()};$('fusion-opacity').oninput=e=>{state.overlayOpacity=Number(e.target.value)/100;renderAll()};$('colormap').onchange=e=>{state.colormap=e.target.value;renderAll()};
+  $('preset').onchange=e=>{const p=e.target._presets[Number(e.target.value)];if(p){state.window={center:p.center,width:p.width};syncWindow();e.target.value=String(e.target._presets.indexOf(p));renderAll()}};
+  for(const [name,key] of [['level','center'],['width','width']])for(const id of [name,name+'-number'])$(id).oninput=e=>{state.window[key]=name==='width'?Math.max(1,Number(e.target.value)):Number(e.target.value);syncWindow();renderAll()};
+  $('invert').onchange=e=>{state.invert=e.target.checked;renderAll()};$('slab-mode').onchange=e=>{state.slab=e.target.value;renderAll()};$('slab-mm').onchange=e=>{state.slabMm=clamp(Number(e.target.value),1,40);renderAll()};$('oblique').oninput=e=>{state.oblique=Number(e.target.value);renderAll()};
+  $('mode3d').onchange=e=>{state.mode3d=e.target.value;render3D()};$('cut3d').onchange=e=>{state.cut3d=e.target.value;render3D()};$('threshold3d').oninput=e=>{state.threshold3d=Number(e.target.value);render3D()};$('opacity3d').oninput=e=>{state.opacity3d=Number(e.target.value)/100;render3D()};$('planes3d').onchange=e=>{state.planes3d=e.target.checked;render3D()};
+  $('tool').onchange=e=>{state.tool=e.target.value;state.pending=[]};$('reset-view').onclick=()=>{state.oblique=0;state.zoom={axial:1,coronal:1,sagittal:1,three:1};state.pan={axial:[0,0],coronal:[0,0],sagittal:[0,0]};state.camera={yaw:.45,pitch:.2};$('oblique').value=0;renderAll()};
+  $('mode-button').onclick=()=>setMode(state.mode==='surgeon'?'patient':'surgeon');$('save-button').onclick=()=>save().catch(e=>status('error',tr('bad')+' '+e.message));$('shot-button').onclick=screenshot;
+  $('add-step').onclick=()=>{const title=$('new-step-title').value.trim(),text=$('new-step-text').value.trim();if(!title||!text)return;addTourStep(title,text);$('new-step-title').value='';$('new-step-text').value=''};
+  $('prev-step').onclick=()=>applyTourStep(state.tourIndex-1);$('next-step').onclick=()=>applyTourStep(state.tourIndex+1);
+  for(const button of document.querySelectorAll('[data-max]'))button.onclick=()=>{const view=button.dataset.max;state.maximized=state.maximized===view?null:view;$('workspace').classList.toggle('single',!!state.maximized);for(const el of document.querySelectorAll('.view'))el.classList.toggle('active',!state.maximized||el.dataset.view===state.maximized);state.activeView=view;requestAnimationFrame(renderAll)};
+  new ResizeObserver(()=>{if(state.status==='ready')renderAll()}).observe($('workspace'));
+}
+function start(){loadCapsule()}
+
+start();
+</script>
+</body></html>

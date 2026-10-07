@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TractLab · Cortex & pathways</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./lesson_player.css"><link rel="stylesheet" href="./atlas.css">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/controls/OrbitControls.js":"./vendor/OrbitControls.js","three/addons/":"./vendor/addons/"}}</script>
+</head><body>
+<a class="skip-link" href="#atlasControls">Skip to atlas controls</a>
+<header class="studio-header"><a class="brand" href="./atlas.html">TractLab <span>ANATOMY</span></a>
+  <nav aria-label="Workspace"><a href="./?profile=clinical">Case reconstruction</a><a href="./atlas-sources.html">Atlas sources</a>
+  <button id="toggleLesson" type="button" aria-controls="lessonPanel" aria-expanded="true">Hide lesson</button></nav>
+</header>
+<main>
+  <div class="intro"><div><p class="eyebrow">REFERENCE ATLAS · EDUCATIONAL DRAFT</p><h1>Cortex & pathways</h1></div>
+    <p>Choose a cortical area or follow a guided lesson.<br><span>Group anatomy · no patient registration</span></p></div>
+  <div id="atlasWorkspace">
+    <section class="atlas-stage" aria-label="Reference anatomy">
+      <div class="stage-head"><div><span class="eyebrow">HCP–MMP1</span><p><strong>360</strong> cortical areas <span>· paired hemisphere labels</span></p></div>
+        <div class="views" role="group" aria-label="Anatomical views"><button type="button" data-view="left">Left</button><button type="button" data-view="right">Right</button><button type="button" data-view="superior">Top</button><button type="button" data-view="medial">Medial</button></div></div>
+      <div id="atlasCanvas"><p id="atlasLoading" role="status">Loading the reference atlas…</p></div>
+      <div class="scene-readout" aria-live="polite"><span class="eyebrow" id="pickedClass">ATLAS PARCEL</span>
+        <h2 id="pickedName">Left · area 4</h2><p id="pickedDescription">Select cortex to inspect its HCP-MMP1 label.</p></div>
+      <div class="scene-footer"><span id="pathwaySummary">Sampled atlas pathways</span><button type="button" id="tracePlay" aria-pressed="false">Play display trace</button></div>
+      <p class="trace-note" id="traceNote">Paused · paired trace follows shape; no direction or conduction.</p>
+    </section>
+    <aside id="lessonPanel" aria-label="Guided anatomy lesson"><p>Preparing guided lessons…</p></aside>
+  </div>
+  <section id="atlasControls" class="atlas-controls" aria-label="Atlas display controls" tabindex="-1">
+    <div><label for="atlasArea">Cortical area</label><select id="atlasArea" disabled><option>Loading atlas labels…</option></select></div>
+    <div><label for="atlasHemisphere">Hemisphere</label><select id="atlasHemisphere"><option value="both">Both hemispheres</option><option value="L">Left hemisphere</option><option value="R">Right hemisphere</option></select></div>
+    <div class="pathway-picker" id="atlasPathways" role="group" aria-labelledby="atlasPathwaysLabel"><div class="picker-head"><label id="atlasPathwaysLabel" for="pathwayFilter">Reference pathways <span id="pathwayCount" class="picker-count">loading…</span></label><button type="button" id="pathwayClear" disabled>Clear</button></div><input id="pathwayFilter" type="search" placeholder="Filter pathways (e.g. arcuate, CST, _L)…" autocomplete="off" disabled><div id="pathwayGroups" class="picker-groups"></div></div>
+    <div><label for="surfaceLevel">Cortical surface</label><input id="surfaceLevel" type="range" min="8" max="95" value="60"><span class="range-caption">Transparent <span>Defined</span></span></div>
+    <div class="deep-control"><label><input id="deepStructures" type="checkbox"> Deep structures</label><label for="deepRegion" class="sr-only">Inspect a deep atlas structure</label><select id="deepRegion"><option value="">Inspect a structure…</option></select></div>
+  </section>
+  <footer class="source-footer"><p>HCP S1200 surface · HCP-MMP1 parcels · HCP1065 sampled tractography · Melbourne subcortex</p>
+    <a href="./atlas-sources.html">Sources, preparation & use terms ↗</a></footer>
+</main><script type="module" src="./atlas_app.js"></script>
+</body></html>

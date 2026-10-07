@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+# TractLab PHI containment — last line of defence before a commit.
+# Keys on content shape, not directory name, and fails closed.
+#
+# Escape hatch waives the SIZE check only, deliberately per-command:
+#   TRACTLAB_ALLOW_LARGE=1 git commit ...
+# The imaging/tabular checks have no override.
+set -euo pipefail
+
+MAX_BYTES=$((1024 * 1024))
+IMAGING_RE='\.(nii|nii\.gz|mif|mih|tck|trk|trx|npy|npz|dcm|ima|bval|bvec|mgz|mgh|annot|label|gii|nrrd|vtk|mat|lta)$'
+PIXEL_RE='\.(png|jpg|jpeg|tif|tiff|webp|avif|bmp|gif)$'
+TABULAR_RE='\.(csv|tsv)$'
+
+imaging=""; pixels=""; tabular=""; casejson=""; large=""
+fail=0
+
+# ⛔ The staged list goes through a TEMP FILE, not `< <(process substitution)`.
+# Bash's errexit does NOT check the exit status of a command inside `<(...)`, so
+# a failing `git diff` yields an empty stream, every check below sees nothing,
+# `fail` stays 0, and the hook exits 0 — fail-OPEN, on the exact axis this gate
+# exists to close. Measured: `while IFS= read -r -d '' f; do :; done < <(false;
+# printf '')` under `set -euo pipefail` exits 0, while the older
+# `staged=$(false)` form exits 1. A temp file lets the exit status be checked
+# explicitly while keeping NUL delimiting.
+staged_list=$(mktemp "${TMPDIR:-/tmp}/tractlab-precommit.XXXXXX")
+trap 'rm -f "$staged_list"' EXIT
+
+# ⛔ NUL-DELIMITED, NOT --name-only ALONE. `git diff --cached --name-only`
+# C-quotes any path containing non-ASCII bytes, control characters, `"` or `\`
+# (core.quotePath defaults to true), emitting a token like
+#     "cases/x/cr\303\242nio.mgz"
+# whose last character is `"`. Every $-anchored regex below then misses, the
+# *.json test misses, `git rev-parse ":$f"` fails, and the hook FAILS OPEN.
+# Verified during review: a 2 MiB accented .mgz committed cleanly through the
+# --name-only version while its ASCII twin was refused. This is a pt-BR
+# environment; accented filenames are the norm, not an edge case. `-z` also
+# fixes embedded newlines and quotes, which `core.quotepath=false` would not.
+if ! git diff --cached -z --name-only --diff-filter=AM > "$staged_list"; then
+  echo "⛔ pre-commit: cannot list staged files, so nothing can be checked." >&2
+  echo "   Refusing rather than guessing. Fix the repository state and retry." >&2
+  exit 1
+fi
+
+while IFS= read -r -d '' f; do
+  [[ -n "$f" ]] || continue
+  if [[ "$f" =~ $IMAGING_RE ]]; then imaging+="  $f"$'\n'; continue; fi
+  if [[ "$f" =~ $PIXEL_RE ]];   then pixels+="  $f"$'\n';  continue; fi
+  if [[ "$f" =~ $TABULAR_RE ]]; then tabular+="  $f"$'\n'; continue; fi
+  # Case-scoped JSON may carry voxel/world coordinates. Audited exceptions:
+  # manifest.json (hashes + grid metadata) and preflight.json (scorecard only).
+  base=$(basename "$f")
+  if [[ "$f" == cases/* && "$f" == *.json && "$base" != "manifest.json" && "$base" != "preflight.json" ]]; then
+    casejson+="  $f"$'\n'; continue
+  fi
+  # ⛔ Honest null: an unresolvable size must REFUSE, never read as "0 bytes,
+  # fine". This branch is the catch-all backstop for formats the extension
+  # lists miss, so a silent 0 here is the whole gate failing quietly.
+  if ! oid=$(git rev-parse ":$f" 2>&1); then
+    echo "⛔ pre-commit: cannot resolve staged object for: $f" >&2
+    echo "   git rev-parse said: $oid" >&2
+    fail=1; continue
+  fi
+  if ! size=$(git cat-file -s "$oid" 2>&1); then
+    echo "⛔ pre-commit: cannot determine size for: $f" >&2
+    echo "   git cat-file said: $size" >&2
+    fail=1; continue
+  fi
+  if (( size > MAX_BYTES )); then large+="  $f ($((size / 1024)) KB)"$'\n'; fi
+done < "$staged_list"
+
+if [[ -n "$imaging" ]]; then
+  echo "⛔ pre-commit: refusing to commit patient imaging / surfaces / transforms." >&2
+  echo "$imaging" >&2
+  echo "   Local-only repo, no remote. No override for this check." >&2
+  fail=1
+fi
+
+if [[ -n "$tabular" ]]; then
+  echo "⛔ pre-commit: refusing to commit tabular data (.csv/.tsv)." >&2
+  echo "$tabular" >&2
+  echo "   A connectivity matrix or label table is patient-derived. No override." >&2
+  fail=1
+fi
+
+if [[ -n "$casejson" ]]; then
+  echo "⛔ pre-commit: refusing case-scoped JSON that is not manifest.json." >&2
+  echo "$casejson" >&2
+  echo "   These carry voxel/world coordinates. Put derived JSON under work*/." >&2
+  fail=1
+fi
+
+if [[ -n "$pixels" ]]; then
+  echo "⛔ pre-commit: refusing to commit rendered image files." >&2
+  echo "$pixels" >&2
+  echo "   Burned-in text re-identifies and survives DICOM anonymisation." >&2
+  fail=1
+fi
+
+if [[ -n "$large" ]]; then
+  if [[ "${TRACTLAB_ALLOW_LARGE:-}" == "1" ]]; then
+    echo "⚠ pre-commit: size check waived by TRACTLAB_ALLOW_LARGE=1:" >&2
+    echo "$large" >&2
+  else
+    echo "⛔ pre-commit: staged blob over $((MAX_BYTES / 1024)) KB." >&2
+    echo "$large" >&2
+    echo "   Re-run with TRACTLAB_ALLOW_LARGE=1 if this really is source." >&2
+    fail=1
+  fi
+fi
+
+exit $fail

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src data: blob:; worker-src blob:; font-src data:">
+<title>Case Capsule</title>
+<style><!--INLINE:styles.css--></style>
+<!--CAPSULE_PAYLOAD-->
+</head>
+<body>
+<header><div class="brand"><svg width="29" height="29" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="13" stroke="currentColor"/><path d="M16 5v22M5 16h22M9 9l14 14" stroke="currentColor" stroke-width="1.3"/></svg><div><h1>CASE CAPSULE</h1><div class="hint" id="case-label"></div></div></div><div class="badges"><span id="anonymous">Anonimizado</span><span>Offline</span><span id="gpu-badge">GPU</span><span id="version-badge">v1</span></div><div class="actions"><button id="mode-button" class="gold" type="button">Paciente</button><button id="save-button" class="surgeon-only" type="button">Salvar cápsula</button><button id="shot-button" class="surgeon-only" type="button">PNG</button></div></header>
+<main class="shell"><section id="workspace" class="workspace" aria-label="Imagens">
+<div class="view active" data-view="axial"><canvas id="axial-canvas" aria-label="Axial"></canvas><span class="tag">AXIAL</span><span class="orient left">R</span><span class="orient right">L</span><span class="orient top">A</span><span class="orient bottom">P</span><button class="maximize surgeon-only" data-max="axial" type="button" aria-label="Maximizar axial">⤢</button></div>
+<div class="view" data-view="coronal"><canvas id="coronal-canvas" aria-label="Coronal"></canvas><span class="tag">CORONAL</span><span class="orient left">R</span><span class="orient right">L</span><span class="orient top">S</span><span class="orient bottom">I</span><button class="maximize surgeon-only" data-max="coronal" type="button" aria-label="Maximizar coronal">⤢</button></div>
+<div class="view" data-view="sagittal"><canvas id="sagittal-canvas" aria-label="Sagital"></canvas><span class="tag">SAGITAL</span><span class="orient left">A</span><span class="orient right">P</span><span class="orient top">S</span><span class="orient bottom">I</span><button class="maximize surgeon-only" data-max="sagittal" type="button" aria-label="Maximizar sagital">⤢</button></div>
+<div class="view" data-view="three"><canvas id="three-canvas" aria-label="Reconstrução tridimensional"></canvas><span class="tag">3D</span><button class="maximize surgeon-only" data-max="three" type="button" aria-label="Maximizar 3D">⤢</button></div>
+</section><aside class="side"><div id="surgeon-panel" class="surgeon-only">
+<section class="group"><h2>Volumes e fusão</h2><div class="row"><label>Base <select id="base-volume"></select></label><label>Sobreposição <select id="overlay-volume"></select></label></div><div class="row"><label>Opacidade <input id="fusion-opacity" type="range" min="0" max="100" value="35"></label><select id="colormap" aria-label="Mapa de cores"><option value="grey">Cinza</option><option value="hot">Quente</option><option value="cool">Frio</option></select></div></section>
+<section class="group"><h2>Janela</h2><div class="row"><select id="preset" aria-label="Janela"></select><label><input id="invert" type="checkbox"> Inverter</label></div><canvas id="histogram" width="260" height="36"></canvas><div class="row"><label>Nível <input id="level" type="range" min="-1200" max="2000"><input id="level-number" type="number"></label></div><div class="row"><label>Largura <input id="width" type="range" min="1" max="4000"><input id="width-number" type="number" min="1"></label></div></section>
+<section class="group"><h2>Planos</h2><div class="row"><label>Laje <select id="slab-mode"><option value="thin">Fina</option><option value="mip">MIP</option><option value="minip">MinIP</option><option value="mean">Média</option></select></label><label>mm <input id="slab-mm" type="number" value="1" min="1" max="40"></label></div><div class="row"><label>Oblíquo ° <input id="oblique" type="range" min="-60" max="60" value="0"></label><button id="reset-view" type="button">Redefinir</button></div><p class="hint">Arraste o ponto dourado no axial para girar os planos.</p></section>
+<section class="group"><h2>3D</h2><div class="row"><select id="mode3d"><option value="bone">Osso</option><option value="skin">Pele + osso</option><option value="mip">MIP</option></select><label>Corte <select id="cut3d"><option value="off">Desligado</option><option value="axial">Axial</option><option value="coronal">Coronal</option><option value="sagittal">Sagital</option></select></label></div><div class="row"><label>Limiar <input id="threshold3d" type="range" min="-1000" max="2000" value="300"></label><label>Opacidade <input id="opacity3d" type="range" min="1" max="100" value="45"></label></div><label><input id="planes3d" type="checkbox" checked> Planos de corte</label></section>
+<section class="group"><h2>Ferramentas</h2><div class="row"><select id="tool"><option value="crosshair">Cursor</option><option value="distance">Distância</option><option value="angle">Ângulo</option><option value="point">Ponto</option><option value="trajectory">Trajetória</option><option value="roi">ROI circular</option><option value="grow">Crescimento 3D</option><option value="brush">Pincel +</option><option value="erase">Pincel −</option></select><label>Raio <input id="tool-radius" type="number" value="4" min="1" max="80"></label></div><div class="row"><label>Tolerância <input id="grow-tolerance" type="number" value="5" min="1" max="500"></label><label>Raio máx. <input id="grow-radius" type="number" value="30" min="1" max="100"></label></div><p class="hint">Clique para marcar; distância, trajetória e ROI usam 2 pontos; ângulo usa 3.</p><div id="annotation-list" class="stack"></div></section>
+<section class="group"><h2>Máscaras</h2><div id="mask-list" class="stack"></div></section><section class="group"><h2>Roteiro</h2><div id="step-list"></div><input id="new-step-title" class="fill" type="text" placeholder="Título do passo"><textarea id="new-step-text" placeholder="Explicação em português"></textarea><button id="add-step" type="button">Adicionar passo</button></section></div>
+<section id="tour-panel" class="group"><div class="hint" id="step-count"></div><h2 id="step-title"></h2><p class="tour-text" id="step-text"></p><div class="row"><button id="prev-step" type="button">Anterior</button><button id="next-step" class="gold" type="button">Próximo</button></div></section></aside><div class="readout" id="readout" role="status">—</div></main>
+<div id="status"><h2>Carregando cápsula</h2><p id="status-detail">Preparando volumes…</p></div>
+<script>
+'use strict';
+<!--INLINE:i18n.js-->
+<!--INLINE:state.js-->
+<!--INLINE:decode.js-->
+<!--INLINE:mpr.js-->
+<!--INLINE:render3d.js-->
+<!--INLINE:segmentation.js-->
+<!--INLINE:tools.js-->
+<!--INLINE:tour.js-->
+<!--INLINE:save.js-->
+<!--INLINE:ui.js-->
+start();
+</script>
+</body></html>

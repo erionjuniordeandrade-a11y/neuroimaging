@@ -1,0 +1,75 @@
+#btnLessons {width:auto;margin:0;padding:6px 10px;white-space:nowrap;}
+#lessonPanel {display:none;min-height:0;overflow:auto;overscroll-behavior:contain;background:#12171e;
+  border-left:1px solid var(--line-strong);padding:20px 22px 36px;color:#d5dbe3;font-size:14px;line-height:1.6;}
+#main[data-lessons-open="true"] {grid-template-columns:minmax(0,1fr) 370px;}
+#main[data-lessons-open="true"] #side {display:none;}
+#main[data-lessons-open="true"] #scene {grid-column:1;grid-row:1;}
+#main[data-lessons-open="true"] #lessonPanel {display:block;grid-column:2;grid-row:1;}
+.lesson-top {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.lesson-eyebrow {font:600 10px/1.3 var(--mono);letter-spacing:.13em;color:#d1b971;}
+#lessonPanel button {width:auto;margin:0;padding:7px 11px;background:#202936;color:#e8edf4;border:1px solid #3d4a5a;}
+#lessonPanel button:disabled {opacity:.35;}
+#lessonPanel select {width:100%;min-width:0;background:#1b232e;color:#e8edf4;padding:9px;border:1px solid #42516a;border-radius:6px;font:inherit;}
+#lessonPanel h2 {font-size:25px;line-height:1.2;font-weight:600;letter-spacing:-.025em;margin:15px 0 18px;color:#f1eee5;}
+#lessonPanel h3 {font-size:20px;line-height:1.3;font-weight:550;letter-spacing:-.015em;margin:9px 0 12px;color:#f1eee5;}
+#lessonPanel p {margin:8px 0 14px;}
+#lessonPanel .lesson-lead {font-size:15px;line-height:1.65;color:#d6dee8;}
+.lesson-review {font-size:11px;color:#d4b779;}
+.lesson-progress {display:flex;gap:5px;margin:0 0 12px;}
+#lessonPanel .lesson-progress button {min-width:32px;padding:5px;}
+#lessonPanel button[aria-current="step"] {background:#d6bd7c;border-color:#d6bd7c;color:#17191d;}
+.lesson-evidence {text-transform:uppercase;color:#8fb9c3;font:600 10px/1.4 var(--mono);letter-spacing:.05em;}
+#lessonPanel .lesson-capability {border-left:2px solid #917d4d;padding:8px 10px;background:#1f211f;font-size:12px;color:#cabf9e;}
+.lesson-regions details,.lesson-sources,.lesson-notes,.lesson-answer {border-top:1px solid #303946;margin:14px 0;padding-top:10px;}
+#lessonPanel summary {font-weight:550;font-size:12px;color:#bacbdf;cursor:pointer;}
+#lessonPanel details p {font-size:12px;line-height:1.6;}
+#lessonPanel details small {color:#8fb9c3;font-size:10px;}
+.lesson-nav {display:flex;gap:7px;justify-content:space-between;margin:22px 0 9px;}
+#lessonPanel .lesson-nav button {flex:1;padding:8px 4px;font-size:12px;}
+.lesson-sources a {color:#a8c8e5;font-size:12px;text-decoration-thickness:1px;text-underline-offset:3px;}
+.lesson-sources>div {margin-top:13px;}
+#lessonPanel .lesson-version {font:10px/1.6 var(--mono);color:#94a0af;margin-top:22px;}
+.lesson-catalog {display:grid;gap:9px;}
+#lessonPanel .lesson-catalog button {display:block;text-align:left;width:100%;padding:13px;font-weight:550;}
+.lesson-catalog span,.lesson-catalog small {display:block;font-weight:400;margin-top:5px;}
+.lesson-catalog span {font:10px/1.4 var(--mono);color:#c6b484;}
+.lesson-catalog small {font-size:12px;line-height:1.5;color:#aab9cb;}
+.lesson-diagram {display:grid;gap:6px;padding:13px;background:#0d1218;border:1px solid #2d3947;margin:16px 0;}
+.lesson-diagram>span {padding:8px;border-left:2px solid #759fa3;background:#18232d;font-size:12px;}
+.lesson-diagram small {font:10px/1.5 var(--mono);color:#a2afc0;}
+#scene {container-type:inline-size;}
+#teachingViewportNote {position:static;max-width:none;margin:7px 0 0;padding:6px 8px;backdrop-filter:none;}
+#hud {max-width:min(440px,calc(100% - 32px));max-height:38%;overflow:auto;}
+#referenceScene {display:none;position:absolute;inset:0;padding:70px 8%;align-content:center;}
+#referenceScene h2 {font-size:clamp(22px,3vw,36px);max-width:600px;line-height:1.2;letter-spacing:-.02em;color:#e6ddc8;}
+#referenceScene p {max-width:540px;font-size:15px;line-height:1.7;color:#aab9c9;}
+#scene[data-reference-only="true"] #gl,#scene[data-reference-only="true"] #hud,
+#scene[data-reference-only="true"] #streamlineInspector,#scene[data-reference-only="true"] #emptyState {visibility:hidden;}
+#scene[data-reference-only="true"] #referenceScene {display:grid;}
+.keyboard-inspector {margin-top:12px;border-top:1px solid var(--line-strong);padding-top:9px;}
+.keyboard-inspector select,.keyboard-inspector input {width:100%;min-width:0;background:var(--bg);color:var(--ink);border:1px solid var(--ctl-mute);padding:6px;}
+.keyboard-inspector .row {gap:5px;}
+.keyboard-inspector button {margin-top:5px;padding:6px;}
+#traceControls {margin:9px 0;}
+#traceControls button {margin:0;padding:7px;font-size:12px;}
+#traceControls small {display:block;margin-top:5px;color:var(--dim);}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible {outline:2px solid #e0c482;outline-offset:3px;}
+@container (max-width:650px) {
+  .viewport-tools {left:8px;right:8px;gap:3px;flex-wrap:wrap;}
+  .viewport-tools button {padding:5px 7px;font-size:10px;}
+  #streamlineInspector {top:58px;left:8px;max-width:calc(100% - 16px);max-height:24%;overflow:auto;}
+  #hud {left:8px;bottom:8px;max-width:calc(100% - 16px);font-size:11px;}
+  #hudHints {display:none;}
+}
+@media(max-width:760px) {
+  #main[data-lessons-open="true"] {grid-template-columns:1fr;grid-template-rows:minmax(220px,40dvh) minmax(0,1fr);}
+  #main[data-lessons-open="true"] #lessonPanel {grid-column:1;grid-row:2;padding:16px 20px;border-left:0;border-top:1px solid var(--line-strong);}
+  #main[data-lessons-open="true"] #scene {grid-column:1;grid-row:1;}
+  #referenceScene {padding:48px 20px 12px;}
+  #referenceScene h2 {font-size:22px;margin:0;}
+  #referenceScene p {font-size:12px;margin:0;}
+}
+
+.lesson-pace {height:3px;margin:-6px 0 12px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
+.lesson-pace-fill {display:block;height:100%;width:0;background:var(--accent,#C9A84C);transition:width linear 0ms;}
+@media (prefers-reduced-motion: reduce){.lesson-pace-fill{transition:none;width:100%!important;opacity:.5;}}

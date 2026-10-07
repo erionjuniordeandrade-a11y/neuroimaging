@@ -1,0 +1,25 @@
+{
+  "name": "tractlab",
+  "private": true,
+  "type": "module",
+  "description": "Research tractography viewer (Explore bank + live iFOD2)",
+  "scripts": {
+    "postinstall": "node scripts/restore-viewer-runtime.mjs",
+    "restore:viewer": "node scripts/restore-viewer-runtime.mjs",
+    "test:js": "node --test 'tests/js/*.test.js' tests/test_tract_colour.mjs",
+    "test": "node --test 'tests/js/*.test.js' tests/test_tract_colour.mjs",
+    "test:browser": "node tests/perf/browser_smoke.mjs",
+    "test:browser:priors": "node tests/perf/browser_smoke.mjs --require-priors",
+    "test:viewer": "node tests/perf/viewer_interaction_smoke.mjs",
+    "test:visual": "node tests/perf/visual_regression.mjs",
+    "test:pick": "node tests/perf/bvh_pick_check.mjs",
+    "test:display-modes": "node tests/perf/display_modes_smoke.mjs",
+    "test:atlas:journey": "node tests/perf/atlas_journey.mjs"
+  },
+  "devDependencies": {
+    "pixelmatch": "^7.2.0",
+    "playwright": "1.62.1",
+    "pngjs": "^7.0.0",
+    "three": "0.185.0"
+  }
+}

@@ -1,0 +1,15 @@
+# Default-deny for imaging data: nothing patient- or dataset-derived is ever committed.
+data/
+cases/
+out/
+*.dcm
+*.nii
+*.nii.gz
+*.capsule.html
+.venv/
+__pycache__/
+.pytest_cache/
+handoff/preflight*.json
+node_modules/
+handoff/logs/
+data

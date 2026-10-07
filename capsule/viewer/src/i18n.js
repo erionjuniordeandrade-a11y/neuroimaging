@@ -1,0 +1,18 @@
+// All interface copy is kept here. Patient mode always uses pt-BR.
+const STRINGS={
+  'pt-BR':{loading:'Carregando cápsula',empty:'Esta cápsula não contém volumes.',bad:'Não foi possível abrir a cápsula.',gpu:'WebGL2 indisponível neste navegador.',noTour:'O cirurgião ainda não preparou a explicação deste caso.',step:'Passo',readout:'Cursor',reviewed:'Revisado pelo cirurgião',save:'Salvar cápsula',patient:'Paciente',surgeon:'Cirurgião'},
+  en:{loading:'Loading capsule',empty:'This capsule has no volumes.',bad:'Could not open capsule.',gpu:'WebGL2 is unavailable in this browser.',noTour:'The surgeon has not prepared this explanation yet.',step:'Step',readout:'Cursor',reviewed:'Surgeon reviewed',save:'Save capsule',patient:'Patient',surgeon:'Surgeon'}
+};
+function tr(key){return STRINGS[state.mode==='patient'?'pt-BR':(state.manifest?.locale==='en'?'en':'pt-BR')][key]}
+const UI_COPY={
+  'pt-BR':{volumes:'Volumes e fusão',base:'Base',overlay:'Sobreposição',opacity:'Opacidade',grey:'Cinza',hot:'Quente',cool:'Frio',window:'Janela',invert:'Inverter',level:'Nível',width:'Largura',planes:'Planos',slab:'Laje',thin:'Fina',mean:'Média',oblique:'Oblíquo °',reset:'Redefinir',obliqueHint:'Arraste o ponto dourado no axial para girar os planos.',bone:'Osso',skin:'Pele + osso',cut:'Corte',off:'Desligado',threshold:'Limiar',cutPlanes:'Planos de corte',tools:'Ferramentas',cursor:'Cursor',distance:'Distância',angle:'Ângulo',point:'Ponto',trajectory:'Trajetória',roi:'ROI circular',grow:'Crescimento 3D',brush:'Pincel +',erase:'Pincel −',radius:'Raio',maxRadius:'Raio máx.',tolerance:'Tolerância',toolHint:'Clique para marcar; distância, trajetória e ROI usam 2 pontos; ângulo usa 3.',masks:'Máscaras',tour:'Roteiro',addStep:'Adicionar passo',previous:'Anterior',next:'Próximo',none:'Nenhuma',manual:'Manual',delete:'Excluir',titlePlaceholder:'Título do passo',textPlaceholder:'Explicação em português'},
+  en:{volumes:'Volumes and fusion',base:'Base',overlay:'Overlay',opacity:'Opacity',grey:'Grey',hot:'Hot',cool:'Cool',window:'Window',invert:'Invert',level:'Level',width:'Width',planes:'Planes',slab:'Slab',thin:'Thin',mean:'Mean',oblique:'Oblique °',reset:'Reset',obliqueHint:'Drag the gold handle in the axial view to rotate planes.',bone:'Bone',skin:'Skin + bone',cut:'Cut',off:'Off',threshold:'Threshold',cutPlanes:'Slice planes',tools:'Tools',cursor:'Cursor',distance:'Distance',angle:'Angle',point:'Point',trajectory:'Trajectory',roi:'Circular ROI',grow:'3D region grow',brush:'Brush +',erase:'Brush −',radius:'Radius',maxRadius:'Max radius',tolerance:'Tolerance',toolHint:'Click to mark; distance, trajectory, and ROI use 2 points; angle uses 3.',masks:'Masks',tour:'Tour',addStep:'Add step',previous:'Previous',next:'Next',none:'None',manual:'Manual',delete:'Delete',titlePlaceholder:'Step title',textPlaceholder:'Explanation in Portuguese'}
+};
+function localizeStatic(){
+  const locale=state.mode==='patient'?'pt-BR':state.manifest?.locale==='en'?'en':'pt-BR';
+  const keys=Object.keys(UI_COPY['pt-BR']),mapping=new Map();
+  for(const key of keys){mapping.set(UI_COPY['pt-BR'][key],UI_COPY[locale][key]);mapping.set(UI_COPY.en[key],UI_COPY[locale][key])}
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;
+  while((node=walker.nextNode())){if(node.parentElement?.closest('script,style,#tour-panel,#step-list,#mask-list,#annotation-list,#readout,#case-label'))continue;const raw=node.textContent,trimmed=raw.trim();if(mapping.has(trimmed))node.textContent=raw.replace(trimmed,mapping.get(trimmed))}
+  for(const el of document.querySelectorAll('[placeholder]'))if(mapping.has(el.placeholder))el.placeholder=mapping.get(el.placeholder);
+}

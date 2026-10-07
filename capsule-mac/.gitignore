@@ -1,0 +1,6 @@
+.build/
+build/
+handoff/
+.claude/
+*.png
+.swiftpm/

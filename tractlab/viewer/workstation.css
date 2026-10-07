@@ -1,0 +1,276 @@
+/* Workstation layout. Tokens live in index.html's :root; anatomy/data colours are defined by their own scales. */
+[hidden] { display:none !important; }
+#app { grid-template-rows:auto minmax(0,1fr) auto; }
+#chrome,body.case-map #chrome { min-height:48px; height:auto; padding:4px 16px; gap:16px; }
+#chrome #provChipResearch { margin-left:auto !important; }
+#runtimeIdentity { min-width:0; max-width:280px; color:var(--dim); font-size:var(--fs-caption); line-height:1.4; }
+#runtimeIdentity span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#reviewTools { display:flex; flex:none; gap:6px; }
+#reviewTools button { margin:0; width:auto; padding:6px 10px; font-weight:500; font-size:var(--fs-caption); background:var(--card); color:var(--ink); border:1px solid var(--line-strong); }
+#viewWorkspace { position:relative; }
+#reviewStatus { position:absolute; z-index:15; top:56px; left:16px; right:16px; padding:10px 12px; background:var(--card); border:1px solid var(--line-strong); color:var(--ink); font-size:var(--fs-caption); box-shadow:0 4px 20px #0008; }
+#reviewStatus[data-state="error"] { border-color:#b28747; }
+#reviewStatus .review-dismiss { float:right; width:auto; margin:0 0 0 12px; padding:4px 8px; }
+#reviewStatus pre { max-height:45vh; overflow:auto; white-space:pre-wrap; font-size:var(--fs-caption); line-height:1.5; }
+#reviewStatus button { background:var(--elev); border:1px solid var(--line-strong); color:var(--ink); font-size:var(--fs-caption); }
+#reviewStatus .review-restore-heading { margin:8px 0 4px; font-weight:600; }
+#reviewStatus .review-restore-list { margin:0; padding-left:18px; max-height:30vh; overflow:auto; }
+#reviewStatus .review-restore-list li[data-state="refused"] { color:#e0b55f; }
+@media(max-width:760px) {
+  #chrome,body.case-map #chrome { flex-wrap:wrap; gap:6px 12px; }
+  #runtimeIdentity { flex:1; max-width:none; }
+  #reviewTools { order:3; }
+  #chrome #provChipResearch { order:4; }
+}
+#provenanceBar { position:relative; display:flex; align-items:center; gap:12px; min-height:36px; padding:2px 12px; background:var(--panel); border-top:1px solid var(--line); font-size:var(--fs-caption); color:var(--mute); }
+#provenanceBar #provStrip { flex:1; min-width:0; }
+#provenanceBar .prov-chip { background:transparent; border-color:transparent; padding:4px 8px; }
+#provenanceBar .prov-chip[data-state="mute"] { border-color:transparent; }
+#provCard { position:absolute; z-index:25; bottom:100%; left:12px; max-width:min(680px,calc(100vw - 24px)); max-height:60vh; overflow:auto; margin:0; }
+#chrome .brand h1 { font-weight:600; font-size:var(--fs-title); line-height:1; }
+#chrome .brand .sub { display:none; }
+.prov-chip,body.case-map .prov-chip { min-height:32px; font-weight:500; font-size:var(--fs-caption); line-height:1.3; letter-spacing:0; text-transform:none; }
+.prov-chip[data-prov="preflight"][data-state="mute"],.prov-chip[data-prov="operating"][data-state="mute"] { color:#f2cd86; border-color:#85652e; }
+.prov-chip[data-prov="research"],body.case-map #provChipResearch { color:var(--dim); background:transparent; border:0; }
+#provChipSpace,body.case-map #provChipSpace { color:var(--dim); border-color:var(--line-strong); background:transparent; }
+#chromeHelp { min-width:32px; width:32px; height:32px; }
+#main,body.case-map #main { grid-template-columns:var(--side-w) minmax(0,1fr); }
+#side { padding:0; display:flex; flex-direction:column; overflow:hidden; position:relative; }
+#btnCloseRail { display:none; }
+/* Nonshrinking measurement cards used to push the rail nav and its panels
+   below the visible sidebar with several banks selected (F02). Let the card
+   list shrink and scroll on its own, reserving the nav plus at least ~140px
+   of panel; #railNav stays flex:none and the active .rail-panel is flex:1
+   min-height:0 below, so both keep a guaranteed floor of visible height. */
+#caseMap { flex:0 1 auto; min-height:0; max-height:min(55%,calc(100% - 200px)); overflow:auto; padding:20px 16px 12px !important; border:0; }
+#caseMap h2 { font-size:var(--fs-title); font-weight:600; letter-spacing:-.02em; }
+#caseMap .map-intro { font-size:var(--fs-caption); margin:0 0 12px; }
+.map-layer { grid-template-columns:minmax(0,1fr) 34px; border-radius:var(--r-ctl); background:var(--card); }
+.map-focus { min-height:62px; padding:8px 12px !important; grid-template-columns:1fr auto; }
+.map-focus[data-focused="true"] { background:#24374c !important; border-color:#85b5e8 !important; }
+.map-name { font-weight:600 !important; font-size:var(--fs-label) !important; line-height:1.3 !important; }
+.map-focus[data-focused="true"] .map-name::before { content:'⌖ '; color:#bddbfa; }
+.map-value { font-weight:600 !important; font-size:24px !important; line-height:1.1 !important; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.map-note,.map-detail,.map-counts { display:none; }
+.map-population { grid-column:1/-1; font-weight:400; font-size:var(--fs-caption); line-height:1.3; color:var(--dim); }
+.map-remove { width:34px !important; min-height:34px; font-size:var(--fs-title) !important; color:var(--dim) !important; }
+.map-footnote { font-size:var(--fs-caption) !important; line-height:1.4; margin:10px 0 0 !important; }
+.map-layer[aria-busy="true"] progress { width:100%; height:4px; grid-column:1/-1; accent-color:var(--active); }
+#railNav { display:flex; padding:8px 12px; gap:4px; border-block:1px solid var(--line); flex:none; }
+#railNav button { flex:1; width:auto; margin:0; padding:6px; min-height:34px; background:transparent; color:var(--dim); border:1px solid transparent; }
+#railNav button[aria-selected="true"] { background:var(--elev); color:var(--ink); border-color:var(--line-strong); }
+.rail-panel { min-height:0; overflow:auto; flex:1; padding:12px; }
+.rail-panel .section { padding:0 0 16px !important; margin:0; border:0; }
+body.case-map #side #connectotomyHost { display:block; }
+.rail-panel h2 { font-weight:600; font-size:var(--fs-title); line-height:1.3; margin:4px 0 12px; }
+.section-title,.section summary { text-transform:none; letter-spacing:0; font-size:var(--fs-label); }
+.step,.tier-tag,#secView>.section-hint,#colorLegend,#solidLegend,#distLegend { display:none !important; }
+#focusDetails { font-size:var(--fs-caption); line-height:1.6; margin:4px 0 16px; padding:12px; border-left:2px solid #86b4e5; background:var(--card); }
+#focusDetails strong { display:block; font-size:var(--fs-label); color:var(--ink); }
+#streamlineInspector { position:relative; inset:auto; width:100%; max-width:none; padding:12px; margin:0 0 12px; background:var(--card); pointer-events:auto; box-shadow:none; }
+#streamlineInspectorTitle { padding-right:30px; font-weight:600; font-size:var(--fs-label); line-height:1.4; }
+#streamlineInspectorMeta { font-weight:400; font-size:var(--fs-caption); line-height:1.5; overflow-wrap:anywhere; }
+#btnClearStreamline { position:absolute; top:6px; right:6px; margin:0; width:32px; min-height:32px; padding:0; font-size:var(--fs-title); background:transparent; color:var(--ink); border:1px solid transparent; }
+body.case-map #proxCard { display:none; }
+#limitsPanel { background:var(--card); padding:12px; margin-top:16px; }
+#limitsPanel summary { font-weight:600; }
+#limitsPanel p { margin-bottom:0; }
+button,.chip { min-height:32px !important; }
+#side .section-title { font-size:var(--fs-label) !important; }
+button:hover:not(:disabled),.chip:hover:not(:disabled) { filter:brightness(1.15); border-color:#7e9dbf; }
+.chip,.badge,.stat,.prior-prov,.chip .chip-sift,.gcount,.tier-tag { font-size:var(--fs-caption) !important; }
+.alert-label,[id^="role"],#btnNewAnd { font-size:var(--fs-caption) !important; }
+.section summary,.bank-group summary,#researchTools summary,#limitsPanel summary { color:var(--ink); }
+#toolHint { color:var(--dim); font-size:var(--fs-caption); }
+.chip:not(.active) { color:var(--dim) !important; }
+.chip.active { background:#293d57 !important; color:var(--ink) !important; }
+.chip.variant { border-style:solid !important; border-left:4px solid #b09ad4 !important; }
+.bank-group summary { font-size:var(--fs-label); min-height:36px; }
+.bank-group summary .gcount { font-family:inherit; }
+.section-hint,.stat,.badge { color:var(--dim); }
+.val { color:#9dc8ff; }
+.seg .chip,#viewCluster button,body.case-map #viewCluster button { min-width:32px; min-height:32px; }
+summary { min-height:32px; padding-block:6px; box-sizing:border-box; }
+#sliceSettings select { min-height:32px; }
+input[type=checkbox] { flex:none; width:32px !important; height:32px !important; }
+.range-control { display:grid; grid-template-columns:minmax(0,1fr) 58px 32px; align-items:center; gap:8px; }
+input[type=range] { min-height:32px; margin:0; }
+.range-control input[type=number] { width:58px; height:32px; padding:4px; background:var(--bg); border:1px solid var(--line-strong); color:var(--ink); border-radius:4px; font-size:var(--fs-caption); }
+.range-control button { width:32px; min-height:32px; margin:0; padding:0; background:var(--elev); color:var(--ink); }
+#viewWorkspace { display:grid; grid-template-rows:auto minmax(0,1fr); min-width:0; min-height:0; overflow:hidden; }
+#viewWorkspace.slices-open { grid-template-rows:auto minmax(0,1fr) var(--anatomy-height,104px); }
+#scene,body.case-map #scene { grid-row:2; min-height:0; }
+#gl { cursor:grab; touch-action:none; }
+#gl:active { cursor:grabbing; }
+#workstationTools { position:absolute; left:16px; top:14px; z-index:4; display:flex; gap:6px; }
+#workstationTools button { width:auto; margin:0; padding:6px 10px; font-size:var(--fs-caption); background:rgba(20,27,36,.94); border:1px solid var(--line-strong); color:var(--ink); }
+#viewCluster,body.case-map #viewCluster { top:14px; right:14px; gap:2px; }
+#viewCluster button { min-width:32px; min-height:32px; font-size:var(--fs-caption); }
+#mapScale { width:220px; left:16px; bottom:16px; padding:8px 10px; background:rgba(13,17,23,.92); }
+#mapScale p { font-size:var(--fs-label); font-weight:600; margin:0 0 4px; }
+#mapScale small,#mapScale .map-scale-ticks { font-size:var(--fs-caption); }
+#mapScale small { margin-top:4px; }
+.legend-keys { display:flex; flex-wrap:wrap; column-gap:12px; }
+.legend-row { display:flex; align-items:center; gap:6px; font-size:var(--fs-caption); margin:3px 0 0; line-height:1.25; }
+.legend-row i { width:12px; height:12px; border-radius:2px; flex:none; }
+.legend-row--dual { flex-wrap:wrap; gap:2px 14px; }
+.legend-item { display:flex; align-items:center; gap:6px; }
+.legend-bar { position:relative; height:10px; background:var(--ramp); border-radius:2px; overflow:hidden; }
+.legend-floor { position:absolute; inset:0 auto 0 0; width:var(--floor-width); background:repeating-linear-gradient(135deg,#75808d 0 3px,#323e4a 3px 6px); }
+#orientationCube { position:absolute; z-index:3; right:16px; bottom:44px; width:92px; height:92px; background:none; border:0; border-radius:0; }
+#orientationCube text { font-weight:600; font-size:var(--fs-caption); paint-order:stroke; stroke:var(--bg); stroke-width:3px; fill:var(--ink); }
+#worldScale { position:absolute; right:16px; bottom:14px; color:var(--dim); font-size:var(--fs-caption); text-align:center; z-index:3; }
+#worldScale .scale-line { height:7px; border:1px solid var(--dim); border-top:0; margin:auto auto 3px; }
+#worldScale small { font-size:var(--fs-caption); }
+#compactTracts { display:none; grid-row:1; min-width:0; gap:8px; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--line); }
+#compactTracts button { flex:1; min-width:0; display:grid; grid-template-columns:1fr auto; align-content:center; align-items:center; gap:2px 8px; width:auto; margin:0; padding:6px 10px; min-height:44px !important; text-align:left; background:var(--card); border:1px solid var(--line-strong); color:var(--ink); font-size:var(--fs-caption); }
+#compactTracts button[aria-pressed="true"] { background:#24374c; border-color:var(--focus); box-shadow:inset 3px 0 var(--focus); }
+#compactTracts .compact-name { font-weight:600; }
+#compactTracts b { font-size:var(--fs-title); font-variant-numeric:tabular-nums; white-space:nowrap; }
+#compactTracts .map-population { font-size:var(--fs-caption); }
+#anatomyDock { grid-row:3; position:relative; display:flex; flex-direction:column; border-top:1px solid var(--line-strong); background:var(--panel); padding:8px 12px 4px; min-height:0; }
+#anatomyResize { position:absolute; z-index:6; height:32px; width:80px; left:calc(50% - 40px); top:-16px; cursor:ns-resize; touch-action:none; }
+#anatomyResize::after { content:''; position:absolute; width:48px; height:4px; border-radius:2px; background:#869aaf; top:14px; left:16px; }
+#anatomyResize:hover::after,#anatomyResize:focus-visible::after { background:var(--ink); }
+#anatomyResize:focus-visible { outline:2px solid #9dc8ff; outline-offset:1px; }
+#anatomyHead { display:flex; flex:none; align-items:center; gap:8px; }
+#anatomyHead h2 { font-weight:600; font-size:var(--fs-label); margin:0 auto 0 0; }
+#anatomyHead button { font-size:var(--fs-caption); margin:0; width:auto; padding:4px 10px; }
+#anatomyDock #underToggle { margin:0 !important; }
+#anatomyDock #underHint { display:none; }
+/* grid-template-rows is explicit (not the implicit "auto" default) so this
+   row's height comes only from the available space, never from the content's
+   intrinsic/min-content size. Without it, a percentage or flex-basis height
+   on a canvas child can fail to resolve and fall back to the canvas's own
+   backing width/height attributes (its intrinsic aspect ratio), which is how
+   an inspected canvas's last-drawn backing size leaked into later layout
+   (F04). This applies to full, compact and slice-focused layouts alike. */
+#anatomyDock .mpr { display:grid; flex:1; min-height:0; grid-template-columns:repeat(3,minmax(0,1fr)); grid-template-rows:minmax(0,1fr); gap:12px; margin:8px 0 0; }
+#anatomyDock .mpr figure { min-height:0; display:flex; flex-direction:column; }
+#anatomyDock .mpr canvas { display:block; flex:1; width:100%; height:0; max-height:none; object-fit:contain; aspect-ratio:auto; min-height:0; border:0; cursor:crosshair; }
+#anatomyDock .mpr figcaption { text-align:left; font-size:var(--fs-caption); margin-top:4px; }
+#anatomyDock .slice-footer { display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:32px; }
+#anatomyDock .mpr .slice-footer { margin:0; }
+#anatomyDock .slice-footer input { flex:1; min-width:32px; width:0; }
+#anatomyDock .slice-footer>span,#anatomyDock .slice-footer button { flex:none; white-space:nowrap; }
+#anatomyDock .slice-plane-name { display:none; }
+#anatomyDock .slice-footer button { width:auto; margin:0; padding:4px 8px; color:var(--dim); background:transparent; border:1px solid var(--line-strong); font-size:var(--fs-caption); }
+#anatomyDock.slice-focused .mpr { grid-template-columns:minmax(0,1fr); }
+#anatomyDock.slice-focused .mpr figure { min-height:0; }
+#anatomyDock.slice-focused .mpr canvas { flex:1; height:0; }
+#anatomyDock input[type=range] { min-height:32px; }
+#anatomyDock.paint-mode .mpr canvas { outline:1px solid #dfbf70; }
+#sliceSettings { display:flex; flex:none; align-items:center; gap:6px; margin:0; font-size:var(--fs-caption); }
+#sliceSettings select { color:var(--ink); background:var(--elev); padding:5px; border:1px solid var(--line-strong); }
+#mprMessage { color:var(--dim); font-size:var(--fs-caption); margin-left:auto; }
+.assistive { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+#sliceColourKey { display:flex; gap:8px; margin-left:4px; font-size:var(--fs-caption); color:var(--dim); }
+#sliceColourKey span { display:flex; align-items:center; gap:4px; }
+#sliceColourKey i { width:8px; height:8px; border-radius:2px; }
+#mapLabels rect { fill:rgba(15,22,31,.9); stroke:#6e849e; stroke-width:1; }
+#mapLabels text { font-weight:600; font-size:var(--fs-caption); stroke-width:0; fill:var(--ink); }
+#mapLabels rect.is-focused { stroke:var(--focus); stroke-width:2; fill:#20364a; }
+#mapLabels line.is-focused { stroke:var(--focus); stroke-width:2; opacity:1; }
+#mapLabels circle.is-focused,#mapLabels text.is-focused { fill:var(--focus); }
+.map-layer[data-active="true"] .map-focus { border-color:var(--focus); box-shadow:inset 3px 0 var(--focus); }
+#scene.short-scene #mapScale { top:56px; bottom:auto; width:200px; font-size:var(--fs-caption); padding:6px 8px; }
+#scene.short-scene #mapScale p { margin:0 0 4px; }
+#scene.short-scene #mapScale .legend-keys { gap:3px 8px; }
+#scene.short-scene #mapScale .legend-row { line-height:1.2; }
+#scene.short-scene #mapScale .legend-context { display:none; }
+#scene.short-scene #orientationCube,#scene.short-scene #worldScale { display:none; }
+#scene.short-scene #toast { bottom:4px; max-width:calc(100% - 280px); }
+#howto { position:absolute; z-index:15; top:64px; left:16px; max-width:380px; padding:16px; background:var(--panel); border:1px solid var(--line-strong); }
+#howto kbd { color:var(--ink); background:var(--elev); padding:2px 5px; }
+.skip-link { position:fixed; top:-60px; left:8px; z-index:40; padding:8px; background:var(--panel); color:var(--ink); }
+.skip-link:focus { top:8px; }
+@media(max-width:1100px) {
+  #chrome .brand h1 { font-size:17px; }
+  #chrome,body.case-map #chrome { padding:6px 10px; gap:10px; }
+  #provStrip { gap:4px; }
+}
+@media(max-width:1000px) {
+  #main,body.case-map #main { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr); }
+  #side { position:absolute; top:0; bottom:0; left:0; width:300px; max-width:90vw; z-index:10; box-shadow:8px 0 30px #0008; transform:translateX(-105%); }
+  #side #caseMap { display:none !important; }
+  #btnCloseRail { display:block; align-self:flex-end; width:auto; margin:8px 12px; padding:6px 10px; flex:none; }
+  #main { position:relative; }
+  body.rail-open #side { transform:none; }
+  #viewWorkspace { grid-row:1; }
+  #compactTracts { display:flex; }
+  #viewCluster button[data-view] { display:none; }
+  #provChipResearch { display:block; }
+  #chrome .brand { display:none; }
+}
+@media(max-width:600px) {
+  #chrome,body.case-map #chrome { min-height:44px; }
+  #provenanceBar { align-items:flex-start; }
+  #provenanceBar>span { display:none; }
+  #provStrip { flex-wrap:wrap; }
+  #anatomyDock .mpr { grid-template-columns:1fr; overflow:auto; }
+  #anatomyDock .mpr canvas { flex:none; height:160px; }
+  #anatomyHead { flex-wrap:wrap; }
+  #mapScale { width:200px; bottom:12px; left:12px; }
+  #orientationCube { width:70px; height:70px; right:8px; }
+  #viewCluster #btnResetView { padding:6px !important; font-size:var(--fs-caption); }
+  #mapLabels { display:none; }
+}
+/* Overview shows context; inspection exposes the full slice and paint controls. */
+#anatomyDock.anatomy-compact { display:grid; grid-template-columns:100px minmax(0,1fr); grid-template-rows:minmax(0,1fr); gap:12px; padding:8px 12px; }
+#anatomyDock.anatomy-compact #anatomyHead { flex-direction:column; justify-content:center; align-items:flex-start; gap:8px; }
+#anatomyDock.anatomy-compact #anatomyHead h2 { margin:0; }
+#anatomyDock.anatomy-compact #underToggle,
+#anatomyDock.anatomy-compact #sliceSettings,
+#anatomyDock.anatomy-compact #btnPaintMode,
+#anatomyDock.anatomy-compact #btnUndoPaint,
+#anatomyDock.anatomy-compact #sliceColourKey,
+#anatomyDock.anatomy-compact .slice-position,
+#anatomyDock.anatomy-compact .slice-footer input { display:none; }
+#anatomyDock.anatomy-compact .mpr { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:0; overflow:hidden; height:min(100%,104px); align-self:center; }
+#anatomyDock.anatomy-compact .mpr figure { display:grid; grid-template-columns:minmax(0,1fr) 64px; grid-template-rows:minmax(0,1fr); gap:4px; }
+#anatomyDock.anatomy-compact .mpr canvas { width:100%; height:100%; min-width:0; }
+#anatomyDock.anatomy-compact .slice-footer { flex-direction:column; justify-content:center; gap:2px; }
+#anatomyDock.anatomy-compact .slice-plane-name { display:block; color:var(--dim); }
+@media(max-width:600px) {
+  #compactTracts { gap:4px; padding:6px; }
+  #compactTracts button { display:flex; flex-direction:column; justify-content:center; align-items:flex-start; padding:6px; gap:2px; }
+  #anatomyDock.anatomy-compact { grid-template-columns:88px minmax(0,1fr); gap:6px; padding:6px; }
+  #anatomyDock.anatomy-compact .mpr figure { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 32px; }
+  #anatomyDock.anatomy-compact .slice-plane-name { display:none; }
+}
+@media(prefers-reduced-motion:no-preference) { #side { transition:transform 160ms ease; } }
+
+/* Keep all three default answers above the rail tabs in a short desktop.
+   Additional tracts and the explanatory paragraph scroll within the summary. */
+@media(min-width:1001px) and (max-height:700px) {
+  #caseMap { padding:12px 16px !important; }
+  #caseMap .map-intro { display:none; }
+  #caseMap .map-focus { min-height:44px; padding:6px 10px !important; }
+}
+
+/* Scene toolbar toggle state: the Anatomy button shows or hides the dock. */
+#workstationTools button[aria-pressed="true"] { background:var(--elev); border-color:var(--line-strong); color:var(--ink); }
+
+/* Rail panels scroll inside a fixed-height sidebar; keep a visible cue. */
+.rail-panel { scrollbar-width:thin; scrollbar-color:var(--line-strong) transparent; scroll-padding-top:8px; }
+.rail-panel::-webkit-scrollbar { width:8px; }
+.rail-panel::-webkit-scrollbar-thumb { background:var(--line-strong); border-radius:4px; }
+.rail-panel::-webkit-scrollbar-track { background:transparent; }
+/* Non-obscuring scroll cue (F10): a background-only shadow, not a mask on the
+   content, so labels/controls near the bottom edge stay fully opaque even in
+   a short panel. Two layers at the same position/size: a "cover" painted in
+   the panel's own colour that scrolls WITH the content (background-attachment
+   local), and a shadow gradient fixed to the panel's own box (attachment
+   scroll, the default, i.e. it does not move on scroll). While there is more
+   content below, the cover sits past the visible bottom edge and the shadow
+   shows through; once scrolled to the true bottom the cover lines up exactly
+   over the shadow and hides it, with no JS scroll-position math needed. */
+.rail-panel[data-more="true"] {
+  background-image:
+    linear-gradient(var(--panel),var(--panel)),
+    linear-gradient(to top,rgba(0,0,0,.42),rgba(0,0,0,0));
+  background-repeat:no-repeat;
+  background-position:bottom,bottom;
+  background-size:100% 28px,100% 28px;
+  background-attachment:local,scroll;
+}

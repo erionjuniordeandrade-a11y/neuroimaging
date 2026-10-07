@@ -1,0 +1,645 @@
+{
+  "_provenance": {
+    "source_url": "https://github.com/neuroneural/brainchop-models/raw/main/meshnet/model24chan104cls/colormap.json",
+    "source_sha256": "a450db760609a91a38b3ff1810a465841c39b1ff138cab005071c897ad0da069",
+    "cross_checked_identical_to": [
+      "https://github.com/neuroneural/brainchop-models/raw/main/meshnet/model21_104class/colormap.json (byte-identical, sha256 verified)"
+    ],
+    "model_alias_source": "https://raw.githubusercontent.com/neuroneural/brainchop-cli/main/models.json (sha256 d2081bfc952f22938186c38e8c8c971c940714d9b2a7fd67c14756a0eb41415c) maps DKatlas -> folder model24chan104cls_synth",
+    "model_folder": "model24chan104cls_synth",
+    "note": "model24chan104cls_synth (the DKatlas alias run by `uvx brainchop -m DKatlas`) ships no colormap.json of its own. Its sibling model24chan104cls/README.md states colormap.json is 'copied from model21_104class, identical label set' and is the DKatlas drop-in replacement for model21_104class ('Same task (Desikan-Killiany atlas, 104 labels)'). Verified byte-identical (sha256) across model21_104class/colormap.json and model24chan104cls/colormap.json (README URL: https://github.com/neuroneural/brainchop-models/raw/main/meshnet/model24chan104cls/README.md, sha256 e692e11cf97e9eeea08be288074d39d5d6a7031206e2c84bdd2ae220bf2f6e0e).",
+    "date": "2026-09-14",
+    "freesurfer_lut_reference": "~/freesurfer/FreeSurferColorLUT.txt (local install, name->id lookup only; not redistributed here)",
+    "alias_corrections": {
+      "Left-Thalamus-Proper*": "Left-Thalamus",
+      "Right-Thalamus-Proper*": "Right-Thalamus"
+    },
+    "cross_check_vs_morning_dice_run": "PASS: L cortex ids 1-34, R cortex 35-68, thalamus 69/70, caudate 71/72, putamen 73/74, pallidum 75/76, hippocampus 77/78, amygdala 79/80, WM 85/86, brainstem 94 all match the compact ids reported from the morning Dice run. One correction to the morning inference: corpus callosum is NOT dropped -- CC_Posterior..CC_Anterior occupy ids 99-103 (5 labels), for 103 foreground labels + BG = 104 total."
+  },
+  "entries": [
+    {
+      "brainchop_id": 0,
+      "name": "BG",
+      "freesurfer_id": 0,
+      "freesurfer_name": "Unknown"
+    },
+    {
+      "brainchop_id": 1,
+      "name": "ctx-lh-bankssts",
+      "freesurfer_id": 1001,
+      "freesurfer_name": "ctx-lh-bankssts"
+    },
+    {
+      "brainchop_id": 2,
+      "name": "ctx-lh-caudalanteriorcingulate",
+      "freesurfer_id": 1002,
+      "freesurfer_name": "ctx-lh-caudalanteriorcingulate"
+    },
+    {
+      "brainchop_id": 3,
+      "name": "ctx-lh-caudalmiddlefrontal",
+      "freesurfer_id": 1003,
+      "freesurfer_name": "ctx-lh-caudalmiddlefrontal"
+    },
+    {
+      "brainchop_id": 4,
+      "name": "ctx-lh-cuneus",
+      "freesurfer_id": 1005,
+      "freesurfer_name": "ctx-lh-cuneus"
+    },
+    {
+      "brainchop_id": 5,
+      "name": "ctx-lh-entorhinal",
+      "freesurfer_id": 1006,
+      "freesurfer_name": "ctx-lh-entorhinal"
+    },
+    {
+      "brainchop_id": 6,
+      "name": "ctx-lh-fusiform",
+      "freesurfer_id": 1007,
+      "freesurfer_name": "ctx-lh-fusiform"
+    },
+    {
+      "brainchop_id": 7,
+      "name": "ctx-lh-inferiorparietal",
+      "freesurfer_id": 1008,
+      "freesurfer_name": "ctx-lh-inferiorparietal"
+    },
+    {
+      "brainchop_id": 8,
+      "name": "ctx-lh-inferiortemporal",
+      "freesurfer_id": 1009,
+      "freesurfer_name": "ctx-lh-inferiortemporal"
+    },
+    {
+      "brainchop_id": 9,
+      "name": "ctx-lh-isthmuscingulate",
+      "freesurfer_id": 1010,
+      "freesurfer_name": "ctx-lh-isthmuscingulate"
+    },
+    {
+      "brainchop_id": 10,
+      "name": "ctx-lh-lateraloccipital",
+      "freesurfer_id": 1011,
+      "freesurfer_name": "ctx-lh-lateraloccipital"
+    },
+    {
+      "brainchop_id": 11,
+      "name": "ctx-lh-lateralorbitofrontal",
+      "freesurfer_id": 1012,
+      "freesurfer_name": "ctx-lh-lateralorbitofrontal"
+    },
+    {
+      "brainchop_id": 12,
+      "name": "ctx-lh-lingual",
+      "freesurfer_id": 1013,
+      "freesurfer_name": "ctx-lh-lingual"
+    },
+    {
+      "brainchop_id": 13,
+      "name": "ctx-lh-medialorbitofrontal",
+      "freesurfer_id": 1014,
+      "freesurfer_name": "ctx-lh-medialorbitofrontal"
+    },
+    {
+      "brainchop_id": 14,
+      "name": "ctx-lh-middletemporal",
+      "freesurfer_id": 1015,
+      "freesurfer_name": "ctx-lh-middletemporal"
+    },
+    {
+      "brainchop_id": 15,
+      "name": "ctx-lh-parahippocampal",
+      "freesurfer_id": 1016,
+      "freesurfer_name": "ctx-lh-parahippocampal"
+    },
+    {
+      "brainchop_id": 16,
+      "name": "ctx-lh-paracentral",
+      "freesurfer_id": 1017,
+      "freesurfer_name": "ctx-lh-paracentral"
+    },
+    {
+      "brainchop_id": 17,
+      "name": "ctx-lh-parsopercularis",
+      "freesurfer_id": 1018,
+      "freesurfer_name": "ctx-lh-parsopercularis"
+    },
+    {
+      "brainchop_id": 18,
+      "name": "ctx-lh-parsorbitalis",
+      "freesurfer_id": 1019,
+      "freesurfer_name": "ctx-lh-parsorbitalis"
+    },
+    {
+      "brainchop_id": 19,
+      "name": "ctx-lh-parstriangularis",
+      "freesurfer_id": 1020,
+      "freesurfer_name": "ctx-lh-parstriangularis"
+    },
+    {
+      "brainchop_id": 20,
+      "name": "ctx-lh-pericalcarine",
+      "freesurfer_id": 1021,
+      "freesurfer_name": "ctx-lh-pericalcarine"
+    },
+    {
+      "brainchop_id": 21,
+      "name": "ctx-lh-postcentral",
+      "freesurfer_id": 1022,
+      "freesurfer_name": "ctx-lh-postcentral"
+    },
+    {
+      "brainchop_id": 22,
+      "name": "ctx-lh-posteriorcingulate",
+      "freesurfer_id": 1023,
+      "freesurfer_name": "ctx-lh-posteriorcingulate"
+    },
+    {
+      "brainchop_id": 23,
+      "name": "ctx-lh-precentral",
+      "freesurfer_id": 1024,
+      "freesurfer_name": "ctx-lh-precentral"
+    },
+    {
+      "brainchop_id": 24,
+      "name": "ctx-lh-precuneus",
+      "freesurfer_id": 1025,
+      "freesurfer_name": "ctx-lh-precuneus"
+    },
+    {
+      "brainchop_id": 25,
+      "name": "ctx-lh-rostralanteriorcingulate",
+      "freesurfer_id": 1026,
+      "freesurfer_name": "ctx-lh-rostralanteriorcingulate"
+    },
+    {
+      "brainchop_id": 26,
+      "name": "ctx-lh-rostralmiddlefrontal",
+      "freesurfer_id": 1027,
+      "freesurfer_name": "ctx-lh-rostralmiddlefrontal"
+    },
+    {
+      "brainchop_id": 27,
+      "name": "ctx-lh-superiorfrontal",
+      "freesurfer_id": 1028,
+      "freesurfer_name": "ctx-lh-superiorfrontal"
+    },
+    {
+      "brainchop_id": 28,
+      "name": "ctx-lh-superiorparietal",
+      "freesurfer_id": 1029,
+      "freesurfer_name": "ctx-lh-superiorparietal"
+    },
+    {
+      "brainchop_id": 29,
+      "name": "ctx-lh-superiortemporal",
+      "freesurfer_id": 1030,
+      "freesurfer_name": "ctx-lh-superiortemporal"
+    },
+    {
+      "brainchop_id": 30,
+      "name": "ctx-lh-supramarginal",
+      "freesurfer_id": 1031,
+      "freesurfer_name": "ctx-lh-supramarginal"
+    },
+    {
+      "brainchop_id": 31,
+      "name": "ctx-lh-frontalpole",
+      "freesurfer_id": 1032,
+      "freesurfer_name": "ctx-lh-frontalpole"
+    },
+    {
+      "brainchop_id": 32,
+      "name": "ctx-lh-temporalpole",
+      "freesurfer_id": 1033,
+      "freesurfer_name": "ctx-lh-temporalpole"
+    },
+    {
+      "brainchop_id": 33,
+      "name": "ctx-lh-transversetemporal",
+      "freesurfer_id": 1034,
+      "freesurfer_name": "ctx-lh-transversetemporal"
+    },
+    {
+      "brainchop_id": 34,
+      "name": "ctx-lh-insula",
+      "freesurfer_id": 1035,
+      "freesurfer_name": "ctx-lh-insula"
+    },
+    {
+      "brainchop_id": 35,
+      "name": "ctx-rh-bankssts",
+      "freesurfer_id": 2001,
+      "freesurfer_name": "ctx-rh-bankssts"
+    },
+    {
+      "brainchop_id": 36,
+      "name": "ctx-rh-caudalanteriorcingulate",
+      "freesurfer_id": 2002,
+      "freesurfer_name": "ctx-rh-caudalanteriorcingulate"
+    },
+    {
+      "brainchop_id": 37,
+      "name": "ctx-rh-caudalmiddlefrontal",
+      "freesurfer_id": 2003,
+      "freesurfer_name": "ctx-rh-caudalmiddlefrontal"
+    },
+    {
+      "brainchop_id": 38,
+      "name": "ctx-rh-cuneus",
+      "freesurfer_id": 2005,
+      "freesurfer_name": "ctx-rh-cuneus"
+    },
+    {
+      "brainchop_id": 39,
+      "name": "ctx-rh-entorhinal",
+      "freesurfer_id": 2006,
+      "freesurfer_name": "ctx-rh-entorhinal"
+    },
+    {
+      "brainchop_id": 40,
+      "name": "ctx-rh-fusiform",
+      "freesurfer_id": 2007,
+      "freesurfer_name": "ctx-rh-fusiform"
+    },
+    {
+      "brainchop_id": 41,
+      "name": "ctx-rh-inferiorparietal",
+      "freesurfer_id": 2008,
+      "freesurfer_name": "ctx-rh-inferiorparietal"
+    },
+    {
+      "brainchop_id": 42,
+      "name": "ctx-rh-inferiortemporal",
+      "freesurfer_id": 2009,
+      "freesurfer_name": "ctx-rh-inferiortemporal"
+    },
+    {
+      "brainchop_id": 43,
+      "name": "ctx-rh-isthmuscingulate",
+      "freesurfer_id": 2010,
+      "freesurfer_name": "ctx-rh-isthmuscingulate"
+    },
+    {
+      "brainchop_id": 44,
+      "name": "ctx-rh-lateraloccipital",
+      "freesurfer_id": 2011,
+      "freesurfer_name": "ctx-rh-lateraloccipital"
+    },
+    {
+      "brainchop_id": 45,
+      "name": "ctx-rh-lateralorbitofrontal",
+      "freesurfer_id": 2012,
+      "freesurfer_name": "ctx-rh-lateralorbitofrontal"
+    },
+    {
+      "brainchop_id": 46,
+      "name": "ctx-rh-lingual",
+      "freesurfer_id": 2013,
+      "freesurfer_name": "ctx-rh-lingual"
+    },
+    {
+      "brainchop_id": 47,
+      "name": "ctx-rh-medialorbitofrontal",
+      "freesurfer_id": 2014,
+      "freesurfer_name": "ctx-rh-medialorbitofrontal"
+    },
+    {
+      "brainchop_id": 48,
+      "name": "ctx-rh-middletemporal",
+      "freesurfer_id": 2015,
+      "freesurfer_name": "ctx-rh-middletemporal"
+    },
+    {
+      "brainchop_id": 49,
+      "name": "ctx-rh-parahippocampal",
+      "freesurfer_id": 2016,
+      "freesurfer_name": "ctx-rh-parahippocampal"
+    },
+    {
+      "brainchop_id": 50,
+      "name": "ctx-rh-paracentral",
+      "freesurfer_id": 2017,
+      "freesurfer_name": "ctx-rh-paracentral"
+    },
+    {
+      "brainchop_id": 51,
+      "name": "ctx-rh-parsopercularis",
+      "freesurfer_id": 2018,
+      "freesurfer_name": "ctx-rh-parsopercularis"
+    },
+    {
+      "brainchop_id": 52,
+      "name": "ctx-rh-parsorbitalis",
+      "freesurfer_id": 2019,
+      "freesurfer_name": "ctx-rh-parsorbitalis"
+    },
+    {
+      "brainchop_id": 53,
+      "name": "ctx-rh-parstriangularis",
+      "freesurfer_id": 2020,
+      "freesurfer_name": "ctx-rh-parstriangularis"
+    },
+    {
+      "brainchop_id": 54,
+      "name": "ctx-rh-pericalcarine",
+      "freesurfer_id": 2021,
+      "freesurfer_name": "ctx-rh-pericalcarine"
+    },
+    {
+      "brainchop_id": 55,
+      "name": "ctx-rh-postcentral",
+      "freesurfer_id": 2022,
+      "freesurfer_name": "ctx-rh-postcentral"
+    },
+    {
+      "brainchop_id": 56,
+      "name": "ctx-rh-posteriorcingulate",
+      "freesurfer_id": 2023,
+      "freesurfer_name": "ctx-rh-posteriorcingulate"
+    },
+    {
+      "brainchop_id": 57,
+      "name": "ctx-rh-precentral",
+      "freesurfer_id": 2024,
+      "freesurfer_name": "ctx-rh-precentral"
+    },
+    {
+      "brainchop_id": 58,
+      "name": "ctx-rh-precuneus",
+      "freesurfer_id": 2025,
+      "freesurfer_name": "ctx-rh-precuneus"
+    },
+    {
+      "brainchop_id": 59,
+      "name": "ctx-rh-rostralanteriorcingulate",
+      "freesurfer_id": 2026,
+      "freesurfer_name": "ctx-rh-rostralanteriorcingulate"
+    },
+    {
+      "brainchop_id": 60,
+      "name": "ctx-rh-rostralmiddlefrontal",
+      "freesurfer_id": 2027,
+      "freesurfer_name": "ctx-rh-rostralmiddlefrontal"
+    },
+    {
+      "brainchop_id": 61,
+      "name": "ctx-rh-superiorfrontal",
+      "freesurfer_id": 2028,
+      "freesurfer_name": "ctx-rh-superiorfrontal"
+    },
+    {
+      "brainchop_id": 62,
+      "name": "ctx-rh-superiorparietal",
+      "freesurfer_id": 2029,
+      "freesurfer_name": "ctx-rh-superiorparietal"
+    },
+    {
+      "brainchop_id": 63,
+      "name": "ctx-rh-superiortemporal",
+      "freesurfer_id": 2030,
+      "freesurfer_name": "ctx-rh-superiortemporal"
+    },
+    {
+      "brainchop_id": 64,
+      "name": "ctx-rh-supramarginal",
+      "freesurfer_id": 2031,
+      "freesurfer_name": "ctx-rh-supramarginal"
+    },
+    {
+      "brainchop_id": 65,
+      "name": "ctx-rh-frontalpole",
+      "freesurfer_id": 2032,
+      "freesurfer_name": "ctx-rh-frontalpole"
+    },
+    {
+      "brainchop_id": 66,
+      "name": "ctx-rh-temporalpole",
+      "freesurfer_id": 2033,
+      "freesurfer_name": "ctx-rh-temporalpole"
+    },
+    {
+      "brainchop_id": 67,
+      "name": "ctx-rh-transversetemporal",
+      "freesurfer_id": 2034,
+      "freesurfer_name": "ctx-rh-transversetemporal"
+    },
+    {
+      "brainchop_id": 68,
+      "name": "ctx-rh-insula",
+      "freesurfer_id": 2035,
+      "freesurfer_name": "ctx-rh-insula"
+    },
+    {
+      "brainchop_id": 69,
+      "name": "Left-Thalamus-Proper*",
+      "freesurfer_id": 10,
+      "freesurfer_name": "Left-Thalamus"
+    },
+    {
+      "brainchop_id": 70,
+      "name": "Right-Thalamus-Proper*",
+      "freesurfer_id": 49,
+      "freesurfer_name": "Right-Thalamus"
+    },
+    {
+      "brainchop_id": 71,
+      "name": "Left-Caudate",
+      "freesurfer_id": 11,
+      "freesurfer_name": "Left-Caudate"
+    },
+    {
+      "brainchop_id": 72,
+      "name": "Right-Caudate",
+      "freesurfer_id": 50,
+      "freesurfer_name": "Right-Caudate"
+    },
+    {
+      "brainchop_id": 73,
+      "name": "Left-Putamen",
+      "freesurfer_id": 12,
+      "freesurfer_name": "Left-Putamen"
+    },
+    {
+      "brainchop_id": 74,
+      "name": "Right-Putamen",
+      "freesurfer_id": 51,
+      "freesurfer_name": "Right-Putamen"
+    },
+    {
+      "brainchop_id": 75,
+      "name": "Left-Pallidum",
+      "freesurfer_id": 13,
+      "freesurfer_name": "Left-Pallidum"
+    },
+    {
+      "brainchop_id": 76,
+      "name": "Right-Pallidum",
+      "freesurfer_id": 52,
+      "freesurfer_name": "Right-Pallidum"
+    },
+    {
+      "brainchop_id": 77,
+      "name": "Left-Hippocampus",
+      "freesurfer_id": 17,
+      "freesurfer_name": "Left-Hippocampus"
+    },
+    {
+      "brainchop_id": 78,
+      "name": "Right-Hippocampus",
+      "freesurfer_id": 53,
+      "freesurfer_name": "Right-Hippocampus"
+    },
+    {
+      "brainchop_id": 79,
+      "name": "Left-Amygdala",
+      "freesurfer_id": 18,
+      "freesurfer_name": "Left-Amygdala"
+    },
+    {
+      "brainchop_id": 80,
+      "name": "Right-Amygdala",
+      "freesurfer_id": 54,
+      "freesurfer_name": "Right-Amygdala"
+    },
+    {
+      "brainchop_id": 81,
+      "name": "Left-Accumbens-area",
+      "freesurfer_id": 26,
+      "freesurfer_name": "Left-Accumbens-area"
+    },
+    {
+      "brainchop_id": 82,
+      "name": "Right-Accumbens-area",
+      "freesurfer_id": 58,
+      "freesurfer_name": "Right-Accumbens-area"
+    },
+    {
+      "brainchop_id": 83,
+      "name": "Left-VentralDC",
+      "freesurfer_id": 28,
+      "freesurfer_name": "Left-VentralDC"
+    },
+    {
+      "brainchop_id": 84,
+      "name": "Right-VentralDC",
+      "freesurfer_id": 60,
+      "freesurfer_name": "Right-VentralDC"
+    },
+    {
+      "brainchop_id": 85,
+      "name": "Left-Cerebral-White-Matter",
+      "freesurfer_id": 2,
+      "freesurfer_name": "Left-Cerebral-White-Matter"
+    },
+    {
+      "brainchop_id": 86,
+      "name": "Right-Cerebral-White-Matter",
+      "freesurfer_id": 41,
+      "freesurfer_name": "Right-Cerebral-White-Matter"
+    },
+    {
+      "brainchop_id": 87,
+      "name": "Left-Lateral-Ventricle",
+      "freesurfer_id": 4,
+      "freesurfer_name": "Left-Lateral-Ventricle"
+    },
+    {
+      "brainchop_id": 88,
+      "name": "Left-Inf-Lat-Vent",
+      "freesurfer_id": 5,
+      "freesurfer_name": "Left-Inf-Lat-Vent"
+    },
+    {
+      "brainchop_id": 89,
+      "name": "Right-Lateral-Ventricle",
+      "freesurfer_id": 43,
+      "freesurfer_name": "Right-Lateral-Ventricle"
+    },
+    {
+      "brainchop_id": 90,
+      "name": "Right-Inf-Lat-Vent",
+      "freesurfer_id": 44,
+      "freesurfer_name": "Right-Inf-Lat-Vent"
+    },
+    {
+      "brainchop_id": 91,
+      "name": "3rd-Ventricle",
+      "freesurfer_id": 14,
+      "freesurfer_name": "3rd-Ventricle"
+    },
+    {
+      "brainchop_id": 92,
+      "name": "4th-Ventricle",
+      "freesurfer_id": 15,
+      "freesurfer_name": "4th-Ventricle"
+    },
+    {
+      "brainchop_id": 93,
+      "name": "CSF",
+      "freesurfer_id": 24,
+      "freesurfer_name": "CSF"
+    },
+    {
+      "brainchop_id": 94,
+      "name": "Brain-Stem",
+      "freesurfer_id": 16,
+      "freesurfer_name": "Brain-Stem"
+    },
+    {
+      "brainchop_id": 95,
+      "name": "Left-Cerebellum-White-Matter",
+      "freesurfer_id": 7,
+      "freesurfer_name": "Left-Cerebellum-White-Matter"
+    },
+    {
+      "brainchop_id": 96,
+      "name": "Right-Cerebellum-White-Matter",
+      "freesurfer_id": 46,
+      "freesurfer_name": "Right-Cerebellum-White-Matter"
+    },
+    {
+      "brainchop_id": 97,
+      "name": "Left-Cerebellum-Cortex",
+      "freesurfer_id": 8,
+      "freesurfer_name": "Left-Cerebellum-Cortex"
+    },
+    {
+      "brainchop_id": 98,
+      "name": "Right-Cerebellum-Cortex",
+      "freesurfer_id": 47,
+      "freesurfer_name": "Right-Cerebellum-Cortex"
+    },
+    {
+      "brainchop_id": 99,
+      "name": "CC_Posterior",
+      "freesurfer_id": 251,
+      "freesurfer_name": "CC_Posterior"
+    },
+    {
+      "brainchop_id": 100,
+      "name": "CC_Mid_Posterior",
+      "freesurfer_id": 252,
+      "freesurfer_name": "CC_Mid_Posterior"
+    },
+    {
+      "brainchop_id": 101,
+      "name": "CC_Central",
+      "freesurfer_id": 253,
+      "freesurfer_name": "CC_Central"
+    },
+    {
+      "brainchop_id": 102,
+      "name": "CC_Mid_Anterior",
+      "freesurfer_id": 254,
+      "freesurfer_name": "CC_Mid_Anterior"
+    },
+    {
+      "brainchop_id": 103,
+      "name": "CC_Anterior",
+      "freesurfer_id": 255,
+      "freesurfer_name": "CC_Anterior"
+    }
+  ]
+}

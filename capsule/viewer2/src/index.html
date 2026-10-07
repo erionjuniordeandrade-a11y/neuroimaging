@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src data: blob:; worker-src blob:; font-src data:">
+<title>Case Capsule</title>
+<style><!--INLINE:styles.css--></style>
+<!--CAPSULE_PAYLOAD-->
+</head>
+<body>
+<header class="topbar glass">
+  <div class="brand"><svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="13" stroke="currentColor"/><path d="M16 5v22M5 16h22M9 9l14 14" stroke="currentColor" stroke-width="1.3"/></svg><div><h1>CASE CAPSULE</h1><div class="hint" id="case-label"></div></div></div>
+  <div class="badges"><span class="badge" id="anonymous" data-t="anonymized"></span><span class="badge" data-t="offline"></span><span class="badge gold-badge" id="version-badge">versão 1</span></div>
+  <span class="badge gold-badge intended-use-chip" id="intended-use-chip" data-t="intendedUse"></span>
+  <nav class="layouts" id="layout-buttons" aria-label="Layout">
+    <button type="button" data-layout="2x2" title="2×2"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="2" width="7" height="7" rx="1"/><rect x="11" y="2" width="7" height="7" rx="1"/><rect x="2" y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/></svg><span data-t="layout2x2"></span></button>
+    <button type="button" data-layout="3d"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2l7 4v8l-7 4-7-4V6z"/><path d="M3 6l7 4 7-4M10 10v8"/></svg><span data-t="layout3d"></span></button>
+    <button type="button" data-layout="axial" class="surgeon-only"><span data-t="axial"></span></button>
+    <button type="button" data-layout="coronal" class="surgeon-only"><span data-t="coronal"></span></button>
+    <button type="button" data-layout="sagittal" class="surgeon-only"><span data-t="sagittal"></span></button>
+  </nav>
+  <div class="actions">
+    <button id="mode-button" class="gold" type="button"></button>
+    <button id="save-button" class="surgeon-only" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3h9l3 3v11H4z"/><path d="M7 3v5h6V3M7 17v-5h6v5"/></svg><span data-t="save"></span></button>
+    <button id="shot-button" class="surgeon-only" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="5" width="16" height="12" rx="2"/><circle cx="10" cy="11" r="3.2"/><path d="M7 5l1.5-2h3L13 5"/></svg><span>PNG</span></button>
+  </div>
+</header>
+<main class="shell">
+  <section class="fusionbar glass surgeon-only" aria-label="Fusão">
+    <label><span data-t="base"></span> <select id="base-volume"></select></label>
+    <label><span data-t="overlay"></span> <select id="overlay-volume"></select></label>
+    <label><span data-t="colormap"></span> <select id="overlay-colormap"><option value="hot" data-t="cmHot"></option><option value="warm" data-t="cmWarm"></option><option value="cool" data-t="cmCool"></option><option value="viridis">Viridis</option></select></label>
+    <label class="grow"><span data-t="opacity"></span> <input id="overlay-opacity" type="range" min="0" max="100" value="50"><output id="overlay-opacity-out">50%</output></label>
+  </section>
+  <section id="workspace" class="workspace" aria-label="Imagens">
+    <div id="gl-wrap"><canvas id="gl" aria-label="Visualização NiiVue"></canvas></div>
+    <div id="gl3d-wrap"><canvas id="gl3d" aria-label="Visualização 3D"></canvas><div id="density-warning" class="density-warning glass" data-t="densityWarning" role="status" hidden></div></div>
+    <div id="mask-legend" class="mask-legend glass" hidden></div>
+    <div class="view-hint surgeon-only" id="view-hint" data-t="viewHint"></div>
+  </section>
+  <aside class="side glass">
+    <div id="surgeon-panel" class="surgeon-only">
+      <section class="group"><h2 data-t="reviewer"></h2><div class="row"><input id="reviewer-name" type="text" autocomplete="off"></div></section>
+      <section class="group"><h2><span data-t="window"></span></h2>
+        <div class="row"><select id="window-layer" aria-label="Camada"></select><select id="window-preset" aria-label="Predefinição"></select></div>
+        <div class="row"><label><span data-t="level"></span> <input id="level-number" type="number" step="1"></label><label><span data-t="width"></span> <input id="width-number" type="number" min="1" step="1"></label></div>
+      </section>
+      <section class="group"><h2 data-t="render3d"></h2>
+        <div class="row"><select id="preset3d" aria-label="Predefinição 3D"></select><label><span data-t="light"></span> <input id="illumination" type="range" min="0" max="100" value="60"></label></div>
+        <div class="row" id="vessel-review-control" hidden><label><input id="vessel-review-checkbox" type="checkbox"> <span data-t="reviewed"></span></label><span id="vessel-review-status" class="hint"></span></div>
+        <div class="row window3d-row" title="Janela 3D"><label><span data-t="window3dMin"></span> <input id="window3d-min" type="range" min="0" max="1000" value="250"></label><label><span data-t="window3dMax"></span> <input id="window3d-max" type="range" min="0" max="1000" value="750"></label></div>
+        <div class="row"><span class="hint" data-t="clip"></span><div class="seg" id="clip-buttons"><button type="button" data-clip="" data-t="off"></button><button type="button" data-clip="axial">Ax</button><button type="button" data-clip="coronal">Cor</button><button type="button" data-clip="sagittal">Sag</button></div></div>
+        <div class="row"><button id="reset-view" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10a6 6 0 1 0 2-4.5"/><path d="M3 3v4h4"/></svg><span data-t="resetView"></span></button><span class="hint" data-t="rotateHint"></span></div>
+      </section>
+      <section class="group"><h2 data-t="tracts"></h2>
+        <div class="row"><button id="tract-density-toggle" type="button" aria-pressed="false"><span data-t="densityLabel"></span> <span class="density-option active" data-density-mode="proportional" data-t="densityProportional"></span> | <span class="density-option" data-density-mode="equalized" data-t="densityEqualized"></span></button></div>
+        <div id="tract-list" class="stack"></div>
+        <div class="row"><label><input id="show-outliers" type="checkbox"> <span data-t="showOutliers"></span></label></div>
+        <div class="row xray-row"><label for="tract-xray" data-t="tractXray"></label><input id="tract-xray" type="range" min="0" max="100" step="5" value="0"><output id="tract-xray-out">0%</output></div>
+        <div class="row"><label><span data-t="slab"></span> <input id="tract-slab" type="number" min="0.5" max="200" step="0.5" value="5"> mm</label></div>
+      </section>
+      <section class="group"><h2 data-t="masks"></h2><div id="mask-list" class="stack"></div><button id="new-mask" type="button" data-t="newMask"></button></section>
+      <section class="group" id="anatomy-group" hidden><h2 data-t="anatomy"></h2><div id="anatomy-list" class="stack"></div></section>
+      <section class="group"><h2 data-t="tools"></h2>
+        <div class="seg wrap" id="tool-buttons">
+          <button type="button" data-tool="crosshair" data-t="toolCursor"></button>
+          <button type="button" data-tool="distance" data-t="toolDistance"></button>
+          <button type="button" data-tool="angle" data-t="toolAngle"></button>
+          <button type="button" data-tool="pen" data-t="toolPen"></button>
+          <button type="button" data-tool="erase" data-t="toolErase"></button>
+          <button type="button" data-tool="segment" data-t="toolSegment"></button>
+          <button type="button" data-tool="trajectory" data-t="toolTrajectory"></button>
+        </div>
+        <div class="row"><label><span data-t="penSize"></span> <input id="pen-size" type="number" min="1" max="30" value="3"></label><button id="undo-draw" type="button" data-t="undo"></button></div>
+        <p class="hint" id="tool-hint"></p>
+        <div id="annotation-list" class="stack"></div>
+        <div id="segmentation-panel" class="segmentation-panel">
+          <button type="button" data-tool="segprompt" data-t="toolSegPrompt"></button>
+          <label for="seg-prompt-name" data-t="segPromptName"></label>
+          <div class="row"><input id="seg-prompt-name" type="text"><button id="add-seg-prompt" type="button" data-t="addSegPrompt"></button></div>
+          <div id="seg-prompt-list" class="stack"></div>
+        </div>
+      </section>
+      <section class="group" id="trajectory-panel" hidden><h2 data-t="trajectory"></h2>
+        <p class="hint" id="traj-length"></p>
+        <div class="row"><button id="surgeon-view" type="button" data-t="surgeonView"></button></div>
+        <div class="row"><label><input id="traj-clip" type="checkbox"> <span data-t="trajClip"></span></label></div>
+        <div class="row"><label class="slider"><span data-t="trajDepth"></span> <input id="traj-depth" type="range" min="0" max="100" step="0.5" value="0"></label><output id="traj-depth-out"></output></div>
+        <div class="row"><label class="slider"><span data-t="corridorRadius"></span> <input id="corridor-radius" type="range" min="0" max="15" step="0.5" value="5"></label><output id="corridor-radius-out"></output></div>
+        <div id="corridor-report" class="stack"></div>
+      </section>
+      <section class="group"><h2 data-t="tour"></h2><div id="step-list" class="stack"></div>
+        <input id="new-step-title" class="fill" type="text">
+        <textarea id="new-step-text"></textarea>
+        <button id="add-step" type="button" data-t="addStep"></button>
+      </section>
+    </div>
+    <section id="tour-panel" class="group patient-only"><div class="hint" id="step-count"></div><h2 id="step-title"></h2><p class="tour-text" id="step-text"></p><div class="row"><button id="prev-step" type="button" data-t="previous"></button><button id="next-step" class="gold" type="button" data-t="next"></button></div></section>
+  </aside>
+  <div class="readout glass surgeon-only" id="readout" role="status">—</div>
+</main>
+<div id="status" class="glass"><h2 data-t="loading"></h2><p id="status-detail"></p></div>
+<script>
+<!--INLINE:niivue-->
+</script>
+<script>
+'use strict';
+<!--INLINE:i18n.js-->
+<!--INLINE:state.js-->
+<!--INLINE:decode.js-->
+<!--INLINE:view.js-->
+<!--INLINE:render3d.js-->
+<!--INLINE:tracts.js-->
+<!--INLINE:masks.js-->
+<!--INLINE:anatomy.js-->
+<!--INLINE:tools.js-->
+<!--INLINE:trajectory.js-->
+<!--INLINE:seg-prompts.js-->
+<!--INLINE:tour.js-->
+<!--INLINE:save.js-->
+<!--INLINE:ui.js-->
+start();
+</script>
+</body></html>

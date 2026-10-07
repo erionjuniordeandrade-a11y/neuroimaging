@@ -1,0 +1,111 @@
+# PHI — NEVER commit, NEVER push. LOCAL-ONLY repo, no remote.
+# This project READS patient imaging from ~/tractlab-data by path; it must never
+# copy imaging into its own tree. These rules are defense-in-depth in case a
+# file ever lands here by mistake. Comments must be on their OWN line: git does
+# NOT support trailing comments.
+
+# Imaging / streamlines / gradient tables (by directory and by the hook's extensions)
+data/
+nifti/
+tracts/
+raw/
+qc/
+cases/*/nifti/
+cases/*/tracts/
+cases/*/raw/
+cases/*/qc/
+cases/*/viewer/data.json
+
+# Built viewer payload + vendored libs
+viewer/data.json
+viewer/vendor/
+node_modules/
+/app/macos/build/
+.venv/
+.venv-synthetic/
+.playwright-cli/
+handoff/AGENT.lock
+handoff/branch-split-snapshot/
+handoff/merge-source/
+handoff/population-review-base/
+
+# Derived / scratch imaging workspaces
+work*/
+dwifslpreproc-tmp-*/
+dwifslpreproc-tmp-*/
+
+# Housekeeping
+.baton/
+__pycache__/
+*.pyc
+.DS_Store
+.omx/
+.code-review-graph/
+docs/superpowers/
+
+# agent worktrees
+.worktrees/
+tests/fixtures/generated/
+
+# Owner-signed operating-point sheet is provenance, not data: re-include it
+# (git cannot re-include a file under an excluded dir, hence the 3 lines).
+!cases/*/docs/qc/
+cases/*/docs/qc/*
+!cases/*/docs/qc/OPERATING-POINT-fidelity.md
+
+# Regenerable D0 derivatives (prep_fidelity / atlas_prep) and dataset probes — hook refuses them anyway
+cases/*/fidelity/
+cases/*/normative/
+handoff/d0-license-check/*.bval
+docs/manuscript/figures/
+
+# CR peel outputs (imaging-derived) — only the receipt is tracked
+/cases/*/cr/*
+!/cases/*/cr/summary.json
+
+# Imaging / surfaces / transforms by EXTENSION (the directory list above was
+# outrun three times in the sibling repo; extensions are the durable rule)
+*.nii
+*.nii.gz
+*.mif
+*.mih
+*.tck
+*.trk
+*.trx
+*.npy
+*.npz
+*.dcm
+*.ima
+*.bval
+*.bvec
+*.mgz
+*.mgh
+*.annot
+*.label
+*.gii
+*.nrrd
+*.vtk
+*.mat
+*.lta
+
+# Derived tables (connectivity matrices, label tables)
+*.csv
+*.tsv
+
+# Rendered rasters — burned-in identifiers survive DICOM anonymisation
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+*.webp
+*.avif
+*.bmp
+*.gif
+
+# Case-scoped JSON may carry coordinates; manifest.json is the audited exception
+cases/**/*.json
+!cases/*/manifest.json
+# Audited case JSON exceptions kept from main (scorecard and CR receipt)
+!cases/*/preflight.json
+!/cases/*/cr/summary.json

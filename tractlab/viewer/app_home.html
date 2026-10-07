@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TractLab — Cases</title>
+<style>
+:root {
+  --brand: #C9A84C;
+  --gold: #dfbf70;
+  --active: #2861b5;
+  --focus: #afd6ff;
+  --caution: #e0a030;
+  --caution-bg: #2a1f0a;
+  --caution-line: #6a4a12;
+  --bg: #0d1117;
+  --panel: #141b24;
+  --ink: #edf2f7;
+  --dim: #b7c3d1;
+  --mute: #9aa6b2;
+  --line: #2b3747;
+  --line-strong: #3b4b60;
+  --card: #1a2330;
+  --elev: #202c3b;
+  --danger: #ff8a8a;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius: 6px;
+  --radius-sm: 4px;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; background: var(--bg); color: var(--ink); }
+body { font: 14px/1.5 Inter, system-ui, sans-serif; }
+button, input { font: inherit; }
+button {
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  background: var(--elev); color: var(--ink); padding: 8px 12px; cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--gold); background: #27364a; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+button:disabled { opacity: .48; cursor: not-allowed; }
+.primary { color: #1a1200; background: var(--gold); border-color: #9b7c35; font-weight: 700; }
+.primary:hover:not(:disabled) { background: #efd58f; }
+header {
+  min-height: 58px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 10px max(22px, calc((100vw - 1040px) / 2));
+  background: var(--panel); border-bottom: 1px solid var(--line-strong);
+}
+.brand { display: flex; align-items: baseline; gap: 9px; }
+h1 { margin: 0; font-size: 20px; line-height: 1; letter-spacing: -.02em; }
+h1::after { content: ''; display: inline-block; width: 5px; height: 5px; margin-left: 5px; vertical-align: 4px; background: var(--gold); border-radius: 1px; }
+.eyebrow { color: var(--mute); font: 600 10px/1 var(--mono); letter-spacing: .09em; text-transform: uppercase; }
+.research-chip { margin-left: auto; border: 1px solid var(--caution-line); border-radius: 99px; padding: 5px 9px; color: var(--caution); background: var(--caution-bg); font-size: 11px; font-weight: 700; }
+main { max-width: 1040px; margin: 0 auto; padding: 28px 22px 36px; }
+.disclaimer {
+  margin: 0 0 22px; padding: 9px 12px; border-left: 2px solid var(--caution);
+  background: #171b20; color: var(--dim); font-size: 12px;
+}
+.toolbar { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.toolbar-copy { flex: 1 1 240px; }
+.toolbar-copy h2 { margin: 0 0 3px; font-size: 19px; }
+.toolbar-copy p { margin: 0; color: var(--mute); font-size: 12px; }
+.label-field { display: grid; gap: 5px; min-width: min(250px, 100%); color: var(--dim); font-size: 12px; }
+input {
+  width: 100%; min-height: 37px; padding: 7px 9px; border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm); background: #0d141c; color: var(--ink);
+}
+.fallback { display: flex; flex: 1 1 100%; gap: 8px; align-items: center; }
+.fallback[hidden] { display: none; }
+.fallback input { flex: 1; min-width: 180px; }
+#message {
+  min-height: 38px; margin: 0 0 12px; padding: 9px 11px; border: 1px solid transparent;
+  border-radius: var(--radius-sm); color: var(--mute); font-size: 12px;
+}
+#message[data-tone="error"] { color: var(--danger); border-color: #623737; background: #211819; }
+#message[data-tone="success"] { color: #a8d8b2; border-color: #315640; background: #142019; }
+#message[data-tone="permission"] { color: var(--caution); border-color: var(--caution-line); background: var(--caution-bg); }
+.case-list { display: grid; gap: 10px; }
+.case-card { padding: 15px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+.case-head { display: flex; align-items: start; justify-content: space-between; gap: 14px; }
+.case-name { min-width: 0; }
+.case-name h3 { margin: 0 0 4px; font-size: 15px; overflow-wrap: anywhere; }
+.case-meta { color: var(--mute); font-size: 11px; }
+.case-id { display: inline-block; margin-left: 7px; color: var(--dim); font: 11px var(--mono); }
+.case-actions { display: flex; gap: 7px; flex-shrink: 0; }
+.case-actions button { min-width: 68px; padding: 6px 10px; font-size: 12px; }
+.stages { display: flex; gap: 7px; flex-wrap: wrap; margin: 13px 0 0; padding: 0; list-style: none; }
+.stage {
+  display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--line);
+  border-radius: 99px; color: var(--dim); background: #151d27; font-size: 11px;
+}
+.stage::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--mute); }
+.stage[data-state="running"]::before { background: var(--caution); box-shadow: 0 0 0 3px #e0a03022; }
+.stage[data-state="done"]::before { background: #76c78c; }
+.stage[data-state="failed"] { color: var(--danger); border-color: #623737; }
+.stage[data-state="failed"]::before { background: var(--danger); }
+.stage-time { color: var(--mute); font: 10px var(--mono); }
+.empty { padding: 28px 16px; border: 1px dashed var(--line-strong); border-radius: var(--radius); color: var(--mute); text-align: center; }
+footer { margin-top: 22px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--mute); font-size: 11px; }
+dialog { width: min(760px, calc(100vw - 30px)); max-height: 80vh; padding: 0; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--panel); color: var(--ink); box-shadow: 0 18px 60px #0009; }
+dialog::backdrop { background: #05080dcc; }
+.dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.dialog-head h2 { margin: 0; font-size: 14px; }
+#logContent { max-height: calc(80vh - 52px); overflow: auto; margin: 0; padding: 14px; color: var(--dim); font: 11px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 650px) {
+  header { padding-inline: 16px; }
+  main { padding: 20px 14px 28px; }
+  .case-head { display: grid; }
+  .case-actions { justify-content: start; }
+  .label-field { flex: 1 1 100%; }
+  .research-chip { margin-left: auto; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><h1>TractLab</h1><span class="eyebrow">Local cases</span></div>
+  <span class="research-chip">Research / Preview</span>
+</header>
+<main>
+  <p class="disclaimer">Research/preview only — not navigation.</p>
+  <section class="toolbar" aria-labelledby="casesHeading">
+    <div class="toolbar-copy">
+      <h2 id="casesHeading">Cases</h2>
+      <p>Cases stay on this Mac. Processing runs in the background.</p>
+    </div>
+    <label class="label-field" for="caseLabel">Case label
+      <input id="caseLabel" type="text" maxlength="160" autocomplete="off" placeholder="A label you choose">
+    </label>
+    <button id="pickFolder" class="primary" type="button">Open DICOM…</button>
+    <div id="browserFallback" class="fallback" hidden>
+      <input id="folderPath" type="text" autocomplete="off" aria-label="DICOM folder path" placeholder="DICOM folder path">
+      <button id="startIngest" type="button">Start ingest</button>
+    </div>
+  </section>
+  <p id="message" role="status" aria-live="polite">Loading cases…</p>
+  <section id="caseList" class="case-list" aria-label="Case list">
+    <article class="case-card" aria-label="Loading demo case">
+      <div class="case-head"><div class="case-name"><h3>Demo (CC0, Leipzig sub-010005)</h3><div class="case-meta">Demo dataset · loading status</div></div>
+        <div class="case-actions"><button type="button" disabled>Open</button><button type="button" disabled>Show log</button></div>
+      </div>
+    </article>
+  </section>
+  <footer>Research/preview only — not navigation.</footer>
+</main>
+<dialog id="logDialog" aria-labelledby="logTitle">
+  <div class="dialog-head"><h2 id="logTitle">Stage log</h2><button id="closeLog" type="button">Close</button></div>
+  <pre id="logContent">Loading…</pre>
+</dialog>
+<script>
+(() => {
+  const message = document.getElementById('message');
+  const caseList = document.getElementById('caseList');
+  const pickFolder = document.getElementById('pickFolder');
+  const labelInput = document.getElementById('caseLabel');
+  const fallback = document.getElementById('browserFallback');
+  const folderPath = document.getElementById('folderPath');
+  const dialog = document.getElementById('logDialog');
+  const logContent = document.getElementById('logContent');
+  let polling = false;
+  let ingesting = false;
+
+  function setMessage(text, tone = '') {
+    message.textContent = text;
+    message.dataset.tone = tone;
+  }
+
+  function withTimeout(milliseconds, callback) {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), milliseconds);
+    return callback(controller.signal).finally(() => window.clearTimeout(timer));
+  }
+
+  async function getJSON(url, timeout = 8000) {
+    return withTimeout(timeout, async (signal) => {
+      const response = await fetch(url, { signal, cache: 'no-store' });
+      let data = {};
+      try { data = await response.json(); } catch (_) { /* handled below */ }
+      if (!response.ok) {
+        const error = new Error(data.error || 'Request failed.');
+        error.status = response.status;
+        throw error;
+      }
+      return data;
+    });
+  }
+
+  function formatElapsed(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return 'time unavailable';
+    if (seconds < 60) return `${Math.floor(seconds)}s`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ${Math.floor(seconds % 60)}s`;
+    return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+  }
+
+  function formatDate(value) {
+    if (!value) return 'Date unavailable';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Date unavailable';
+    return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
+  }
+
+  function makeStage(stage) {
+    const item = document.createElement('li');
+    item.className = 'stage';
+    item.dataset.state = stage.state;
+    const name = document.createElement('span');
+    name.textContent = stage.name;
+    const state = document.createElement('span');
+    state.textContent = stage.state;
+    const elapsed = document.createElement('span');
+    elapsed.className = 'stage-time';
+    elapsed.textContent = formatElapsed(stage.elapsed_seconds);
+    item.append(name, state, elapsed);
+    return item;
+  }
+
+  function makeCase(caseInfo) {
+    const card = document.createElement('article');
+    card.className = 'case-card';
+    const head = document.createElement('div');
+    head.className = 'case-head';
+    const name = document.createElement('div');
+    name.className = 'case-name';
+    const title = document.createElement('h3');
+    title.textContent = caseInfo.label;
+    const id = document.createElement('span');
+    id.className = 'case-id';
+    id.textContent = caseInfo.case_id;
+    title.append(id);
+    const meta = document.createElement('div');
+    meta.className = 'case-meta';
+    meta.textContent = `${caseInfo.is_demo ? 'CC0 demo' : 'Created'} · ${formatDate(caseInfo.created_utc)} · ${caseInfo.state}`;
+    name.append(title, meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'case-actions';
+    const open = document.createElement('button');
+    open.type = 'button';
+    open.textContent = 'Open';
+    open.disabled = !caseInfo.open_enabled;
+    open.addEventListener('click', () => openCase(caseInfo.case_id));
+    const log = document.createElement('button');
+    log.type = 'button';
+    log.textContent = 'Show log';
+    log.addEventListener('click', () => showLog(caseInfo.case_id));
+    actions.append(open, log);
+    head.append(name, actions);
+
+    const stages = document.createElement('ul');
+    stages.className = 'stages';
+    for (const stage of caseInfo.stages || []) stages.append(makeStage(stage));
+    card.append(head, stages);
+    return card;
+  }
+
+  function renderCases(cases) {
+    caseList.replaceChildren();
+    if (!cases.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = 'No cases are available yet. Choose a DICOM folder to create one.';
+      caseList.append(empty);
+      return;
+    }
+    for (const caseInfo of cases) caseList.append(makeCase(caseInfo));
+  }
+
+  async function refreshCases() {
+    if (polling) return;
+    polling = true;
+    try {
+      const data = await getJSON('/api/cases');
+      const cases = Array.isArray(data.cases) ? data.cases : [];
+      renderCases(cases);
+      setMessage(`Updated ${new Date().toLocaleTimeString()}. Case list refreshes every 5 seconds.`);
+    } catch (error) {
+      if (error.status === 403) {
+        setMessage('Permission denied while reading the cases folder. Check its macOS folder access.', 'permission');
+      } else if (error.name === 'AbortError') {
+        setMessage('The case list timed out. Retry when the local server is available.', 'error');
+      } else {
+        setMessage('Could not load cases. The server may have stopped; use Cases to retry.', 'error');
+      }
+    } finally {
+      polling = false;
+    }
+  }
+
+  async function openCase(caseId) {
+    setMessage('Opening case…');
+    try {
+      const result = await withTimeout(150000, async (signal) => {
+        const response = await fetch('/api/open', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ case_id: caseId }), signal,
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          const error = new Error(data.error || 'Could not open case.');
+          error.status = response.status;
+          throw error;
+        }
+        return data;
+      });
+      window.location.assign(result.url);
+    } catch (error) {
+      if (error.name === 'AbortError') setMessage('Opening the viewer timed out. Retry from the case list.', 'error');
+      else setMessage(error.status === 403 ? 'Permission denied while opening this case.' : 'Could not open this case. Check its manifest and viewer files.', error.status === 403 ? 'permission' : 'error');
+    }
+  }
+
+  async function showLog(caseId) {
+    document.getElementById('logTitle').textContent = `Stage log · ${caseId}`;
+    logContent.textContent = 'Loading…';
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+    try {
+      const result = await getJSON(`/api/log?case_id=${encodeURIComponent(caseId)}`);
+      logContent.textContent = result.lines.length ? result.lines.join('\n') : 'No stage log is available yet.';
+    } catch (error) {
+      logContent.textContent = error.status === 403 ? 'Permission denied while reading this log.' : 'Could not load the stage log. Retry from the case list.';
+    }
+  }
+
+  async function startIngest(path) {
+    if (ingesting) return;
+    if (!path) {
+      setMessage('Choose a DICOM folder before starting ingest.', 'permission');
+      return;
+    }
+    ingesting = true;
+    pickFolder.disabled = true;
+    document.getElementById('startIngest').disabled = true;
+    setMessage('Ingest is running. The DICOM folder path is used for this request only.');
+    try {
+      await withTimeout(15 * 60 * 1000, async (signal) => {
+        const response = await fetch('/api/ingest', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dicom_dir: path, label: labelInput.value }), signal,
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          const error = new Error(data.error || 'Ingest could not complete.');
+          error.status = response.status;
+          throw error;
+        }
+        return data;
+      });
+      folderPath.value = '';
+      setMessage('Ingest completed and the pipeline started. Progress will appear in the case list.', 'success');
+      await refreshCases();
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        setMessage('Ingest took longer than expected. Refresh the case list to check progress.', 'error');
+        await refreshCases();
+      } else if (error.status === 403) {
+        setMessage('Permission denied while reading that folder. Check its macOS folder access.', 'permission');
+      } else {
+        setMessage('Ingest failed. Check the selected folder and the case list for current status.', 'error');
+      }
+    } finally {
+      ingesting = false;
+      pickFolder.disabled = false;
+      document.getElementById('startIngest').disabled = false;
+    }
+  }
+
+  pickFolder.addEventListener('click', () => {
+    const nativePicker = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.pickFolder;
+    if (nativePicker) {
+      setMessage('Choose a DICOM folder in the system picker.');
+      nativePicker.postMessage(null);
+    } else {
+      fallback.hidden = false;
+      folderPath.focus();
+      setMessage('Enter the local DICOM folder path in this browser.');
+    }
+  });
+  document.getElementById('startIngest').addEventListener('click', () => startIngest(folderPath.value));
+  document.getElementById('closeLog').addEventListener('click', () => {
+    if (typeof dialog.close === 'function') dialog.close();
+    else dialog.removeAttribute('open');
+  });
+
+  window.tractlabFolderPicked = (path) => {
+    if (typeof path !== 'string' || !path) {
+      setMessage('Folder selection was cancelled. Choose a folder to continue.', 'permission');
+      return;
+    }
+    startIngest(path);
+  };
+  window.tractlabShowCases = refreshCases;
+
+  renderCases([{ case_id: 'demo-leipzig-sub-010005', label: 'Demo (CC0, Leipzig sub-010005)', is_demo: true, created_utc: null, state: 'pending', open_enabled: true, stages: ['ss3t', 't1reg', 'banks', 'scalar_maps'].map((name) => ({ name, state: 'pending', elapsed_seconds: null })) }]);
+  refreshCases();
+  window.setInterval(refreshCases, 5000);
+})();
+</script>
+</body>
+</html>

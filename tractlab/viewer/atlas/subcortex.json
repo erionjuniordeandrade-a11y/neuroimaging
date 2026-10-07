@@ -1,0 +1,403 @@
+{
+  "id": "melbourne-subcortex-s1-v1",
+  "title": "Subcortical structures, Melbourne Subcortex Atlas scale 1",
+  "source": "https://github.com/yetianmed/subcortex",
+  "source_commit": "dcad93421ea8021d6c5738df0a915a2223cd82aa",
+  "source_file": "Group-Parcellation/3T/Subcortex-Only/Tian_Subcortex_S1_3T.nii",
+  "citation": "Tian Y, Margulies DS, Breakspear M, Zalesky A. Topographic organization of the human subcortex unveiled with functional connectivity gradients. Nat Neurosci 23:1421 (2020). doi:10.1038/s41593-020-00711-6",
+  "licence": "Melbourne Subcortex Atlas licence: use, copy, modify, publish and distribute permitted with citation",
+  "space": "MNI152 (HCP standard space), 2 mm parcellation as shipped by the atlas; same space convention as the site's cortex and tracts",
+  "n": ">1,000 HCP participants",
+  "evidence_class": "atlas",
+  "method": "marching cubes at the 0.5 crossing of each label mask, Taubin smoothing (lambda 0.5, nu -0.53, 10 iterations), no decimation; anterior and posterior thalamus merged",
+  "generated_by": "scripts/build_subcortex.py",
+  "anatomy_checks": [
+    {
+      "structure": "HIP-lh",
+      "passed": true,
+      "centroid": [
+        -24.5,
+        -23.4,
+        -13.1
+      ],
+      "distance_from_expected_mm": 3.1,
+      "volume_cm3": 5.2
+    },
+    {
+      "structure": "HIP-rh",
+      "passed": true,
+      "centroid": [
+        26.5,
+        -23.4,
+        -13.1
+      ],
+      "distance_from_expected_mm": 2.7,
+      "volume_cm3": 5.2
+    },
+    {
+      "structure": "AMY-lh",
+      "passed": true,
+      "centroid": [
+        -22.0,
+        -4.0,
+        -18.8
+      ],
+      "distance_from_expected_mm": 1.2,
+      "volume_cm3": 2.8
+    },
+    {
+      "structure": "AMY-rh",
+      "passed": true,
+      "centroid": [
+        24.0,
+        -4.0,
+        -18.8
+      ],
+      "distance_from_expected_mm": 1.3,
+      "volume_cm3": 2.8
+    },
+    {
+      "structure": "THA-lh",
+      "passed": true,
+      "centroid": [
+        -10.0,
+        -18.8,
+        6.6
+      ],
+      "distance_from_expected_mm": 1.9,
+      "volume_cm3": 10.04
+    },
+    {
+      "structure": "THA-rh",
+      "passed": true,
+      "centroid": [
+        12.0,
+        -18.8,
+        6.6
+      ],
+      "distance_from_expected_mm": 1.9,
+      "volume_cm3": 10.04
+    },
+    {
+      "structure": "NAc-lh",
+      "passed": true,
+      "centroid": [
+        -10.9,
+        14.3,
+        -5.2
+      ],
+      "distance_from_expected_mm": 5.0,
+      "volume_cm3": 1.65
+    },
+    {
+      "structure": "NAc-rh",
+      "passed": true,
+      "centroid": [
+        12.9,
+        14.3,
+        -5.2
+      ],
+      "distance_from_expected_mm": 6.1,
+      "volume_cm3": 1.65
+    },
+    {
+      "structure": "GP-lh",
+      "passed": true,
+      "centroid": [
+        -18.2,
+        -3.9,
+        -1.5
+      ],
+      "distance_from_expected_mm": 0.5,
+      "volume_cm3": 1.58
+    },
+    {
+      "structure": "GP-rh",
+      "passed": true,
+      "centroid": [
+        20.2,
+        -3.9,
+        -1.5
+      ],
+      "distance_from_expected_mm": 2.2,
+      "volume_cm3": 1.58
+    },
+    {
+      "structure": "PUT-lh",
+      "passed": true,
+      "centroid": [
+        -24.7,
+        -0.4,
+        0.7
+      ],
+      "distance_from_expected_mm": 2.8,
+      "volume_cm3": 7.18
+    },
+    {
+      "structure": "PUT-rh",
+      "passed": true,
+      "centroid": [
+        26.7,
+        -0.4,
+        0.7
+      ],
+      "distance_from_expected_mm": 2.6,
+      "volume_cm3": 7.18
+    },
+    {
+      "structure": "CAU-lh",
+      "passed": true,
+      "centroid": [
+        -12.0,
+        9.8,
+        10.2
+      ],
+      "distance_from_expected_mm": 2.4,
+      "volume_cm3": 3.48
+    },
+    {
+      "structure": "CAU-rh",
+      "passed": true,
+      "centroid": [
+        14.0,
+        9.8,
+        10.2
+      ],
+      "distance_from_expected_mm": 2.4,
+      "volume_cm3": 3.48
+    }
+  ],
+  "structures": [
+    {
+      "id": "HIP-lh",
+      "name": "Hippocampus",
+      "hemisphere": "L",
+      "atlas_labels": [
+        9
+      ],
+      "mesh": "subcortex/HIP-lh.glb",
+      "centroid_mni": [
+        -24.5,
+        -23.4,
+        -13.1
+      ],
+      "volume_cm3": 5.2,
+      "faces": 1608
+    },
+    {
+      "id": "HIP-rh",
+      "name": "Hippocampus",
+      "hemisphere": "R",
+      "atlas_labels": [
+        1
+      ],
+      "mesh": "subcortex/HIP-rh.glb",
+      "centroid_mni": [
+        26.5,
+        -23.4,
+        -13.1
+      ],
+      "volume_cm3": 5.2,
+      "faces": 1608
+    },
+    {
+      "id": "AMY-lh",
+      "name": "Amygdala",
+      "hemisphere": "L",
+      "atlas_labels": [
+        10
+      ],
+      "mesh": "subcortex/AMY-lh.glb",
+      "centroid_mni": [
+        -22.0,
+        -4.0,
+        -18.8
+      ],
+      "volume_cm3": 2.8,
+      "faces": 784
+    },
+    {
+      "id": "AMY-rh",
+      "name": "Amygdala",
+      "hemisphere": "R",
+      "atlas_labels": [
+        2
+      ],
+      "mesh": "subcortex/AMY-rh.glb",
+      "centroid_mni": [
+        24.0,
+        -4.0,
+        -18.8
+      ],
+      "volume_cm3": 2.8,
+      "faces": 784
+    },
+    {
+      "id": "THA-lh",
+      "name": "Thalamus",
+      "hemisphere": "L",
+      "atlas_labels": [
+        12,
+        11
+      ],
+      "mesh": "subcortex/THA-lh.glb",
+      "centroid_mni": [
+        -10.0,
+        -18.8,
+        6.6
+      ],
+      "volume_cm3": 10.04,
+      "faces": 1856
+    },
+    {
+      "id": "THA-rh",
+      "name": "Thalamus",
+      "hemisphere": "R",
+      "atlas_labels": [
+        4,
+        3
+      ],
+      "mesh": "subcortex/THA-rh.glb",
+      "centroid_mni": [
+        12.0,
+        -18.8,
+        6.6
+      ],
+      "volume_cm3": 10.04,
+      "faces": 1856
+    },
+    {
+      "id": "NAc-lh",
+      "name": "Nucleus accumbens",
+      "hemisphere": "L",
+      "atlas_labels": [
+        13
+      ],
+      "mesh": "subcortex/NAc-lh.glb",
+      "centroid_mni": [
+        -10.9,
+        14.3,
+        -5.2
+      ],
+      "volume_cm3": 1.65,
+      "faces": 610
+    },
+    {
+      "id": "NAc-rh",
+      "name": "Nucleus accumbens",
+      "hemisphere": "R",
+      "atlas_labels": [
+        5
+      ],
+      "mesh": "subcortex/NAc-rh.glb",
+      "centroid_mni": [
+        12.9,
+        14.3,
+        -5.2
+      ],
+      "volume_cm3": 1.65,
+      "faces": 610
+    },
+    {
+      "id": "GP-lh",
+      "name": "Globus pallidus",
+      "hemisphere": "L",
+      "atlas_labels": [
+        14
+      ],
+      "mesh": "subcortex/GP-lh.glb",
+      "centroid_mni": [
+        -18.2,
+        -3.9,
+        -1.5
+      ],
+      "volume_cm3": 1.58,
+      "faces": 584
+    },
+    {
+      "id": "GP-rh",
+      "name": "Globus pallidus",
+      "hemisphere": "R",
+      "atlas_labels": [
+        6
+      ],
+      "mesh": "subcortex/GP-rh.glb",
+      "centroid_mni": [
+        20.2,
+        -3.9,
+        -1.5
+      ],
+      "volume_cm3": 1.58,
+      "faces": 584
+    },
+    {
+      "id": "PUT-lh",
+      "name": "Putamen",
+      "hemisphere": "L",
+      "atlas_labels": [
+        15
+      ],
+      "mesh": "subcortex/PUT-lh.glb",
+      "centroid_mni": [
+        -24.7,
+        -0.4,
+        0.7
+      ],
+      "volume_cm3": 7.18,
+      "faces": 1776
+    },
+    {
+      "id": "PUT-rh",
+      "name": "Putamen",
+      "hemisphere": "R",
+      "atlas_labels": [
+        7
+      ],
+      "mesh": "subcortex/PUT-rh.glb",
+      "centroid_mni": [
+        26.7,
+        -0.4,
+        0.7
+      ],
+      "volume_cm3": 7.18,
+      "faces": 1776
+    },
+    {
+      "id": "CAU-lh",
+      "name": "Caudate nucleus",
+      "hemisphere": "L",
+      "atlas_labels": [
+        16
+      ],
+      "mesh": "subcortex/CAU-lh.glb",
+      "centroid_mni": [
+        -12.0,
+        9.8,
+        10.2
+      ],
+      "volume_cm3": 3.48,
+      "faces": 1116
+    },
+    {
+      "id": "CAU-rh",
+      "name": "Caudate nucleus",
+      "hemisphere": "R",
+      "atlas_labels": [
+        8
+      ],
+      "mesh": "subcortex/CAU-rh.glb",
+      "centroid_mni": [
+        14.0,
+        9.8,
+        10.2
+      ],
+      "volume_cm3": 3.48,
+      "faces": 1116
+    }
+  ],
+  "limitations": [
+    "A group parcellation of healthy adults; individual anatomy varies",
+    "Scale-1 regions; finer subdivisions exist in the same atlas",
+    "No brainstem nuclei: PAG and RVM remain markers because the atlases that contain them do not permit redistribution"
+  ]
+}

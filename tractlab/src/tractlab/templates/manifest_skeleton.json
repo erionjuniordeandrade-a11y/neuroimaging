@@ -1,0 +1,51 @@
+{
+  "disclaimer": "research/preview only — not navigation. T1→DWI owner-signed 2026-08-16. Reverse-PE is only the Leipzig SEfmapDWI AP/PA SE pair via dwifslpreproc -rpe_pair (topup+eddy); no further PE claim. Eddy QUAD warning only (not a QC pass). Residual geometry uncertainty remains.",
+  "t1_qc": {
+    "auto": {
+      "ok": false,
+      "grid_id_match": false,
+      "shape_match": false,
+      "mask_overlap_frac": 0.0,
+      "t1_nonzero_frac": 0.0,
+      "notes": []
+    },
+    "approved_by": null,
+    "date": null,
+    "sheet_sha": null,
+    "sheet_path": null,
+    "derivation": ""
+  },
+  "atlas_prior_qc": {
+    "auto": {
+      "ok": false,
+      "cst_symmetry_ok": false,
+      "hull_containment_ok": false,
+      "cst_overlap": 0.0,
+      "hull_frac": 0.0,
+      "notes": []
+    },
+    "approved_by": null,
+    "date": null,
+    "sheet_sha": null,
+    "sheet_path": null,
+    "derivation": ""
+  },
+  "parcellation_qc": {
+    "auto": {
+      "ok": false,
+      "label_complete": false,
+      "lut_ok": false,
+      "hull_ok": false,
+      "symmetry_ok": false,
+      "n_labels": 0,
+      "hull_frac": 0.0,
+      "lr_ratio": 0.0,
+      "notes": []
+    },
+    "approved_by": null,
+    "date": null,
+    "sheet_sha": null,
+    "sheet_path": null,
+    "derivation": ""
+  }
+}

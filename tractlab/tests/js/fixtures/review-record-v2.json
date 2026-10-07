@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 2,
+  "createdAt": "2026-09-10T12:00:00.000Z",
+  "context": {
+    "caseId": "demo-leipzig-sub-010005",
+    "gridId": "grid-983ab",
+    "volumeId": "volume-b0-9c22",
+    "recipeHash": "8fca7793abc12345",
+    "caseSourceHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "buildId": "build-20260910-a1"
+  },
+  "banks": [
+    {
+      "bankId": "cst-r",
+      "sourcePopulation": "bank:cst-r",
+      "sourceHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "tractLabel": "CST-R",
+      "displayedCount": 822,
+      "analyticCount": 1500,
+      "fullCount": 2204,
+      "p5": 7.25,
+      "floorMm": 3,
+      "clearanceMethod": "surface-distance",
+      "clearancePopulation": "analytic bank sample",
+      "weighting": "SIFT2",
+      "fidelityStatus": "ok",
+      "operatingPoint": "R=0.30 · min 0.70 · signed"
+    }
+  ],
+  "generated": [
+    {
+      "layerKey": "__live__",
+      "tractLabel": "Filtered corpus",
+      "request": {
+        "route": "/api/filter",
+        "bankId": null,
+        "seedPresetId": null,
+        "roiRef": "paint",
+        "params": {
+          "params": {
+            "minlength": 20
+          }
+        },
+        "digest": "0000000000000000"
+      },
+      "identity": {
+        "sourcePopulation": "filtered-corpus",
+        "engineDigest": "436cba4520d244b1",
+        "nReturned": 1204,
+        "lineCount": 900,
+        "bankSourceHash": null,
+        "edgeSourceHash": null,
+        "corpusSourceHash": null,
+        "parcellationSourceHash": null,
+        "generationId": null
+      }
+    }
+  ],
+  "paint": {
+    "grid": {
+      "gridId": "grid-983ab",
+      "dims": [
+        8,
+        8,
+        8
+      ],
+      "affineDigest": "05ea77e5f7c435de"
+    },
+    "paintMode": true,
+    "role": "seed",
+    "andIndex": 0,
+    "brushRadiusMm": 4,
+    "seedPresetId": "seed-handknob-r",
+    "rois": {
+      "seed": [
+        10,
+        3,
+        40,
+        1
+      ],
+      "and": [
+        [
+          100,
+          2
+        ]
+      ],
+      "or": [],
+      "not": [
+        200,
+        1
+      ]
+    }
+  },
+  "overlays": {
+    "priors": [
+      "norm_cst_r"
+    ],
+    "parcelNetwork": 3
+  },
+  "envelope": {
+    "layerKey": "bank:cst-r",
+    "marginMm": 5
+  },
+  "view": {
+    "focusLayerKey": "bank:cst-r",
+    "colour": "distance",
+    "camera": {
+      "position": [
+        120,
+        -60,
+        24
+      ],
+      "target": [
+        0,
+        0,
+        0
+      ],
+      "up": [
+        0,
+        0,
+        1
+      ],
+      "offset": [
+        0,
+        0
+      ]
+    },
+    "slices": {
+      "ax": 54,
+      "cor": 48,
+      "sag": 52
+    },
+    "underlay": "b0",
+    "radius": 0.24,
+    "displayNearLesion": true,
+    "nearLesionFrac": 0.55,
+    "nearRadiusMm": 12,
+    "hideLowSupport": false,
+    "onlyLowSupport": false,
+    "hullVeil": "ghost",
+    "hullVisible": true,
+    "lesionVisible": true,
+    "slicePlane": "off",
+    "layout": {
+      "slicesOpen": true,
+      "dockFraction": 0.35,
+      "overviewFraction": 0.35,
+      "focusedSlice": null
+    },
+    "pin": {
+      "layerKey": "bank:cst-r",
+      "sourceIndex": 12
+    },
+    "profileInterval": null
+  },
+  "evidence": {
+    "preflightState": "signed",
+    "preflightText": "gradients · pass",
+    "spaceLabel": "DWI space · corrected, unsigned"
+  },
+  "unsupported": [],
+  "summary": "TractLab review record\nSchema: 2\nCreated: 2026-09-10T12:00:00.000Z\n\nContext\nCase: demo-leipzig-sub-010005\nGrid: grid-983ab\nVolume: volume-b0-9c22\nRecipe: 8fca7793abc12345\nCase source hash: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\nBuild: build-20260910-a1\n\nBanks — Historical annotations only; do not treat saved measurements as current.\n1. CST-R (cst-r)\n   Source population: bank:cst-r\n   Source hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n   Counts: displayed 822; analytic 1500; full 2204\n   p5: 7.25 mm; floor: 3 mm\n   Clearance method: surface-distance; population: analytic bank sample\n   Weighting: SIFT2; fidelity: ok; operating point: R=0.30 · min 0.70 · signed\n\nSaved view\nFocus: bank:cst-r; colour: distance; underlay: b0\nCamera position: 120, -60, 24; target: 0, 0, 0; up: 0, 0, 1\nCamera offset: 0, 0 normalized viewport fraction\nSlices: ax 54; cor 48; sag 52; plane off\nTube radius: 0.24; near lesion: on (0.55, 12 mm)\nLow support: hide off; only off\nHull: ghost; lesion: visible\nLayout: slices open; dock 0.35; overview 0.35; focused slice none\nPin: bank:cst-r source #13 (saved source index 12)\n\nGenerated and subset layers — request provenance only; no streamline geometry is saved.\n1. Filtered corpus (__live__)\n   Source population: filtered-corpus\n   Request: bank filter (reproducible)\n   Request digest: 0000000000000000\n   Seed preset: unknown; painted ROIs: yes\n   Parameters: {\"params\":{\"minlength\":20}}\n   Returned: engine digest 436cba4520d244b1; n 1204; displayed 900\n   Bank source hash: unknown\n\nPainted and preset ROI state\nGrid: grid-983ab; dims 8 x 8 x 8; affine digest 05ea77e5f7c435de\nPaint mode: on; role seed; AND region 1\nBrush radius: 4 mm; seed preset seed-handknob-r\nSEED voxels: 4; OR voxels: 0; NOT voxels: 1\nAND regions: 2 voxels\n\nPopulation overlays — population priors, never patient anatomy.\nAtlas priors: norm_cst_r\nParcellation network: 3\n\nDisplay envelope\nLayer bank:cst-r at 5 mm; display only, not clearance and not a resection margin.\n\nEvidence (saved plain text)\nPreflight state: signed\nPreflight text: gradients · pass\nSpace label: DWI space · corrected, unsigned\n\nRecorded floor is a display limit, not measured spatial accuracy; local residual error remains unmeasured. p5 describes reconstructed streamlines.\nSaved measurements are historical annotations only. Current geometry and measurements must be re-read from matching served named-bank sources before restoring this view.\nGenerated and subset layers are redrawn only by re-issuing their saved request and matching the identity the server returns; a mismatch is reported, never drawn."
+}

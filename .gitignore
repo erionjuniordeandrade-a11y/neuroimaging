@@ -1,0 +1,34 @@
+# Default-deny for imaging and patient data across every subproject.
+# Each subproject keeps its own .gitignore; these rules apply repo-wide as well.
+data/
+cases/
+out/
+nifti/
+tracts/
+raw/
+qc/
+work*/
+dwifslpreproc-tmp-*/
+dwibiascorrect-tmp-*/
+*.dcm
+*.nii
+*.nii.gz
+*.mif
+*.tck
+*.trk
+*.capsule.html
+
+# Build and tool state
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+.build/
+build/
+.swiftpm/
+.DS_Store
+.omx/
+.code-review-graph/
+.baton/
+handoff/AGENT.lock

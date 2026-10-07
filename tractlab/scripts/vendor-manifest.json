@@ -1,0 +1,164 @@
+{
+ "target": "viewer/vendor",
+ "packages": {
+  "three": "0.186.1",
+  "three-mesh-bvh": "0.9.15",
+  "camera-controls": "3.1.2",
+  "troika-three-text": "0.52.5",
+  "troika-three-utils": "0.52.5",
+  "troika-worker-utils": "0.52.0",
+  "bidi-js": "1.0.3",
+  "webgl-sdf-generator": "1.1.1"
+ },
+ "localFiles": [
+  ["scripts/vendor-source/Inter-Medium.ttf", "fonts/Inter-Medium.ttf"],
+  ["scripts/vendor-source/Inter-OFL.txt", "fonts/Inter-OFL.txt"]
+ ],
+ "files": [
+  [
+   "three",
+   "build/three.module.js",
+   "three.module.js"
+  ],
+  [
+   "three",
+   "build/three.core.js",
+   "three.core.js"
+  ],
+  [
+   "three",
+   "LICENSE",
+   "LICENSE.md"
+  ],
+  [
+   "three",
+   "examples/jsm/lines/Line2.js",
+   "addons/lines/Line2.js"
+  ],
+  [
+   "three",
+   "examples/jsm/lines/LineGeometry.js",
+   "addons/lines/LineGeometry.js"
+  ],
+  [
+   "three",
+   "examples/jsm/lines/LineMaterial.js",
+   "addons/lines/LineMaterial.js"
+  ],
+  [
+   "three",
+   "examples/jsm/lines/LineSegments2.js",
+   "addons/lines/LineSegments2.js"
+  ],
+  [
+   "three",
+   "examples/jsm/lines/LineSegmentsGeometry.js",
+   "addons/lines/LineSegmentsGeometry.js"
+  ],
+  [
+   "three",
+   "examples/jsm/libs/meshopt_decoder.module.js",
+   "addons/libs/meshopt_decoder.module.js"
+  ],
+  [
+   "three",
+   "examples/jsm/controls/OrbitControls.js",
+   "OrbitControls.js"
+  ],
+  [
+   "three",
+   "examples/jsm/loaders/GLTFLoader.js",
+   "addons/loaders/GLTFLoader.js"
+  ],
+  [
+   "three",
+   "examples/jsm/loaders/DRACOLoader.js",
+   "addons/loaders/DRACOLoader.js"
+  ],
+  [
+   "three",
+   "examples/jsm/utils/BufferGeometryUtils.js",
+   "addons/utils/BufferGeometryUtils.js"
+  ],
+  [
+   "three",
+   "examples/jsm/utils/SkeletonUtils.js",
+   "addons/utils/SkeletonUtils.js"
+  ],
+  [
+   "three",
+   "examples/jsm/libs/draco/gltf/draco_decoder.js",
+   "addons/libs/draco/gltf/draco_decoder.js"
+  ],
+  [
+   "three",
+   "examples/jsm/libs/draco/gltf/draco_decoder.wasm",
+   "addons/libs/draco/gltf/draco_decoder.wasm"
+  ],
+  [
+   "three",
+   "examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js",
+   "addons/libs/draco/gltf/draco_wasm_wrapper.js"
+  ],
+  [
+   "three-mesh-bvh",
+   "build/index.module.js",
+   "three-mesh-bvh.js"
+  ],
+  [
+   "three-mesh-bvh",
+   "LICENSE",
+   "three-mesh-bvh-LICENSE.md"
+  ],
+  [
+   "camera-controls",
+   "dist/camera-controls.module.js",
+   "camera-controls.js"
+  ],
+  [
+   "camera-controls",
+   "LICENSE",
+   "camera-controls-LICENSE.md"
+  ],
+  [
+   "troika-three-text",
+   "dist/troika-three-text.esm.js",
+   "troika/troika-three-text.esm.js"
+  ],
+  [
+   "troika-three-text",
+   "LICENSE",
+   "troika/LICENSE"
+  ],
+  [
+   "troika-three-utils",
+   "dist/troika-three-utils.esm.js",
+   "troika/troika-three-utils.esm.js"
+  ],
+  [
+   "troika-worker-utils",
+   "dist/troika-worker-utils.esm.js",
+   "troika/troika-worker-utils.esm.js"
+  ],
+  [
+   "bidi-js",
+   "dist/bidi.mjs",
+   "troika/bidi.js"
+  ],
+  [
+   "bidi-js",
+   "LICENSE.txt",
+   "troika/bidi-js-LICENSE"
+  ],
+  [
+   "webgl-sdf-generator",
+   "dist/webgl-sdf-generator.mjs",
+   "troika/webgl-sdf-generator.js"
+  ],
+  [
+   "webgl-sdf-generator",
+   "LICENSE.txt",
+   "troika/webgl-sdf-generator-LICENSE"
+  ]
+ ]
+}
