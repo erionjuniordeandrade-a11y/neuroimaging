@@ -7,7 +7,7 @@ uv sync --all-packages
 uv run eidos                      # http://127.0.0.1:8790/  (alias: neuro-workbench)
 ```
 
-The window has a case list and four tabs per case:
+The window opens on **Patients**, the local patient archive, and has four tabs per case:
 
 | Tab | What it shows | Served by |
 |---|---|---|
@@ -15,6 +15,26 @@ The window has a case list and four tabs per case:
 | Capsule viewer | Capsule viewer2: CT/MR fusion, CTA, masks, tracts, tour | the capsule file, through the workbench |
 | Tract evidence | TractLab workstation | a TractLab child process on a free loopback port |
 | Atlas | TractLab reference atlas | the same TractLab child |
+
+## Patients (archive)
+
+Eidos keeps a local archive of patient studies, in the way a PACS viewer does:
+
+- **Import folder or CD** or **Import .zip** copies every DICOM image into the archive and
+  skips files it already has. `uv run eidos --import PATH` does the same from the shell and prints counts.
+- The Patients screen lists each patient with their studies and series. Search matches name,
+  ID, birth date, study date, accession, modality and series description. A click opens the study in the Case tab.
+- Series with fewer than 3 images (scouts, reports) are listed but not drawn.
+
+The archive is **not de-identified**. It holds patient names and IDs, so it stays on the
+computer that imported it:
+
+- location `~/Library/Application Support/Eidos/archive` (`--archive-dir` or `EIDOS_ARCHIVE` to change, `--no-archive` to turn off);
+- folder mode 0700, files 0600, file names are hashes with no identifiers;
+- disk encryption comes from FileVault. Check it with `fdesetup status`;
+- the server logs nothing and import reports carry counts only.
+
+Never put the archive folder in a repository, a cloud folder or a shared drive.
 
 ## Cases
 
@@ -25,7 +45,7 @@ The window has a case list and four tabs per case:
 - `--capsule-dir DIR` (repeatable) lists every `*.capsule.html` in that folder, imaging only.
 - `--manifest FILE` (repeatable) lists one TractLab case, tract evidence only.
 
-The workbench never scans a default patient folder. A case appears only when you name its source.
+Eidos never scans a patient folder by itself. A study appears only after you import it; a capsule or manifest only when you name it.
 
 ## Case tab
 

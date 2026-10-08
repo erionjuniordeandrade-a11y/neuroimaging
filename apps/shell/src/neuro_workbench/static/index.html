@@ -99,7 +99,53 @@
   .drawer-foot { margin-top: auto; padding: 12px 14px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; }
   .drawer-foot code { color: var(--muted); }
 
+  /* Patients */
+  nav .home-sep { height: 1px; background: var(--line); margin: 4px 6px; flex: none; }
+  .patients { position: absolute; inset: 0; z-index: 2; background: var(--bg); display: flex; flex-direction: column; min-height: 0; }
+  .patients[hidden] { display: none; }
+  .p-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 18px 22px 14px; border-bottom: 1px solid var(--line); }
+  .p-head h1 { margin: 0 8px 0 0; font: 600 22px var(--serif); }
+  .p-head h1 small { font: 500 12px var(--sans); color: var(--muted); margin-left: 8px; }
+  .p-head .search { width: min(340px, 100%); }
+  .btn { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line2); background: rgba(255,255,255,.03);
+         border-radius: 9px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+  .btn:hover { background: var(--hover); border-color: rgba(201,168,76,.45); }
+  .btn.primary { background: var(--accent-soft); border-color: rgba(201,168,76,.5); color: var(--accent); font-weight: 600; }
+  .btn svg { width: 16px; height: 16px; }
+  .btn:disabled { opacity: .45; cursor: progress; }
+  .p-path { display: flex; gap: 6px; flex: 1 1 260px; max-width: 460px; }
+  .p-path .search { flex: 1; width: auto; }
+  .p-import { padding: 9px 22px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; display: flex; gap: 12px; align-items: center; }
+  .p-import[hidden] { display: none; }
+  .p-import .bar { flex: 0 0 160px; margin: 0; }
+  .p-import .bar i { animation: none; transition: width .3s; }
+  .p-import.error { color: var(--warn); }
+  .p-head[hidden] { display: none; }
+  .p-list { flex: 1; overflow-y: auto; padding: 14px 22px 30px; display: grid; gap: 10px; align-content: start; }
+  .pt { border: 1px solid var(--line); border-radius: 14px; background: var(--glass); overflow: hidden; }
+  .pt-row { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; }
+  .pt-av { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; font: 600 14px var(--serif);
+           color: var(--accent); background: var(--accent-soft); border: 1px solid rgba(201,168,76,.35); }
+  .pt-row b { font-size: 14.5px; font-weight: 600; }
+  .pt-row .meta { color: var(--muted); font-size: 12px; display: flex; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+  .pt-row .count { color: var(--faint); font-size: 12px; }
+  .st { display: grid; grid-template-columns: 96px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px 10px 66px;
+        border-top: 1px solid var(--line); cursor: pointer; }
+  .st:hover { background: var(--hover); }
+  .st .date { font-variant-numeric: tabular-nums; color: var(--text); }
+  .st .desc { min-width: 0; }
+  .st .desc b { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .st .desc small { color: var(--muted); }
+  .mod { font: 600 10px var(--sans); letter-spacing: .06em; color: var(--accent); border: 1px solid rgba(201,168,76,.4);
+         border-radius: 5px; padding: 1px 6px; margin-right: 4px; }
+  .p-empty { margin: 60px auto; max-width: 440px; text-align: center; color: var(--muted); }
+  .p-empty h3 { font: 600 20px var(--serif); color: var(--text); margin: 0 0 8px; }
+  .p-foot { padding: 10px 22px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; display: flex; gap: 8px; align-items: center; }
+  .p-foot svg { width: 14px; height: 14px; }
+
   @media (max-width: 760px) {
+    .st { grid-template-columns: 1fr auto; padding-left: 14px; } .st .date { grid-column: 1 / -1; }
+    nav .home-sep { display: none; }
     .app { grid-template-columns: 1fr; grid-template-rows: 52px 1fr 60px; }
     .brand { width: 52px; } .app-name, .sep, .ruo { display: none; }
     nav { grid-row: 3; flex-direction: row; border-right: 0; border-top: 1px solid var(--line); padding: 6px; }
@@ -118,6 +164,10 @@
   <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
   <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6"/><path d="M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3"/><path d="M7 15h10"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-patients" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.4-.3 4.4 1.2 5 4.3"/></symbol>
+  <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4 17v1.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V17"/></symbol>
+  <symbol id="i-zip" viewBox="0 0 24 24"><path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M10 4v2m0 2v2m0 2v2"/><rect x="8.5" y="14" width="3" height="3" rx=".6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
 </svg>
 <div class="app">
   <header>
@@ -132,6 +182,8 @@
     <div class="ruo"><b>Research use only</b> · not for clinical use</div>
   </header>
   <nav role="tablist" aria-label="Views">
+    <button role="tab" id="nav-patients" class="home" title="Patient archive (H)" hidden><span class="kbd">H</span><svg class="i"><use href="#i-patients"/></svg>Patients</button>
+    <div class="home-sep" id="nav-sep" hidden></div>
     <button role="tab" data-view="case" title="Shared viewer: every image, structure and tract (1)"><span class="kbd">1</span><svg class="i"><use href="#i-case"/></svg>Case</button>
     <button role="tab" data-view="imaging" title="Capsule viewer with tour and QC (2)"><span class="kbd">2</span><svg class="i"><use href="#i-capsule"/></svg>Capsule</button>
     <button role="tab" data-view="tracts" title="TractLab tract evidence (3)"><span class="kbd">3</span><svg class="i"><use href="#i-tracts"/></svg>Tracts</button>
@@ -144,6 +196,24 @@
         <div class="card"><h3 id="status-title"></h3><p id="status-text"></p><div class="bar"><i></i></div></div>
       </div>
     </div>
+    <section class="patients" id="patients" hidden aria-label="Patient archive">
+      <div class="p-head">
+        <h1>Patients<small id="p-count"></small></h1>
+        <input class="search" id="p-search" placeholder="Search name, ID, date, modality, description" autocomplete="off" spellcheck="false">
+        <div class="spacer"></div>
+        <button class="btn primary" id="p-folder"><svg class="i"><use href="#i-import"/></svg>Import folder or CD</button>
+        <button class="btn" id="p-zip"><svg class="i"><use href="#i-zip"/></svg>Import .zip</button>
+      </div>
+      <div class="p-head" style="padding-top:0;border-bottom:0" id="p-path-row" hidden>
+        <form class="p-path" id="p-path-form">
+          <input class="search" id="p-path" placeholder="Or type a folder or .zip path on this computer" autocomplete="off" spellcheck="false">
+          <button class="btn" type="submit">Import</button>
+        </form>
+      </div>
+      <div class="p-import" id="p-import" hidden><span id="p-import-text"></span><div class="bar"><i id="p-import-bar"></i></div></div>
+      <div class="p-list" id="p-list"></div>
+      <div class="p-foot"><svg class="i"><use href="#i-lock"/></svg>Identifiable data. The archive stays on this computer, in a private folder on an encrypted disk.</div>
+    </section>
   </main>
 </div>
 <div class="scrim" id="scrim"></div>
@@ -153,7 +223,7 @@
     <input class="search" id="search" placeholder="Filter cases" autocomplete="off" spellcheck="false">
   </div>
   <div class="case-list" id="cases"></div>
-  <div class="drawer-foot">A case appears only when you name its source: <code>--capsule-dir</code> or <code>--manifest</code>.</div>
+  <div class="drawer-foot">Patient studies come from the archive (Patients, H). Capsules and manifests come from <code>--capsule-dir</code> or <code>--manifest</code>.</div>
 </aside>
 <script>
 const VIEWS = ["case", "imaging", "tracts", "atlas"];
@@ -164,7 +234,7 @@ const LOADING = {
   tracts: "Starting TractLab on a loopback port.",
   atlas: "Starting the reference atlas.",
 };
-const state = { cases: [], caseId: null, view: "case", frames: new Map(), polling: null };
+const state = { cases: [], caseId: null, view: "case", frames: new Map(), polling: null, archive: false, home: false };
 const $ = (id) => document.getElementById(id);
 
 async function getJSON(url) {
@@ -187,7 +257,7 @@ function renderCases() {
     const b = el("button", "case");
     b.dataset.id = c.id;
     b.setAttribute("aria-current", String(c.id === state.caseId));
-    const av = el("span", "av"); av.append(icon(c.synthetic ? "flask" : "folder"));
+    const av = el("span", "av"); av.append(icon(c.archive ? "patients" : c.synthetic ? "flask" : "folder"));
     const body = el("span");
     const title = el("b", "", c.title);
     if (c.synthetic) title.append(" ", el("span", "tag", "synthetic"));
@@ -207,6 +277,7 @@ function closeDrawer() { document.body.classList.remove("drawer-open"); }
 function currentCase() { return state.cases.find((c) => c.id === state.caseId); }
 
 function select(caseId, view) {
+  setHome(false);
   state.caseId = caseId;
   const c = currentCase();
   view = view || state.view;
@@ -217,7 +288,7 @@ function select(caseId, view) {
   if (c.synthetic) $("case-title").append(" ", el("span", "tag", "synthetic"));
   $("case-sub").textContent = c.subtitle;
   document.title = `${c.title} · ${VIEW_NAME[view]} · Eidos`;
-  document.querySelectorAll("nav button").forEach((b) => {
+  document.querySelectorAll("nav button[data-view]").forEach((b) => {
     b.disabled = !c.views[b.dataset.view];
     b.setAttribute("aria-selected", String(b.dataset.view === view));
   });
@@ -261,7 +332,7 @@ async function show() {
   }
 }
 
-document.querySelectorAll("nav button").forEach((b) => (b.onclick = () => select(state.caseId, b.dataset.view)));
+document.querySelectorAll("nav button[data-view]").forEach((b) => (b.onclick = () => select(state.caseId, b.dataset.view)));
 $("case-switch").onclick = openDrawer;
 $("scrim").onclick = closeDrawer;
 $("search").oninput = renderCases;
@@ -270,6 +341,7 @@ function handleKey(key) {
   const n = Number(key);
   if (n >= 1 && n <= VIEWS.length && currentCase()?.views[VIEWS[n - 1]]) { select(state.caseId, VIEWS[n - 1]); return true; }
   if (key === "k" || key === "K") { openDrawer(); return true; }
+  if ((key === "h" || key === "H") && state.archive) { showPatients(); return true; }
   return false;
 }
 document.addEventListener("keydown", (e) => {
@@ -283,15 +355,175 @@ window.addEventListener("message", (e) => {
   if (e.origin === location.origin && typeof e.data?.workbenchKey === "string") handleKey(e.data.workbenchKey);
 });
 
+// Patients ---------------------------------------------------------------
+const MOD_ORDER = ["CT", "MR", "PT", "NM", "US", "XA", "CR", "DX"];
+function fmtDate(d) { return d && d.length === 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : d || "No date"; }
+function initials(name) { return (name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase(); }
+
+async function loadCases() {
+  const r = await getJSON("/api/cases");
+  state.cases = r.cases;
+  state.archive = !!r.archive;
+  $("nav-patients").hidden = $("nav-sep").hidden = !state.archive;
+}
+
+function setHome(on) {
+  state.home = on;
+  $("patients").hidden = !on;
+  $("nav-patients").setAttribute("aria-selected", String(on));
+  if (on) {
+    document.querySelectorAll("nav button[data-view]").forEach((b) => {
+      b.setAttribute("aria-selected", "false");
+      if (!state.caseId) b.disabled = true;
+    });
+    $("case-title").textContent = "Patient archive";
+    $("case-sub").textContent = "Studies imported on this computer";
+    document.title = "Patients · Eidos";
+    history.replaceState(null, "", "#patients");
+  }
+}
+
+async function showPatients() {
+  closeDrawer();
+  setHome(true);
+  await renderPatients();
+  if (!matchMedia("(max-width: 760px)").matches) $("p-search").focus();
+}
+
+let searchTimer = null;
+async function renderPatients() {
+  let r;
+  try { r = await getJSON(`/api/archive?q=${encodeURIComponent($("p-search").value.trim())}`); }
+  catch (e) { $("p-list").replaceChildren(el("div", "p-empty", `The archive is not reachable: ${e.message}`)); return; }
+  const n = r.patients.length, studies = r.patients.reduce((a, p) => a + p.studies.length, 0);
+  $("p-count").textContent = n ? `${n} patient${n > 1 ? "s" : ""} · ${studies} stud${studies > 1 ? "ies" : "y"}` : "";
+  if (!n) {
+    const box = el("div", "p-empty");
+    if ($("p-search").value.trim()) box.append(el("h3", "", "No match"), el("p", "", "No patient or study matches this search."));
+    else box.append(el("h3", "", "No patients yet"),
+      el("p", "", "Import a DICOM folder, a CD or a .zip from PACS. Eidos copies the images into its private archive and lists each patient here."));
+    $("p-list").replaceChildren(box);
+    return;
+  }
+  $("p-list").replaceChildren(...r.patients.map((p) => {
+    const card = el("div", "pt");
+    const row = el("div", "pt-row");
+    const body = el("div");
+    const meta = el("div", "meta");
+    if (p.patient_id) meta.append(el("span", "", `ID ${p.patient_id}`));
+    if (p.birth_date) meta.append(el("span", "", `Born ${fmtDate(p.birth_date)}`));
+    if (p.sex) meta.append(el("span", "", p.sex));
+    body.append(el("b", "", p.name || "Unnamed patient"), meta);
+    row.append(el("div", "pt-av", initials(p.name)), body,
+               el("span", "count", `${p.studies.length} stud${p.studies.length > 1 ? "ies" : "y"}`));
+    card.append(row);
+    for (const st of p.studies) {
+      const line = el("div", "st");
+      line.tabIndex = 0;
+      line.setAttribute("role", "button");
+      const desc = el("div", "desc");
+      const mods = el("span");
+      const rank = (m) => (MOD_ORDER.includes(m) ? MOD_ORDER.indexOf(m) : 99);
+      for (const m of [...st.modalities].sort((x, y) => rank(x) - rank(y)))
+        mods.append(el("span", "mod", m));
+      desc.append(el("b", "", st.description || "Study"));
+      const series = st.series.filter((x) => x.images > 0);
+      desc.append(el("small", "", `${series.length} series · ${series.reduce((a, x) => a + x.images, 0)} images`
+        + (st.accession ? ` · Acc ${st.accession}` : "")));
+      line.append(el("span", "date", fmtDate(st.date)), desc, mods);
+      line.onclick = () => openStudy(st.id);
+      line.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openStudy(st.id); } };
+      card.append(line);
+    }
+    return card;
+  }));
+}
+
+async function openStudy(id) {
+  if (!state.cases.some((c) => c.id === id)) await loadCases();
+  if (state.cases.some((c) => c.id === id)) select(id, "case");
+}
+
+function importStatus(text, fraction, error) {
+  $("p-import").hidden = false;
+  $("p-import").classList.toggle("error", !!error);
+  $("p-import-text").textContent = text;
+  $("p-import-bar").parentElement.hidden = fraction == null;
+  $("p-import-bar").style.width = `${Math.round((fraction || 0) * 100)}%`;
+}
+
+async function postJSON(url, body) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || `${r.status} ${url}`);
+  return data;
+}
+
+async function startImport(path) {
+  setImportBusy(true);
+  try {
+    await postJSON("/api/archive/import", { path });
+    await pollImport();
+  } catch (e) {
+    importStatus(`Import failed: ${e.message}`, null, true);
+    setImportBusy(false);
+  }
+}
+
+async function pollImport() {
+  const s = await getJSON("/api/archive/import");
+  if (s.state === "running") {
+    importStatus(s.total ? `Importing… ${s.done} of ${s.total} files read` : "Importing… listing files", s.total ? s.done / s.total : 0);
+    return setTimeout(pollImport, 600);
+  }
+  setImportBusy(false);
+  if (s.state === "error") return importStatus(`Import failed: ${s.error}`, null, true);
+  if (s.state === "done") {
+    const r = s.report;
+    importStatus(`Imported ${r.added} new image${r.added === 1 ? "" : "s"} · ${r.already_in_archive} already in the archive · `
+      + `${r.patients} patient${r.patients === 1 ? "" : "s"}, ${r.studies} stud${r.studies === 1 ? "y" : "ies"}, ${r.series} series`
+      + (r.not_dicom ? ` · ${r.not_dicom} other files skipped` : ""), 1);
+    await loadCases();
+    await renderPatients();
+  }
+}
+
+function setImportBusy(on) { for (const id of ["p-folder", "p-zip"]) $(id).disabled = on; }
+
+async function chooseAndImport(kind) {
+  try {
+    const r = await postJSON("/api/archive/choose", { kind });
+    if (r.state === "chosen") return startImport(r.path);
+    if (r.state === "unsupported") { $("p-path-row").hidden = false; $("p-path").focus(); }
+  } catch (e) {
+    $("p-path-row").hidden = false;
+    importStatus(`The file dialog did not open (${e.message}). Type the path instead.`, null, true);
+  }
+}
+
+$("nav-patients").onclick = showPatients;
+$("p-folder").onclick = () => chooseAndImport("folder");
+$("p-zip").onclick = () => chooseAndImport("zip");
+$("p-search").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(renderPatients, 150); };
+$("p-search").onkeydown = (e) => { if (e.key === "Enter") $("p-list").querySelector(".st")?.click(); };
+$("p-path-form").onsubmit = (e) => { e.preventDefault(); const v = $("p-path").value.trim(); if (v) startImport(v); };
+
 (async () => {
   try {
-    state.cases = (await getJSON("/api/cases")).cases;
+    await loadCases();
   } catch (e) {
     return showStatus("The workbench server is not reachable", e.message, true);
   }
   const [hashCase, hashView] = decodeURIComponent(location.hash.slice(1)).split("/");
-  const first = state.cases.find((c) => c.id === hashCase) || state.cases[0];
-  select(first.id, hashView || "case");
+  const first = state.cases.find((c) => c.id === hashCase);
+  if (first) return select(first.id, hashView || "case");
+  if (state.archive) {
+    const s = await getJSON("/api/archive/import").catch(() => null);
+    if (s?.state === "running") { setImportBusy(true); pollImport(); }
+    return showPatients();
+  }
+  if (state.cases.length) return select(state.cases[0].id, "case");
+  showStatus("No cases", "Start Eidos with --capsule-dir, --manifest, or the archive turned on.", true);
 })();
 </script>
 </body>

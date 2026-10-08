@@ -42,7 +42,7 @@ def server(tmp_path: Path):
     (capsules / "teaching-one.capsule.html").write_text("<!doctype html><title>synthetic capsule</title>")
     proc = subprocess.Popen(
         [sys.executable, "-m", "neuro_workbench.server", "--port", "0", "--cache-dir", str(tmp_path / "cache"),
-         "--phantom", str(phantom), "--capsule-dir", str(capsules)],
+         "--archive-dir", str(tmp_path / "archive"), "--phantom", str(phantom), "--capsule-dir", str(capsules)],
         stdout=subprocess.PIPE, text=True)
     url = json.loads(proc.stdout.readline())["url"]
     port = int(url.rsplit(":", 1)[1].strip("/"))

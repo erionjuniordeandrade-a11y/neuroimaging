@@ -12,9 +12,11 @@ list and three views per case:
 Research and teaching only, not for clinical use.
 
 Case sources are explicit. The built-in demo is a synthetic phantom capsule
-plus generated tract curves; they are not one subject. Real capsules and
-TractLab manifests appear only when given with --capsule-dir or --manifest.
-The workbench never scans a default patient folder.
+plus generated tract curves; they are not one subject. Patient studies come
+from the Eidos archive, which holds only what was imported into it (Import
+DICOM in the window, or --import). Capsules and TractLab manifests appear when
+given with --capsule-dir or --manifest. The workbench never scans any other
+folder for patient data.
 """
 
 from __future__ import annotations
@@ -31,7 +33,9 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
+
+from neuro_workbench.archive import Archive, default_archive_dir
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 DEFAULT_REPO = Path(__file__).resolve().parents[4]
@@ -110,8 +114,11 @@ class Job:
 
 class Workbench:
     def __init__(self, repo: Path, cache_dir: Path, phantom: Path | None,
-                 capsule_dirs: list[Path], manifests: list[Path]):
+                 capsule_dirs: list[Path], manifests: list[Path], archive: Archive | None = None):
         self.repo = repo
+        self.archive = archive
+        self.importer = {"state": "idle"}
+        self._import_lock = threading.Lock()
         self.cache_dir = cache_dir
         self.phantom = phantom
         self.cases: dict[str, dict] = {}
@@ -150,6 +157,49 @@ class Workbench:
             }, tracts=Job(lambda job, p=path: self._start_manifest_viewer(job, p)),
                 scene=Job(lambda job, p=path, c=_short_id("tracts", path): self._scene(job, c, [("tractlab", p)])))
 
+    # Archive --------------------------------------------------------------
+    def refresh_archive(self) -> None:
+        """Add archive studies imported since the last call to the case list."""
+        if not self.archive:
+            return
+        for st in self.archive.studies():
+            if st["id"] in self.cases:
+                continue
+            date = st["date"]
+            when = f"{date[:4]}-{date[4:6]}-{date[6:]}" if len(date) == 8 else date or "no date"
+            self._add_case(st["id"], {
+                "title": st["patient"] or "Unnamed patient",
+                "subtitle": f"{when} · {' '.join(st['modalities']) or 'DICOM'} · {st['description'] or 'Study'}",
+                "scope": "Patient study from the Eidos archive. Identifiable data: it stays on this Mac.",
+                "synthetic": False, "archive": True,
+            }, scene=Job(lambda job, c=st["id"]: self._scene(job, c, [("archive", c)])))
+
+    def case_known(self, case_id: str) -> bool:
+        if case_id not in self.cases:
+            self.refresh_archive()
+        return case_id in self.cases
+
+    def start_import(self, source: str) -> dict:
+        if not self.archive:
+            raise RuntimeError("the archive is turned off")
+        with self._import_lock:
+            if self.importer.get("state") == "running":
+                return self.importer
+            self.importer = {"state": "running", "done": 0, "total": 0}
+
+        def progress(done: int, total: int) -> None:
+            self.importer.update(done=done, total=total)
+
+        def run():
+            try:
+                report = self.archive.import_path(Path(source).expanduser(), progress)
+                self.refresh_archive()
+                self.importer = {"state": "done", "report": report}
+            except Exception as exc:  # the page shows the message; no traceback, no path
+                self.importer = {"state": "error", "error": str(exc)[:200] or exc.__class__.__name__}
+        threading.Thread(target=run, daemon=True).start()
+        return self.importer
+
     def _add_case(self, case_id, meta, imaging: Job | None = None, tracts: Job | None = None,
                   scene: Job | None = None):
         self.cases[case_id] = {"id": case_id, **meta,
@@ -168,6 +218,9 @@ class Workbench:
 
         parts = []
         for kind, path in sources:
+            if kind == "archive":
+                parts.append(self.archive.study_scene(self.archive.study_uid(path)))
+                continue
             path = path() if callable(path) else path
             if not Path(path).is_file():
                 raise FileNotFoundError(f"the {kind} source file is missing")
@@ -291,18 +344,52 @@ def make_handler(bench: Workbench):
         def _json(self, code: int, obj):
             self._send(code, json.dumps(obj).encode(), "application/json")
 
+        def do_POST(self):
+            # Same-origin JSON only: a page on another site cannot send this without a preflight.
+            port = self.server.server_address[1]
+            origin = self.headers.get("Origin")
+            if not self._host_ok() or (origin and origin not in (f"http://127.0.0.1:{port}", f"http://localhost:{port}")) \
+                    or not (self.headers.get("Content-Type") or "").startswith("application/json"):
+                return self._json(403, {"error": "forbidden"})
+            try:
+                body = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 65536)) or b"{}")
+            except ValueError:
+                return self._json(400, {"error": "bad json"})
+            path = urlsplit(self.path).path
+            if path == "/api/archive/import":
+                source = str(body.get("path") or "").strip()
+                if not source:
+                    return self._json(400, {"error": "no folder given"})
+                try:
+                    return self._json(200, bench.start_import(source))
+                except RuntimeError as exc:
+                    return self._json(409, {"error": str(exc)})
+            if path == "/api/archive/choose":
+                return self._json(200, choose_folder("zip" if body.get("kind") == "zip" else "folder"))
+            return self._json(404, {"error": "not found"})
+
         def do_GET(self):
             if not self._host_ok():
                 return self._json(403, {"error": "bad host"})
-            path = urlsplit(self.path).path
+            url = urlsplit(self.path)
+            path = url.path
+            if path == "/api/archive":
+                if not bench.archive:
+                    return self._json(200, {"enabled": False, "patients": [], "import": bench.importer})
+                q = (parse_qs(url.query).get("q") or [""])[0]
+                return self._json(200, {"enabled": True, "patients": bench.archive.patients(q),
+                                        "import": bench.importer})
+            if path == "/api/archive/import":
+                return self._json(200, bench.importer)
             if path in ("/", "/index.html"):
                 return self._send(200, (STATIC_DIR / "index.html").read_bytes(), "text/html; charset=utf-8")
             if path == "/vendor/niivue.js":
                 return self._send(200, (bench.repo / NIIVUE_JS).read_bytes(), "text/javascript; charset=utf-8")
             if path == "/api/cases":
-                return self._json(200, {"cases": list(bench.cases.values())})
+                bench.refresh_archive()
+                return self._json(200, {"cases": list(bench.cases.values()), "archive": bench.archive is not None})
             parts = path.strip("/").split("/")
-            if len(parts) == 4 and parts[:2] == ["api", "case"] and parts[2] in bench.cases:
+            if len(parts) == 4 and parts[:2] == ["api", "case"] and bench.case_known(parts[2]):
                 case_id, view = parts[2], parts[3]
                 if view == "case" and case_id in bench.scenes:
                     return self._json(200, bench.scenes[case_id].ensure())
@@ -332,6 +419,18 @@ def make_handler(bench: Workbench):
     return Handler
 
 
+def choose_folder(kind: str = "folder") -> dict:
+    """Ask for a folder or a .zip with the native macOS dialog. Other systems type the path in the page."""
+    if sys.platform != "darwin":
+        return {"state": "unsupported"}
+    script = ('POSIX path of (choose file with prompt "Import DICOM: choose a .zip" of type {"public.zip-archive"})'
+              if kind == "zip" else 'POSIX path of (choose folder with prompt "Import DICOM: choose a folder or a CD")')
+    proc = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
+    if proc.returncode != 0:
+        return {"state": "cancelled"}
+    return {"state": "chosen", "path": proc.stdout.strip()}
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--port", type=int, default=8790)
@@ -342,9 +441,23 @@ def main(argv: list[str] | None = None) -> None:
                         help="folder of *.capsule.html files to list (repeatable)")
     parser.add_argument("--manifest", type=Path, action="append", default=[],
                         help="TractLab manifest.json to list (repeatable)")
+    parser.add_argument("--archive-dir", type=Path, default=Path(os.environ.get("EIDOS_ARCHIVE", default_archive_dir())),
+                        help="patient archive folder (default: the Eidos folder in Application Support)")
+    parser.add_argument("--no-archive", action="store_true", help="run without the patient archive")
+    parser.add_argument("--import", dest="import_path", type=Path,
+                        help="import the DICOM files under this folder into the archive, print counts, and exit")
     args = parser.parse_args(argv)
 
-    bench = Workbench(args.repo.resolve(), args.cache_dir, args.phantom, args.capsule_dir, args.manifest)
+    archive = None if args.no_archive else Archive(args.archive_dir.expanduser())
+    if args.import_path:
+        if not archive:
+            parser.error("--import needs the archive")
+        try:
+            print(json.dumps(archive.import_path(args.import_path)), flush=True)
+        except (FileNotFoundError, ValueError) as exc:
+            sys.exit(f"eidos: import failed: {exc}")
+        return
+    bench = Workbench(args.repo.resolve(), args.cache_dir, args.phantom, args.capsule_dir, args.manifest, archive)
     httpd = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(bench))
     httpd.daemon_threads = True
     stop = threading.Event()
