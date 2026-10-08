@@ -564,13 +564,22 @@ function resetView() {
   nv.scene.crosshairPos = [0.5, 0.5, 0.5];
   nv.setRenderAzimuthElevation(120, 15);
   nv.drawScene();
+  toast("View reset: zoom, pan, cursor and 3D angle.");
 }
 
-function clearMeasures() { nv.clearAllMeasurements?.(); nv.drawScene(); }
+function clearMeasures() {
+  const doc = nv.document, n = (doc.completedMeasurements?.length || 0) + (doc.completedAngles?.length || 0);
+  if (!n) return toast("No distances or angles to clear.");
+  nv.clearAllMeasurements?.();
+  if (doc.completedAngles) doc.completedAngles.length = 0;
+  nv.drawScene(); renderFindings();
+  toast(`Cleared ${n} measurement${n > 1 ? "s" : ""}.`);
+}
 
 function screenshot() {
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
   nv.saveScene(`${caseId}-${S.layout}-${stamp}.png`);
+  toast("PNG of the current view saved to Downloads.");
 }
 
 async function load() {
@@ -822,7 +831,7 @@ function setTrajPoint(which) {
   curTraj()[which] = cursorMM();
   trajChanged();
   const t = curTraj();
-  toast(t.target && t.entry ? `${t.name}: ${len3(sub3(t.target, t.entry)).toFixed(1)} mm` : `${which === "target" ? "Target" : "Entry"} set. Now set the ${which === "target" ? "entry (Y)" : "target (T)"}.`);
+  toast(t.target && t.entry ? (len3(sub3(t.target, t.entry)) < 0.5 ? "Target and entry are the same point. Move the cursor and set one again." : `${t.name}: ${trajState(t)}`) : `${which === "target" ? "Target" : "Entry"} set. Now set the ${which === "target" ? "entry (Y)" : "target (T)"}.`);
 }
 function trajChanged() { invalidateDist(); applyTracts(); renderPlan(); renderFindings(); drawOverlay(true); drawProbe(); scheduleSave(); }
 // One-streamline TCK so NiiVue draws the path in 3D like a tract.
@@ -967,7 +976,7 @@ function renderFindings() {
   }));
   S.traj.forEach((t, i) => rows.push(findingRow({
     color: TRAJ_COLOR, glyph: "⟋", name: t.name, active: i === S.tsel,
-    value: t.target && t.entry ? `${len3(sub3(t.target, t.entry)).toFixed(1)} mm` : "incomplete", sub: "Trajectory",
+    value: trajState(t), sub: "Trajectory",
     onName: (v) => { t.name = v; renderPlan(); renderFindings(); scheduleSave(); },
     onClick: () => { S.tsel = i; trajChanged(); if (t.target) goTo(t.target); },
     onDelete: () => { S.traj.splice(i, 1); S.tsel = Math.min(S.tsel, S.traj.length - 1); trajChanged(); },
@@ -1149,6 +1158,13 @@ async function exportNifti(one) {
   }
   await ref.saveToDisk(`${caseId}-${name}.nii.gz`, data);
   if (!one) download(`${caseId}-structures.json`, new Blob([JSON.stringify(S.seg.objects.map(({ k, name, color }) => ({ value: k, name, color, cm3: Number(segCm3(k).toFixed(3)) })), null, 1)], { type: "application/json" }));
+}
+function trajState(t) {
+  if (!t.target && !t.entry) return "no points";
+  if (!t.entry) return "entry missing";
+  if (!t.target) return "target missing";
+  const L = len3(sub3(t.target, t.entry));
+  return L < 0.5 ? "target = entry" : `${L.toFixed(1)} mm`;
 }
 function findingsTable() {
   const rows = [["type", "name", "value", "unit", "detail"]];
