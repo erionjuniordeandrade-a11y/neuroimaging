@@ -65,7 +65,7 @@ def test_case_list_has_demo_and_explicit_capsules_only(server):
     cases = json.loads(body)["cases"]
     assert status == 200
     assert cases[0]["id"] == "demo-phantom" and cases[0]["synthetic"] is True
-    assert cases[0]["views"] == {"case": True, "imaging": True, "tracts": True, "atlas": True}
+    assert cases[0]["views"] == {"case": True, "imaging": True, "tracts": True}
     assert [c["title"] for c in cases[1:]] == ["teaching-one"]
     assert cases[1]["views"]["tracts"] is False
 
@@ -77,15 +77,26 @@ def test_demo_imaging_serves_the_phantom_capsule(server):
     assert status == 200 and b"synthetic phantom stand-in" in body
 
 
-def test_demo_tracts_and_atlas_start_a_tractlab_child(server):
+def test_demo_tracts_start_a_tractlab_child(server):
     tracts = _poll_ready(server, "/api/case/demo-phantom/tracts")
     assert tracts["state"] == "ready", tracts
     child_port = int(tracts["url"].split(":")[2].split("/")[0])
     status, body = _get(child_port, "/?teaching=1")
     assert status == 200 and b"SYNTHETIC QA" in body
-    atlas = _poll_ready(server, "/api/case/demo-phantom/atlas")
-    assert atlas["url"].endswith("/atlas.html?profile=teaching")
-    assert _get(child_port, "/atlas.html?profile=teaching")[0] == 200
+
+
+def test_atlas_is_case_free_and_cannot_reach_the_workstation(server):
+    status, body = _get(server, "/api/atlas")
+    assert status == 200 and json.loads(body) == {"state": "ready", "url": "/atlas/atlas.html"}
+    assert _get(server, "/api/case/demo-phantom/atlas")[0] == 404
+    status, page = _get(server, "/atlas/atlas.html")
+    assert status == 200 and b"REFERENCE ATLAS" in page
+    assert b"profile=clinical" not in page and b"Case reconstruction" not in page
+    assert _get(server, "/atlas/atlas/manifest.json")[0] == 200
+    assert _get(server, "/atlas/vendor/three.module.js")[0] == 200
+    for blocked in ("/atlas/index.html", "/atlas/", "/atlas/app_home.html", "/atlas/../README.md",
+                    "/atlas/atlas/../../../pyproject.toml", "/atlas/.git/config"):
+        assert _get(server, blocked)[0] == 404, blocked
 
 
 def test_rejects_foreign_host_and_unknown_routes(server):

@@ -68,7 +68,13 @@
   .card p { margin: 0; color: var(--muted); }
   .bar { height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; margin: 18px 0 0; }
   .bar i { display: block; height: 100%; width: 35%; background: var(--accent); border-radius: 3px; animation: slide 1.4s ease-in-out infinite; }
-  .status.error .bar { display: none; }
+  .status.error .bar, .status.idle .bar { display: none; }
+  .status-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .status-actions:empty { display: none; }
+  .status-steps { margin: 12px 0 0; padding: 0; list-style: none; font-size: 12px; color: var(--muted); }
+  .status-steps li::before { content: "○ "; } .status-steps li.done::before { content: "✓ "; color: var(--accent); }
+  .status-steps li.now { color: var(--text, inherit); } .status-steps li.now::before { content: "◐ "; color: var(--accent); }
+  .mod.dti { border-color: rgba(201,168,76,.5); color: var(--accent); }
   .status.error h3 { color: var(--warn); }
   @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
 
@@ -205,7 +211,7 @@
     <div class="scope"><span class="dot"></span><span id="scope"></span></div>
     <div class="stage" id="stage">
       <div class="status" id="status" hidden>
-        <div class="card"><h3 id="status-title"></h3><p id="status-text"></p><div class="bar"><i></i></div></div>
+        <div class="card"><h3 id="status-title"></h3><p id="status-text"></p><div class="bar"><i></i></div><div class="status-actions" id="status-actions"></div></div>
       </div>
     </div>
     <section class="patients" id="patients" hidden aria-label="Patient archive">
@@ -235,7 +241,7 @@
     <input class="search" id="search" placeholder="Filter cases" autocomplete="off" spellcheck="false">
   </div>
   <div class="case-list" id="cases"></div>
-  <div class="drawer-foot">Patient studies come from the archive (Patients, H). Capsules and manifests come from <code>--capsule-dir</code> or <code>--manifest</code>.</div>
+  <div class="drawer-foot">Patient studies come from the archive (Patients, H). Import a DICOM folder, CD or zip there; Eidos builds the capsule and, for DTI studies, the tracts.</div>
 </aside>
 <script>
 const VIEWS = ["case", "imaging", "tracts", "atlas"];
@@ -244,7 +250,12 @@ const LOADING = {
   case: "Decoding images, structures and tracts. The first demo build can take up to an hour; later runs reuse it.",
   imaging: "Preparing the capsule. The first demo build can take up to an hour; later runs reuse it.",
   tracts: "Starting TractLab on a loopback port.",
-  atlas: "Starting the reference atlas.",
+  atlas: "Loading the reference atlas.",
+};
+// The atlas is group anatomy. It belongs to no case, so it never shows a patient header.
+const ATLAS = {
+  title: "Reference atlas", sub: "Group anatomy · not registered to any patient",
+  scope: "Public group-average anatomy (HCP, Melbourne subcortex). It is not this patient, holds no patient data and has no review form.",
 };
 const state = { cases: [], caseId: null, view: "case", frames: new Map(), polling: null, archive: false, home: false };
 const $ = (id) => document.getElementById(id);
@@ -275,6 +286,7 @@ function renderCases() {
     if (c.synthetic) title.append(" ", el("span", "tag", "synthetic"));
     const chips = el("span", "chips");
     for (const v of VIEWS) if (c.views[v]) chips.append(el("span", "chip", VIEW_NAME[v]));
+    if (c.dti) chips.append(el("span", "chip", "DTI"));
     body.append(title, el("small", "", c.subtitle), chips);
     b.append(av, body);
     b.onclick = () => { closeDrawer(); select(c.id, null); };
@@ -287,53 +299,110 @@ function openDrawer() { document.body.classList.add("drawer-open"); renderCases(
 function closeDrawer() { document.body.classList.remove("drawer-open"); }
 
 function currentCase() { return state.cases.find((c) => c.id === state.caseId); }
+function hasView(c, v) { return v === "atlas" || !!c.views[v]; }
+// Browser history and sync keep tab titles, so a patient study shows initials and a study code, never the name.
+function tabName(c) { return c.archive ? `${initials(c.title)} · ${c.id.replace(/^study-/, "").slice(0, 6)}` : c.title; }
 
 function select(caseId, view) {
   setHome(false);
   state.caseId = caseId;
   const c = currentCase();
   view = view || state.view;
-  if (!c.views[view]) view = VIEWS.find((v) => c.views[v]);
+  if (!hasView(c, view)) view = VIEWS.find((v) => hasView(c, v));
   state.view = view;
   history.replaceState(null, "", `#${encodeURIComponent(caseId)}/${view}`);
-  $("case-title").textContent = c.title;
-  if (c.synthetic) $("case-title").append(" ", el("span", "tag", "synthetic"));
-  $("case-sub").textContent = c.subtitle;
-  document.title = `${c.title} · ${VIEW_NAME[view]} · Eidos`;
   document.querySelectorAll("nav button[data-view]").forEach((b) => {
-    b.disabled = !c.views[b.dataset.view];
+    b.disabled = !hasView(c, b.dataset.view);
     b.setAttribute("aria-selected", String(b.dataset.view === view));
   });
-  $("scope").textContent = c.scope;
+  document.body.classList.toggle("atlas-mode", view === "atlas");
+  if (view === "atlas") {
+    $("case-title").textContent = ATLAS.title;
+    $("case-sub").textContent = ATLAS.sub;
+    document.title = "Reference atlas · Eidos";
+    $("scope").textContent = ATLAS.scope;
+  } else {
+    $("case-title").textContent = c.title;
+    if (c.synthetic) $("case-title").append(" ", el("span", "tag", "synthetic"));
+    $("case-sub").textContent = c.subtitle;
+    document.title = `${tabName(c)} · ${VIEW_NAME[view]} · Eidos`;
+    $("scope").textContent = c.scope;
+  }
   renderCases();
   show();
 }
 
-function showStatus(title, text, error) {
+function showStatus(title, text, error, idle) {
   $("status").hidden = false;
   $("status").classList.toggle("error", !!error);
+  $("status").classList.toggle("idle", !!idle);
   $("status-title").textContent = title;
   $("status-text").textContent = text;
+  $("status-actions").replaceChildren();
+  $("status-steps")?.remove();
+}
+
+const PIPELINE_STEPS = [["ss3t", "Fibre orientations (SS3T-CSD)"], ["t1reg", "T1 registration"],
+                        ["banks", "Tract banks"], ["scalar_maps", "FA/MD maps"]];
+
+// An archive study whose capsule or tracts are not built yet: say why and offer the next step.
+function showProduct(kind, p, key) {
+  const again = () => { state.polling = setTimeout(show, 2000); };
+  const build = (label, primary = true) => {
+    const b = el("button", "btn" + (primary ? " primary" : ""), label);
+    b.onclick = async () => {
+      b.disabled = true;
+      try { await postJSON(`/api/case/${encodeURIComponent(state.caseId)}/build`, { product: kind }); show(); }
+      catch (e) { showStatus("The build could not start", e.message, true); }
+    };
+    $("status-actions").append(b);
+  };
+  const dti = (p.dti || []).map((d) => `series ${d.number} (${d.images} images)`).join(", ");
+  if (kind === "capsule") {
+    if (p.state === "running") { showStatus("Building the capsule", `From series ${p.series.join(", ")}. The capsule opens here when it is ready.`); return again(); }
+    if (p.state === "empty") return showStatus("No capsule for this study", "This study has no CT or MR volume series a capsule can use.", true);
+    if (p.state === "error") { showStatus("The capsule build failed", p.error, true); return build("Try again", false); }
+    showStatus("No capsule yet", `Eidos can build one from series ${p.series.join(", ")} of this study. It stays in the archive folder.`, false, true);
+    return build("Build capsule");
+  }
+  if (p.state === "nodti") return showStatus("No DTI series in this study", "Tracts need a diffusion series (6 or more directions). The other views work without it.", true);
+  if (p.state === "unavailable") return showStatus(`DTI detected: ${dti}`, `The tract pipeline cannot run on this Mac. Missing: ${p.missing.join(", ")}.`, true);
+  if (p.state === "running" || (p.state === "error" && p.total)) {
+    const title = p.state === "running" ? `Running the tract pipeline · step ${Math.min(p.done + 1, p.total)} of ${p.total}` : "The tract pipeline failed";
+    showStatus(title, p.state === "running" ? `DTI ${dti}. This takes a long time; you can use other views meanwhile.` : p.error, p.state === "error");
+    const ul = el("ul", "status-steps"); ul.id = "status-steps";
+    PIPELINE_STEPS.forEach(([name, label], i) => ul.append(el("li", i < p.done ? "done" : name === p.stage && p.state === "running" ? "now" : "", label)));
+    $("status-actions").before(ul);
+    if (p.state === "error") return build("Resume pipeline", false);
+    return again();
+  }
+  if (p.state === "error") { showStatus("The tract pipeline failed", p.error, true); return build("Try again", false); }
+  showStatus(`DTI detected: ${dti}`, p.resume ? `A previous run stopped after ${p.done} of ${p.total} steps.` :
+    "Run the tract pipeline on this study: DICOM → NIfTI, fibre orientations, T1 registration, tract banks.", false, true);
+  build(p.resume ? "Resume tract pipeline" : "Run tract pipeline");
 }
 
 async function show() {
   clearTimeout(state.polling);
-  const key = `${state.caseId}/${state.view}`;
+  // One atlas frame for every case: it does not depend on the case.
+  const key = state.view === "atlas" ? "atlas" : `${state.caseId}/${state.view}`;
   for (const [k, f] of state.frames) f.hidden = k !== key;
   if (state.frames.has(key)) { $("status").hidden = true; return; }
   showStatus(`Opening ${VIEW_NAME[state.view]}`, LOADING[state.view]);
   try {
-    const s = await getJSON(`/api/case/${encodeURIComponent(state.caseId)}/${state.view}`);
-    if (`${state.caseId}/${state.view}` !== key) return;
+    const s = await getJSON(key === "atlas" ? "/api/atlas" : `/api/case/${encodeURIComponent(state.caseId)}/${state.view}`);
+    if ((state.view === "atlas" ? "atlas" : `${state.caseId}/${state.view}`) !== key) return;
     if (s.state === "ready") {
       const f = document.createElement("iframe");
       f.src = s.url;
-      f.title = `${currentCase().title} · ${VIEW_NAME[state.view]}`;
+      f.title = key === "atlas" ? ATLAS.title : `${tabName(currentCase())} · ${VIEW_NAME[state.view]}`;
       f.dataset.key = key;
       f.setAttribute("allow", "fullscreen");
       state.frames.set(key, f);
       $("stage").append(f);
       $("status").hidden = true;
+    } else if (s.state === "product") {
+      showProduct(s.kind, s.product, key);
     } else if (s.state === "error") {
       showStatus("This view could not open", s.error, true);
     } else {
@@ -351,7 +420,7 @@ $("search").oninput = renderCases;
 $("search").onkeydown = (e) => { if (e.key === "Enter") $("cases").querySelector(".case")?.click(); };
 function handleKey(key) {
   const n = Number(key);
-  if (n >= 1 && n <= VIEWS.length && currentCase()?.views[VIEWS[n - 1]]) { select(state.caseId, VIEWS[n - 1]); return true; }
+  if (n >= 1 && n <= VIEWS.length && currentCase() && hasView(currentCase(), VIEWS[n - 1])) { select(state.caseId, VIEWS[n - 1]); return true; }
   if (key === "k" || key === "K") { openDrawer(); return true; }
   if ((key === "h" || key === "H") && state.archive) { showPatients(); return true; }
   return false;
@@ -441,6 +510,7 @@ async function renderPatients() {
       const rank = (m) => (MOD_ORDER.includes(m) ? MOD_ORDER.indexOf(m) : 99);
       for (const m of [...st.modalities].sort((x, y) => rank(x) - rank(y)))
         mods.append(el("span", "mod", m));
+      if (st.dti) { const d = el("span", "mod dti", "DTI"); d.title = `${st.dti} diffusion series detected`; mods.append(d); }
       desc.append(el("b", "", st.label || st.description || "Study"));
       if (st.label && st.description) desc.append(el("small", "", `${st.description} · `));
       if (st.note) desc.append(el("span", "note", st.note));
@@ -598,7 +668,7 @@ $("p-path-form").onsubmit = (e) => { e.preventDefault(); const v = $("p-path").v
     return showPatients();
   }
   if (state.cases.length) return select(state.cases[0].id, "case");
-  showStatus("No cases", "Start Eidos with --capsule-dir, --manifest, or the archive turned on.", true);
+  showStatus("No cases yet", "Open Patients (H) and import a DICOM folder, CD or zip.", true);
 })();
 </script>
 </body>

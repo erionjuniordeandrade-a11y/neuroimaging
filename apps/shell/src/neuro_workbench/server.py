@@ -7,7 +7,8 @@ list and three views per case:
               of the case in the same slices and 3D view (scene.html).
 * Capsule   — the Capsule viewer2 file with its guided tour.
 * Tracts    — the TractLab workstation, served by a TractLab child process.
-* Atlas     — the TractLab reference atlas from the same child.
+* Atlas     — the TractLab reference atlas: static group anatomy that Eidos
+              serves itself. It belongs to no case and never shows patient data.
 
 Research and teaching only, not for clinical use.
 
@@ -36,6 +37,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 from neuro_workbench.archive import Archive, default_archive_dir
+from neuro_workbench.derived import Derived
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 DEFAULT_REPO = Path(__file__).resolve().parents[4]
@@ -45,6 +47,16 @@ FILE_TYPES = {".tck": "application/octet-stream", ".gz": "application/gzip", ".n
 CHILD_START_TIMEOUT_S = 90.0
 MAX_JSON_BYTES = 65536
 MAX_ANNOTATION_BYTES = 64 << 20
+# The reference atlas is static group anatomy. Only these parts of the TractLab
+# viewer are served, so the atlas cannot open the case workstation or its review form.
+ATLAS_PAGES = ("atlas.html", "atlas-sources.html")
+ATLAS_DIRS = ("atlas", "vendor", "lessons")
+ATLAS_TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8",
+               ".css": "text/css; charset=utf-8", ".json": "application/json", ".glb": "model/gltf-binary",
+               ".bin": "application/octet-stream", ".wasm": "application/wasm", ".txt": "text/plain; charset=utf-8",
+               ".md": "text/plain; charset=utf-8", ".svg": "image/svg+xml",
+               ".woff": "font/woff", ".woff2": "font/woff2", ".ttf": "font/ttf"}
+ATLAS_CASE_LINK = '<a href="./?profile=clinical">Case reconstruction</a>'
 
 
 def default_cache_dir() -> Path:
@@ -119,6 +131,7 @@ class Workbench:
                  capsule_dirs: list[Path], manifests: list[Path], archive: Archive | None = None):
         self.repo = repo
         self.archive = archive
+        self.derived = Derived(repo, archive) if archive else None
         self.importer = {"state": "idle"}
         self._import_lock = threading.Lock()
         self.cache_dir = cache_dir
@@ -175,8 +188,41 @@ class Workbench:
                 "title": st["patient"] or "Unnamed patient",
                 "subtitle": subtitle,
                 "scope": "Patient study from the Eidos archive. Identifiable data: it stays on this Mac.",
-                "synthetic": False, "archive": True,
-            }, scene=Job(lambda job, c=st["id"]: self._scene(job, c, [("archive", c)])))
+                "synthetic": False, "archive": True, "dti": st.get("dti", 0),
+            }, scene=Job(lambda job, c=st["id"]: self._scene(job, c, [("archive", c)])),
+                imaging=Job(lambda job, c=st["id"]: self._derived_capsule(job, c)),
+                tracts=Job(lambda job, c=st["id"]: self._derived_tracts(job, c)))
+
+    # Derived products of archive studies ----------------------------------
+    def product_view(self, case_id: str, view: str) -> dict:
+        """Imaging/tracts view of an archive study: the viewer when its product is ready, else the product state."""
+        kind = "capsule" if view == "imaging" else "tracts"
+        product = self.derived.status(case_id)[kind]
+        job = (self.imaging if view == "imaging" else self.tracts)[case_id]
+        if product["state"] != "ready":
+            if job.state == "ready":  # the product was removed under a running viewer
+                job.stop()
+                job.state, job.url = "idle", None
+            return {"state": "product", "product": product, "kind": kind}
+        return job.ensure()
+
+    def build_product(self, case_id: str, kind: str) -> dict:
+        if not self.derived or not self.cases.get(case_id, {}).get("archive"):
+            raise KeyError(case_id)
+        return self.derived.build(case_id, kind)
+
+    def _derived_capsule(self, job: Job, case_id: str) -> str:
+        path = self.derived.capsule_file(case_id)
+        if not path:
+            raise FileNotFoundError("the capsule has not been built")
+        job.path = path
+        return f"/case/{case_id}/imaging.html"
+
+    def _derived_tracts(self, job: Job, case_id: str) -> str:
+        manifest = self.derived.manifest(case_id)
+        if not manifest:
+            raise FileNotFoundError("the tract pipeline has not finished")
+        return self._start_manifest_viewer(job, manifest)
 
     def case_known(self, case_id: str) -> bool:
         if case_id not in self.cases:
@@ -208,7 +254,7 @@ class Workbench:
                   scene: Job | None = None):
         self.cases[case_id] = {"id": case_id, **meta,
                                "views": {"case": scene is not None, "imaging": imaging is not None,
-                                         "tracts": tracts is not None, "atlas": True}}
+                                         "tracts": tracts is not None}}
         if scene:
             self.scenes[case_id] = scene
         if imaging:
@@ -296,6 +342,7 @@ class Workbench:
         if uid is None:
             raise KeyError(case_id)
         self.refresh_archive()
+        self.derived.stop(case_id)
         out = self.archive.delete_study(uid)
         self._forget_case(case_id)
         return out
@@ -306,6 +353,9 @@ class Workbench:
         if key is None:
             raise KeyError(case_id)
         self.refresh_archive()
+        for cid in [c for c, m in self.cases.items() if m.get("archive")]:
+            if self.archive.patient_key(cid) == key:
+                self.derived.stop(cid)
         out = self.archive.delete_patient(key)
         for cid in out.pop("study_ids"):
             self._forget_case(cid)
@@ -377,17 +427,33 @@ class Workbench:
             time.sleep(0.25)
         raise TimeoutError("the TractLab viewer did not start in time")
 
-    def atlas(self, case_id: str) -> dict:
-        source = case_id if case_id in self.tracts else DEMO_ID
-        status = self.tracts[source].ensure()
-        if status.get("url"):
-            parts = urlsplit(status["url"])
-            status["url"] = f"{parts.scheme}://{parts.netloc}/atlas.html?profile=teaching"
-        return status
+    def atlas_file(self, rel: str) -> tuple[bytes, str] | None:
+        """One file of the reference atlas, or None when it is outside the atlas allowlist."""
+        viewer = (self.repo / "tractlab" / "viewer").resolve()
+        parts = [p for p in rel.split("/") if p]
+        if not parts or any(p.startswith(".") for p in parts):
+            return None
+        name, suffix = parts[-1], Path(parts[-1]).suffix.lower()
+        if len(parts) == 1:
+            if suffix == ".html" and name not in ATLAS_PAGES:
+                return None
+            if suffix not in (".html", ".js", ".mjs", ".css"):
+                return None
+        elif parts[0] not in ATLAS_DIRS or suffix == ".html":
+            return None
+        file = (viewer / Path(*parts)).resolve()
+        if viewer not in file.parents or not file.is_file() or suffix not in ATLAS_TYPES:
+            return None
+        body = file.read_bytes()
+        if suffix == ".html":
+            body = body.replace(ATLAS_CASE_LINK.encode(), b"")
+        return body, ATLAS_TYPES[suffix]
 
     def stop(self):
         for job in self.tracts.values():
             job.stop()
+        if self.derived:
+            self.derived.stop()
 
 
 def make_handler(bench: Workbench):
@@ -458,6 +524,17 @@ def make_handler(bench: Workbench):
                 except KeyError:
                     return self._json(404, {"error": "not found"})
                 return self._json(404, {"error": "not found"})
+            if len(parts) == 4 and parts[:2] == ["api", "case"] and parts[3] == "build":
+                if not bench.case_known(parts[2]):
+                    return self._json(404, {"error": "not found"})
+                try:
+                    return self._json(200, bench.build_product(parts[2], str(body.get("product") or "")))
+                except KeyError:
+                    return self._json(404, {"error": "not an archive study"})
+                except ValueError as exc:
+                    return self._json(400, {"error": str(exc)})
+                except RuntimeError as exc:
+                    return self._json(409, {"error": str(exc)})
             if path == "/api/archive/choose":
                 return self._json(200, choose_folder("zip" if body.get("kind") == "zip" else "folder"))
             return self._json(404, {"error": "not found"})
@@ -479,6 +556,13 @@ def make_handler(bench: Workbench):
                 return self._send(200, (STATIC_DIR / "index.html").read_bytes(), "text/html; charset=utf-8")
             if path == "/vendor/niivue.js":
                 return self._send(200, (bench.repo / NIIVUE_JS).read_bytes(), "text/javascript; charset=utf-8")
+            if path == "/api/atlas":
+                return self._json(200, {"state": "ready", "url": "/atlas/atlas.html"})
+            if path.startswith("/atlas/"):
+                found = bench.atlas_file(path[len("/atlas/"):])
+                if found:
+                    return self._send(200, *found)
+                return self._json(404, {"error": "not found"})
             if path == "/api/cases":
                 bench.refresh_archive()
                 return self._json(200, {"cases": list(bench.cases.values()), "archive": bench.archive is not None})
@@ -487,12 +571,12 @@ def make_handler(bench: Workbench):
                 case_id, view = parts[2], parts[3]
                 if view == "case" and case_id in bench.scenes:
                     return self._json(200, bench.scenes[case_id].ensure())
+                if view in ("imaging", "tracts") and bench.cases[case_id].get("archive") and bench.derived:
+                    return self._json(200, bench.product_view(case_id, view))
                 if view == "imaging" and case_id in bench.imaging:
                     return self._json(200, bench.imaging[case_id].ensure())
                 if view == "tracts" and case_id in bench.tracts:
                     return self._json(200, bench.tracts[case_id].ensure())
-                if view == "atlas":
-                    return self._json(200, bench.atlas(case_id))
                 if view == "annotations":
                     return self._json(200, bench.load_annotations(case_id))
             if len(parts) == 3 and parts[0] == "case" and parts[2] == "scene.html" and bench.scene_json(parts[1]):

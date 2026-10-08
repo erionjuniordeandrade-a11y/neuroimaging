@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import shutil
 import sqlite3
 import sys
@@ -45,6 +46,11 @@ CREATE INDEX IF NOT EXISTS instances_series ON instances(series_uid);
 CREATE TABLE IF NOT EXISTS study_edits (
   uid TEXT PRIMARY KEY REFERENCES studies(uid), label TEXT NOT NULL DEFAULT '', note TEXT NOT NULL DEFAULT '');
 """
+# Diffusion series by description: raw DWI/DTI acquisitions, not the scanner's derived maps.
+DIFFUSION = re.compile(r"dti|dwi|diff|tensor|hardi|dsi|noddi|mddw|tracto", re.I)
+DIFFUSION_MAPS = re.compile(r"adc|(?<![a-z])c?fa(?![a-z])|colfa|color.?fa|trace|(?<![a-z])exp|isotropic|tensor_b0", re.I)
+# One b0 plus six gradient directions is the least a tensor fit needs.
+MIN_DIFFUSION_IMAGES = 7
 # Local edits are short text; the imported DICOM fields are never changed.
 MAX_LABEL = 120
 MAX_NOTE = 2000
@@ -74,6 +80,18 @@ def _volume_kind(modality: str, description: str) -> str:
     if "CTA" in text or "ANGIO" in text:
         return "CTA"
     return modality.upper() or "OT"
+
+
+def is_diffusion(modality: str, description: str, images: int) -> bool:
+    """True for an MR series that looks like a raw diffusion acquisition."""
+    text = description or ""
+    return (modality or "").upper() == "MR" and images >= MIN_DIFFUSION_IMAGES \
+        and bool(DIFFUSION.search(text)) and not DIFFUSION_MAPS.search(text)
+
+
+def _series_item(modality, description, number, images) -> dict:
+    return {"modality": modality, "description": description, "number": number, "images": images,
+            "dti": is_diffusion(modality or "", description or "", images)}
 
 
 class Archive:
@@ -173,7 +191,7 @@ class Archive:
         by_study: dict[str, list[dict]] = {}
         for s in series:
             by_study.setdefault(s["study_uid"], []).append(
-                {"modality": s["modality"], "description": s["description"], "number": s["number"], "images": s["n"]})
+                _series_item(s["modality"], s["description"], s["number"], s["n"]))
         by_patient: dict[str, list[dict]] = {}
         for st in studies:
             items = sorted(by_study.get(st["uid"], []), key=lambda x: (x["number"] is None, x["number"] or 0))
@@ -181,7 +199,7 @@ class Archive:
                 "id": study_case_id(st["uid"]), "date": st["date"], "description": st["description"],
                 "label": st["label"], "note": st["note"],
                 "accession": st["accession"], "modalities": sorted({x["modality"] for x in items if x["modality"]}),
-                "series": items})
+                "dti": sum(1 for x in items if x["dti"]), "series": items})
         out = []
         terms = [t for t in query.lower().split() if t]
         for p in patients:
@@ -205,6 +223,22 @@ class Archive:
                 if study_case_id(uid) == case_id:
                     return uid
         return None
+
+    def study_series(self, study_uid: str) -> list[dict]:
+        """The series of one study in series-number order, with the diffusion flag."""
+        with self._db() as db:
+            rows = db.execute("""SELECT s.modality, s.description, s.number, COUNT(i.sop_uid) AS n FROM series s
+                                 LEFT JOIN instances i ON i.series_uid = s.uid WHERE s.study_uid=?
+                                 GROUP BY s.uid ORDER BY s.number""", (study_uid,)).fetchall()
+        return [_series_item(r["modality"], r["description"], r["number"], r["n"]) for r in rows]
+
+    def study_dicom_dir(self, study_uid: str) -> Path:
+        """The archive copy of one study's DICOM files. Derived products are built from it."""
+        return self.root / "dicom" / _h(study_uid)
+
+    def derived_dir(self, case_id: str) -> Path:
+        """Products built from one study (capsule, tract case). They live and die with the study."""
+        return self.root / "derived" / case_id
 
     def patient_key(self, case_id: str) -> str | None:
         uid = self.study_uid(case_id)
@@ -247,6 +281,7 @@ class Archive:
             if not left:
                 db.execute("DELETE FROM patients WHERE key=?", (study["patient_key"],))
         shutil.rmtree(self.root / "dicom" / _h(study_uid), ignore_errors=True)
+        shutil.rmtree(self.derived_dir(study_case_id(study_uid)), ignore_errors=True)
         return {"studies": 1, "series": len(series), "images": files, "patient_removed": not left}
 
     def delete_patient(self, patient_key: str) -> dict:
