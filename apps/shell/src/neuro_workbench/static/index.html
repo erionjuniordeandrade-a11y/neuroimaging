@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eidos</title>
+<style>
+  :root {
+    --bg: #07090d; --bg2: #0d1017; --glass: rgba(20,24,33,.72); --hover: rgba(255,255,255,.05);
+    --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.14);
+    --text: #ece9e2; --muted: #8f8c85; --faint: #5f5d58; --accent: #C9A84C; --accent-soft: rgba(201,168,76,.13);
+    --warn: #e0764f;
+    --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --serif: "Playfair Display", "Iowan Old Style", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.45 var(--sans); }
+  button { font: inherit; color: inherit; }
+  svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  .app { display: grid; grid-template-columns: 76px 1fr; grid-template-rows: 52px 1fr; height: 100%; }
+
+  /* Top bar */
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding: 0 14px 0 0;
+           border-bottom: 1px solid var(--line); background: var(--bg2); }
+  .brand { width: 76px; height: 100%; display: grid; place-items: center; border-right: 1px solid var(--line); }
+  .brand-mark { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+                background: linear-gradient(145deg, rgba(201,168,76,.32), rgba(201,168,76,.06));
+                border: 1px solid rgba(201,168,76,.45); color: var(--accent); font: 600 15px var(--serif); }
+  .app-name { font: 600 17px var(--serif); letter-spacing: .01em; white-space: nowrap; }
+  .app-name span { color: var(--accent); }
+  .sep { width: 1px; height: 22px; background: var(--line); }
+  .case-switch { display: flex; align-items: center; gap: 10px; background: none; border: 1px solid var(--line);
+                 border-radius: 10px; padding: 5px 10px 5px 12px; cursor: pointer; min-width: 0; max-width: 46vw; }
+  .case-switch:hover { border-color: var(--line2); background: var(--hover); }
+  .case-switch .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .case-switch .s { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .case-switch svg { width: 14px; height: 14px; color: var(--muted); }
+  .tag { display: inline-block; font: 600 9.5px var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--warn);
+         border: 1px solid rgba(224,118,79,.45); border-radius: 4px; padding: 0 5px; line-height: 15px; vertical-align: 1px; }
+  .spacer { flex: 1; }
+  .ruo { font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .ruo b { color: var(--warn); font-weight: 600; }
+
+  /* View rail */
+  nav { display: flex; flex-direction: column; gap: 4px; padding: 10px 8px; border-right: 1px solid var(--line); background: var(--bg2); }
+  nav button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 9px 2px 8px; border: 1px solid transparent;
+               border-radius: 12px; background: none; color: var(--muted); cursor: pointer; font-size: 10.5px; font-weight: 500;
+               position: relative; }
+  nav button:hover:not(:disabled) { color: var(--text); background: var(--hover); }
+  nav button[aria-selected="true"] { color: var(--accent); background: var(--accent-soft); border-color: rgba(201,168,76,.35); }
+  nav button:disabled { opacity: .3; cursor: not-allowed; }
+  nav .kbd { position: absolute; top: 4px; right: 6px; font-size: 9px; color: var(--faint); }
+
+  /* Stage */
+  main { position: relative; min-width: 0; min-height: 0; display: grid; grid-template-rows: auto 1fr; }
+  .scope { display: flex; align-items: center; gap: 8px; padding: 7px 16px; font-size: 12px; color: var(--muted);
+           border-bottom: 1px solid var(--line); background: rgba(255,255,255,.012); }
+  .scope .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; }
+  .stage { position: relative; min-height: 0; background: #000; }
+  .stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+  .stage iframe[hidden] { display: none; }
+  .status { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; background: var(--bg); }
+  .status[hidden] { display: none; }
+  .card { width: min(420px, 100%); border: 1px solid var(--line); border-radius: 16px; background: var(--glass);
+          padding: 22px 22px 20px; text-align: center; }
+  .card h3 { margin: 0 0 6px; font: 600 18px var(--serif); }
+  .card p { margin: 0; color: var(--muted); }
+  .bar { height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; margin: 18px 0 0; }
+  .bar i { display: block; height: 100%; width: 35%; background: var(--accent); border-radius: 3px; animation: slide 1.4s ease-in-out infinite; }
+  .status.error .bar, .status.idle .bar { display: none; }
+  .status-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .status-actions:empty { display: none; }
+  .status-steps { margin: 12px 0 0; padding: 0; list-style: none; font-size: 12px; color: var(--muted); }
+  .status-steps li::before { content: "○ "; } .status-steps li.done::before { content: "✓ "; color: var(--accent); }
+  .status-steps li.now { color: var(--text, inherit); } .status-steps li.now::before { content: "◐ "; color: var(--accent); }
+  .mod.dti { border-color: rgba(201,168,76,.5); color: var(--accent); }
+  .status.error h3 { color: var(--warn); }
+  @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+
+  /* Case drawer */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 20; opacity: 0; pointer-events: none; transition: opacity .18s; }
+  .drawer { position: fixed; top: 52px; left: 76px; bottom: 0; width: min(360px, calc(100vw - 76px)); z-index: 21;
+            background: var(--bg2); border-right: 1px solid var(--line); transform: translateX(-12px); opacity: 0;
+            pointer-events: none; transition: transform .18s ease, opacity .18s ease; display: flex; flex-direction: column; }
+  body.drawer-open .scrim { opacity: 1; pointer-events: auto; }
+  body.drawer-open .drawer { transform: none; opacity: 1; pointer-events: auto; }
+  .drawer-head { padding: 14px 14px 10px; border-bottom: 1px solid var(--line); }
+  .drawer-head h2 { margin: 0 0 10px; font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+  .search { width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 9px;
+            color: var(--text); padding: 7px 10px; font: inherit; outline: none; }
+  .search:focus { border-color: rgba(201,168,76,.55); }
+  .case-list { overflow-y: auto; padding: 8px; }
+  .case { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; width: 100%; text-align: left;
+          background: none; border: 1px solid transparent; padding: 9px 10px; border-radius: 11px; cursor: pointer; margin-bottom: 3px; }
+  .case:hover { background: var(--hover); }
+  .case[aria-current="true"] { background: var(--accent-soft); border-color: rgba(201,168,76,.4); }
+  .case .av { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: rgba(255,255,255,.05);
+              color: var(--muted); border: 1px solid var(--line); }
+  .case[aria-current="true"] .av { color: var(--accent); border-color: rgba(201,168,76,.4); }
+  .case b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .case small { display: block; color: var(--muted); }
+  .chips { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+  .chip { font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; line-height: 16px; }
+  .drawer-foot { margin-top: auto; padding: 12px 14px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; }
+  .drawer-foot code { color: var(--muted); }
+
+  /* Patients */
+  nav .home-sep { height: 1px; background: var(--line); margin: 4px 6px; flex: none; }
+  .patients { position: absolute; inset: 0; z-index: 2; background: var(--bg); display: flex; flex-direction: column; min-height: 0; }
+  .patients[hidden] { display: none; }
+  .p-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 18px 22px 14px; border-bottom: 1px solid var(--line); }
+  .p-head h1 { margin: 0 8px 0 0; font: 600 22px var(--serif); }
+  .p-head h1 small { font: 500 12px var(--sans); color: var(--muted); margin-left: 8px; }
+  .p-head .search { width: min(340px, 100%); }
+  .btn { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line2); background: rgba(255,255,255,.03);
+         border-radius: 9px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+  .btn:hover { background: var(--hover); border-color: rgba(201,168,76,.45); }
+  .btn.primary { background: var(--accent-soft); border-color: rgba(201,168,76,.5); color: var(--accent); font-weight: 600; }
+  .btn svg { width: 16px; height: 16px; }
+  .btn:disabled { opacity: .45; cursor: progress; }
+  .p-path { display: flex; gap: 6px; flex: 1 1 260px; max-width: 460px; }
+  .p-path .search { flex: 1; width: auto; }
+  .p-import { padding: 9px 22px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; display: flex; gap: 12px; align-items: center; }
+  .p-import[hidden] { display: none; }
+  .p-import .bar { flex: 0 0 160px; margin: 0; }
+  .p-import .bar i { animation: none; transition: width .3s; }
+  .p-import.error { color: var(--warn); }
+  .p-head[hidden] { display: none; }
+  .p-list { flex: 1; overflow-y: auto; padding: 14px 22px 30px; display: grid; gap: 10px; align-content: start; }
+  .pt { border: 1px solid var(--line); border-radius: 14px; background: var(--glass); overflow: hidden; }
+  .pt-row { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; }
+  .pt-av { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; font: 600 14px var(--serif);
+           color: var(--accent); background: var(--accent-soft); border: 1px solid rgba(201,168,76,.35); }
+  .pt-row b { font-size: 14.5px; font-weight: 600; }
+  .pt-row .meta { color: var(--muted); font-size: 12px; display: flex; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+  .pt-row .count { color: var(--faint); font-size: 12px; }
+  .st { display: grid; grid-template-columns: 96px 1fr auto auto; gap: 12px; align-items: center; padding: 10px 14px 10px 66px;
+        border-top: 1px solid var(--line); cursor: pointer; }
+  .st:hover { background: var(--hover); }
+  .st .date { font-variant-numeric: tabular-nums; color: var(--text); }
+  .st .desc { min-width: 0; }
+  .st .desc b { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .st .desc small { color: var(--muted); }
+  .st .desc .note { display: block; color: var(--text); opacity: .8; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .acts { display: flex; gap: 2px; }
+  .ib { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 7px; border: 0; background: none; color: var(--muted); cursor: pointer; }
+  .ib:hover { background: var(--hover); color: var(--text); } .ib.danger:hover { color: #ff7a6b; }
+  .ib svg { width: 15px; height: 15px; }
+  .st-edit { display: grid; gap: 8px; padding: 10px 14px 14px 66px; border-top: 1px solid var(--line); background: var(--hover); }
+  .st-edit label { display: grid; gap: 4px; font-size: 11.5px; color: var(--muted); }
+  .st-edit input, .st-edit textarea { font: 13px var(--sans); color: var(--text); background: var(--bg); border: 1px solid var(--line);
+                                       border-radius: 8px; padding: 7px 9px; resize: vertical; }
+  .st-edit .row { display: flex; gap: 8px; justify-content: flex-end; }
+  .mod { font: 600 10px var(--sans); letter-spacing: .06em; color: var(--accent); border: 1px solid rgba(201,168,76,.4);
+         border-radius: 5px; padding: 1px 6px; margin-right: 4px; }
+  .p-empty { margin: 60px auto; max-width: 440px; text-align: center; color: var(--muted); }
+  .p-empty h3 { font: 600 20px var(--serif); color: var(--text); margin: 0 0 8px; }
+  .p-foot { padding: 10px 22px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; display: flex; gap: 8px; align-items: center; }
+  .p-foot svg { width: 14px; height: 14px; flex: none; }
+  .p-foot.warn { color: #ffb59b; }
+
+  @media (max-width: 760px) {
+    .st { grid-template-columns: 1fr auto auto; padding-left: 14px; } .st-edit { padding-left: 14px; } .st .date { grid-column: 1 / -1; }
+    nav .home-sep { display: none; }
+    .app { grid-template-columns: 1fr; grid-template-rows: 52px 1fr 60px; }
+    .brand { width: 52px; } .app-name, .sep, .ruo { display: none; }
+    nav { grid-row: 3; flex-direction: row; border-right: 0; border-top: 1px solid var(--line); padding: 6px; }
+    nav button { flex: 1; } nav .kbd { display: none; }
+    main { grid-row: 2; }
+    .drawer { left: 0; width: 100vw; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-case" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><path d="M17 13.5c2 1.2 3 2.6 3 3.5s-1 2.6-3 3.5c-2-.9-3-2.6-3-3.5s1-2.3 3-3.5z"/></symbol>
+  <symbol id="i-capsule" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="4"/><path d="M12 8v8"/></symbol>
+  <symbol id="i-tracts" viewBox="0 0 24 24"><path d="M4 20c3-5 3-11 8-16"/><path d="M8 20c2-5 4-9 8-13"/><path d="M12 20c2-3 4-6 8-8"/></symbol>
+  <symbol id="i-atlas" viewBox="0 0 24 24"><path d="M12 4c-4.4 0-8 3-8 7 0 2.2 1.1 4 2.8 5.2V20h3.6v-2h3.2v2h3.6v-3.8C18.9 15 20 13.2 20 11c0-4-3.6-7-8-7z"/><path d="M12 4v10"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6"/><path d="M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3"/><path d="M7 15h10"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-patients" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.4-.3 4.4 1.2 5 4.3"/></symbol>
+  <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4 17v1.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V17"/></symbol>
+  <symbol id="i-zip" viewBox="0 0 24 24"><path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M10 4v2m0 2v2m0 2v2"/><rect x="8.5" y="14" width="3" height="3" rx=".6"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V4.5h6V7"/><path d="M6.5 7l1 13h9l1-13"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+</svg>
+<div class="app">
+  <header>
+    <div class="brand"><div class="brand-mark">E</div></div>
+    <div class="app-name">Ei<span>dos</span></div>
+    <div class="sep"></div>
+    <button class="case-switch" id="case-switch" title="Switch case (K)" aria-haspopup="dialog">
+      <span class="t" id="case-title">…</span><span class="s" id="case-sub"></span>
+      <svg class="i"><use href="#i-down"/></svg>
+    </button>
+    <div class="spacer"></div>
+    <div class="ruo"><b>Research use only</b> · not for clinical use</div>
+  </header>
+  <nav role="tablist" aria-label="Views">
+    <button role="tab" id="nav-patients" class="home" title="Patient archive (H)" hidden><span class="kbd">H</span><svg class="i"><use href="#i-patients"/></svg>Patients</button>
+    <div class="home-sep" id="nav-sep" hidden></div>
+    <button role="tab" data-view="case" title="Shared viewer: every image, structure and tract (1)"><span class="kbd">1</span><svg class="i"><use href="#i-case"/></svg>Case</button>
+    <button role="tab" data-view="imaging" title="Capsule viewer with tour and QC (2)"><span class="kbd">2</span><svg class="i"><use href="#i-capsule"/></svg>Capsule</button>
+    <button role="tab" data-view="tracts" title="TractLab tract evidence (3)"><span class="kbd">3</span><svg class="i"><use href="#i-tracts"/></svg>Tracts</button>
+    <button role="tab" data-view="atlas" title="Reference atlas (4)"><span class="kbd">4</span><svg class="i"><use href="#i-atlas"/></svg>Atlas</button>
+  </nav>
+  <main>
+    <div class="scope"><span class="dot"></span><span id="scope"></span></div>
+    <div class="stage" id="stage">
+      <div class="status" id="status" hidden>
+        <div class="card"><h3 id="status-title"></h3><p id="status-text"></p><div class="bar"><i></i></div><div class="status-actions" id="status-actions"></div></div>
+      </div>
+    </div>
+    <section class="patients" id="patients" hidden aria-label="Patient archive">
+      <div class="p-head">
+        <h1>Patients<small id="p-count"></small></h1>
+        <input class="search" id="p-search" placeholder="Search name, ID, date, modality, description" autocomplete="off" spellcheck="false">
+        <div class="spacer"></div>
+        <button class="btn primary" id="p-folder"><svg class="i"><use href="#i-import"/></svg>Import folder or CD</button>
+        <button class="btn" id="p-zip"><svg class="i"><use href="#i-zip"/></svg>Import .zip</button>
+      </div>
+      <div class="p-head" style="padding-top:0;border-bottom:0" id="p-path-row" hidden>
+        <form class="p-path" id="p-path-form">
+          <input class="search" id="p-path" placeholder="Or type a folder or .zip path on this computer" autocomplete="off" spellcheck="false">
+          <button class="btn" type="submit">Import</button>
+        </form>
+      </div>
+      <div class="p-import" id="p-import" hidden><span id="p-import-text"></span><div class="bar"><i id="p-import-bar"></i></div></div>
+      <div class="p-list" id="p-list"></div>
+      <div class="p-foot" id="p-privacy"><svg class="i"><use href="#i-lock"/></svg><span id="p-privacy-text">Identifiable data.</span></div>
+    </section>
+  </main>
+</div>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-label="Cases">
+  <div class="drawer-head">
+    <h2>Cases</h2>
+    <input class="search" id="search" placeholder="Filter cases" autocomplete="off" spellcheck="false">
+  </div>
+  <div class="case-list" id="cases"></div>
+  <div class="drawer-foot">Patient studies come from the archive (Patients, H). Import a DICOM folder, CD or zip there; Eidos builds the capsule and, for DTI studies, the tracts.</div>
+</aside>
+<script>
+const VIEWS = ["case", "imaging", "tracts", "atlas"];
+const VIEW_NAME = { case: "Case", imaging: "Capsule viewer", tracts: "Tract evidence", atlas: "Atlas" };
+const LOADING = {
+  case: "Decoding images, structures and tracts. The first demo build can take up to an hour; later runs reuse it.",
+  imaging: "Preparing the capsule. The first demo build can take up to an hour; later runs reuse it.",
+  tracts: "Starting TractLab on a loopback port.",
+  atlas: "Loading the reference atlas.",
+};
+// The atlas is group anatomy. It belongs to no case, so it never shows a patient header.
+const ATLAS = {
+  title: "Reference atlas", sub: "Group anatomy · not registered to any patient",
+  scope: "Public group-average anatomy (HCP, Melbourne subcortex). It is not this patient, holds no patient data and has no review form.",
+};
+const state = { cases: [], caseId: null, view: "case", frames: new Map(), polling: null, archive: false, home: false };
+const $ = (id) => document.getElementById(id);
+
+async function getJSON(url) {
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(`${r.status} ${url}`);
+  return r.json();
+}
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
+function icon(name) {
+  const s = document.createElementNS("http://www.w3.org/2000/svg", "svg"); s.setAttribute("class", "i");
+  const u = document.createElementNS("http://www.w3.org/2000/svg", "use"); u.setAttribute("href", `#i-${name}`); s.append(u);
+  return s;
+}
+
+function renderCases() {
+  const q = $("search").value.trim().toLowerCase();
+  const shown = state.cases.filter((c) => !q || `${c.title} ${c.subtitle}`.toLowerCase().includes(q));
+  $("cases").replaceChildren(...shown.map((c) => {
+    const b = el("button", "case");
+    b.dataset.id = c.id;
+    b.setAttribute("aria-current", String(c.id === state.caseId));
+    const av = el("span", "av"); av.append(icon(c.archive ? "patients" : c.synthetic ? "flask" : "folder"));
+    const body = el("span");
+    const title = el("b", "", c.title);
+    if (c.synthetic) title.append(" ", el("span", "tag", "synthetic"));
+    const chips = el("span", "chips");
+    for (const v of VIEWS) if (c.views[v]) chips.append(el("span", "chip", VIEW_NAME[v]));
+    if (c.dti) chips.append(el("span", "chip", "DTI"));
+    body.append(title, el("small", "", c.subtitle), chips);
+    b.append(av, body);
+    b.onclick = () => { closeDrawer(); select(c.id, null); };
+    return b;
+  }));
+  if (!shown.length) $("cases").append(el("div", "chip", "No case matches."));
+}
+
+function openDrawer() { document.body.classList.add("drawer-open"); renderCases(); setTimeout(() => $("search").focus(), 30); }
+function closeDrawer() { document.body.classList.remove("drawer-open"); }
+
+function currentCase() { return state.cases.find((c) => c.id === state.caseId); }
+function hasView(c, v) { return v === "atlas" || !!c.views[v]; }
+// Browser history and sync keep tab titles, so a patient study shows initials and a study code, never the name.
+function tabName(c) { return c.archive ? `${initials(c.title)} · ${c.id.replace(/^study-/, "").slice(0, 6)}` : c.title; }
+
+function select(caseId, view) {
+  setHome(false);
+  state.caseId = caseId;
+  const c = currentCase();
+  view = view || state.view;
+  if (!hasView(c, view)) view = VIEWS.find((v) => hasView(c, v));
+  state.view = view;
+  history.replaceState(null, "", `#${encodeURIComponent(caseId)}/${view}`);
+  document.querySelectorAll("nav button[data-view]").forEach((b) => {
+    b.disabled = !hasView(c, b.dataset.view);
+    b.setAttribute("aria-selected", String(b.dataset.view === view));
+  });
+  document.body.classList.toggle("atlas-mode", view === "atlas");
+  if (view === "atlas") {
+    $("case-title").textContent = ATLAS.title;
+    $("case-sub").textContent = ATLAS.sub;
+    document.title = "Reference atlas · Eidos";
+    $("scope").textContent = ATLAS.scope;
+  } else {
+    $("case-title").textContent = c.title;
+    if (c.synthetic) $("case-title").append(" ", el("span", "tag", "synthetic"));
+    $("case-sub").textContent = c.subtitle;
+    document.title = `${tabName(c)} · ${VIEW_NAME[view]} · Eidos`;
+    $("scope").textContent = c.scope;
+  }
+  renderCases();
+  show();
+}
+
+function showStatus(title, text, error, idle) {
+  $("status").hidden = false;
+  $("status").classList.toggle("error", !!error);
+  $("status").classList.toggle("idle", !!idle);
+  $("status-title").textContent = title;
+  $("status-text").textContent = text;
+  $("status-actions").replaceChildren();
+  $("status-steps")?.remove();
+}
+
+const PIPELINE_STEPS = [["ss3t", "Fibre orientations (SS3T-CSD)"], ["t1reg", "T1 registration"],
+                        ["banks", "Tract banks"], ["scalar_maps", "FA/MD maps"]];
+
+// An archive study whose capsule or tracts are not built yet: say why and offer the next step.
+function showProduct(kind, p, key) {
+  const again = () => { state.polling = setTimeout(show, 2000); };
+  const build = (label, primary = true) => {
+    const b = el("button", "btn" + (primary ? " primary" : ""), label);
+    b.onclick = async () => {
+      b.disabled = true;
+      try { await postJSON(`/api/case/${encodeURIComponent(state.caseId)}/build`, { product: kind }); show(); }
+      catch (e) { showStatus("The build could not start", e.message, true); }
+    };
+    $("status-actions").append(b);
+  };
+  const dti = (p.dti || []).map((d) => `series ${d.number} (${d.images} images)`).join(", ");
+  if (kind === "capsule") {
+    if (p.state === "running") { showStatus("Building the capsule", `From series ${p.series.join(", ")}. The capsule opens here when it is ready.`); return again(); }
+    if (p.state === "empty") return showStatus("No capsule for this study", "This study has no CT or MR volume series a capsule can use.", true);
+    if (p.state === "error") { showStatus("The capsule build failed", p.error, true); return build("Try again", false); }
+    showStatus("No capsule yet", `Eidos can build one from series ${p.series.join(", ")} of this study. It stays in the archive folder.`, false, true);
+    return build("Build capsule");
+  }
+  if (p.state === "nodti") return showStatus("No DTI series in this study", "Tracts need a diffusion series (6 or more directions). The other views work without it.", true);
+  if (p.state === "unavailable") return showStatus(`DTI detected: ${dti}`, `The tract pipeline cannot run on this Mac. Missing: ${p.missing.join(", ")}.`, true);
+  if (p.state === "running" || (p.state === "error" && p.total)) {
+    const title = p.state === "running" ? `Running the tract pipeline · step ${Math.min(p.done + 1, p.total)} of ${p.total}` : "The tract pipeline failed";
+    showStatus(title, p.state === "running" ? `DTI ${dti}. This takes a long time; you can use other views meanwhile.` : p.error, p.state === "error");
+    const ul = el("ul", "status-steps"); ul.id = "status-steps";
+    PIPELINE_STEPS.forEach(([name, label], i) => ul.append(el("li", i < p.done ? "done" : name === p.stage && p.state === "running" ? "now" : "", label)));
+    $("status-actions").before(ul);
+    if (p.state === "error") return build("Resume pipeline", false);
+    return again();
+  }
+  if (p.state === "error") { showStatus("The tract pipeline failed", p.error, true); return build("Try again", false); }
+  showStatus(`DTI detected: ${dti}`, p.resume ? `A previous run stopped after ${p.done} of ${p.total} steps.` :
+    "Run the tract pipeline on this study: DICOM → NIfTI, fibre orientations, T1 registration, tract banks.", false, true);
+  build(p.resume ? "Resume tract pipeline" : "Run tract pipeline");
+}
+
+async function show() {
+  clearTimeout(state.polling);
+  // One atlas frame for every case: it does not depend on the case.
+  const key = state.view === "atlas" ? "atlas" : `${state.caseId}/${state.view}`;
+  for (const [k, f] of state.frames) f.hidden = k !== key;
+  if (state.frames.has(key)) { $("status").hidden = true; return; }
+  showStatus(`Opening ${VIEW_NAME[state.view]}`, LOADING[state.view]);
+  try {
+    const s = await getJSON(key === "atlas" ? "/api/atlas" : `/api/case/${encodeURIComponent(state.caseId)}/${state.view}`);
+    if ((state.view === "atlas" ? "atlas" : `${state.caseId}/${state.view}`) !== key) return;
+    if (s.state === "ready") {
+      const f = document.createElement("iframe");
+      f.src = s.url;
+      f.title = key === "atlas" ? ATLAS.title : `${tabName(currentCase())} · ${VIEW_NAME[state.view]}`;
+      f.dataset.key = key;
+      f.setAttribute("allow", "fullscreen");
+      state.frames.set(key, f);
+      $("stage").append(f);
+      $("status").hidden = true;
+    } else if (s.state === "product") {
+      showProduct(s.kind, s.product, key);
+    } else if (s.state === "error") {
+      showStatus("This view could not open", s.error, true);
+    } else {
+      state.polling = setTimeout(show, 800);
+    }
+  } catch (e) {
+    showStatus("The workbench server is not reachable", e.message, true);
+  }
+}
+
+document.querySelectorAll("nav button[data-view]").forEach((b) => (b.onclick = () => select(state.caseId, b.dataset.view)));
+$("case-switch").onclick = openDrawer;
+$("scrim").onclick = closeDrawer;
+$("search").oninput = renderCases;
+$("search").onkeydown = (e) => { if (e.key === "Enter") $("cases").querySelector(".case")?.click(); };
+function handleKey(key) {
+  const n = Number(key);
+  if (n >= 1 && n <= VIEWS.length && currentCase() && hasView(currentCase(), VIEWS[n - 1])) { select(state.caseId, VIEWS[n - 1]); return true; }
+  if (key === "k" || key === "K") { openDrawer(); return true; }
+  if ((key === "h" || key === "H") && state.archive) { showPatients(); return true; }
+  return false;
+}
+document.addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "Escape") return closeDrawer();
+  if (e.target.matches?.("input, select, textarea")) return;
+  if (handleKey(e.key)) e.preventDefault();
+});
+// The Case viewer runs in a same-origin frame and forwards view and case keys here.
+window.addEventListener("message", (e) => {
+  if (e.origin === location.origin && typeof e.data?.workbenchKey === "string") handleKey(e.data.workbenchKey);
+});
+
+// Patients ---------------------------------------------------------------
+const MOD_ORDER = ["CT", "MR", "PT", "NM", "US", "XA", "CR", "DX"];
+function fmtDate(d) { return d && d.length === 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : d || "No date"; }
+function initials(name) { return (name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase(); }
+
+async function loadCases() {
+  const r = await getJSON("/api/cases");
+  state.cases = r.cases;
+  state.archive = !!r.archive;
+  $("nav-patients").hidden = $("nav-sep").hidden = !state.archive;
+}
+
+function setHome(on) {
+  state.home = on;
+  $("patients").hidden = !on;
+  $("nav-patients").setAttribute("aria-selected", String(on));
+  if (on) {
+    document.querySelectorAll("nav button[data-view]").forEach((b) => {
+      b.setAttribute("aria-selected", "false");
+      if (!state.caseId) b.disabled = true;
+    });
+    $("case-title").textContent = "Patient archive";
+    $("case-sub").textContent = "Studies imported on this computer";
+    document.title = "Patients · Eidos";
+    history.replaceState(null, "", "#patients");
+  }
+}
+
+async function showPatients() {
+  closeDrawer();
+  setHome(true);
+  await renderPatients();
+  if (!matchMedia("(max-width: 760px)").matches) $("p-search").focus();
+}
+
+// The banner states only what the server measured: folder mode, loopback, FileVault and the volume.
+function showPrivacy(f) {
+  const out = ["Identifiable data."];
+  let warn = false;
+  if (f.folder_private === true) out.push("The archive folder opens only for your user account.");
+  else if (f.folder_private === false) { out.push("The archive folder is open to other accounts."); warn = true; }
+  if (f.loopback) out.push("Eidos serves it to this computer only.");
+  if (f.filevault === "on" && f.same_volume_as_home !== false) out.push("FileVault is on for this disk.");
+  else if (f.filevault === "on") { out.push("FileVault is on, but the archive is on another disk, which Eidos did not check."); warn = true; }
+  else if (f.filevault === "off") { out.push("FileVault is off: this disk is not encrypted. Turn it on in System Settings, Privacy & Security."); warn = true; }
+  else { out.push("Eidos could not check disk encryption."); warn = true; }
+  $("p-privacy-text").textContent = out.join(" ");
+  $("p-privacy").classList.toggle("warn", warn);
+}
+
+let searchTimer = null;
+async function renderPatients() {
+  let r;
+  try { r = await getJSON(`/api/archive?q=${encodeURIComponent($("p-search").value.trim())}`); }
+  catch (e) { $("p-list").replaceChildren(el("div", "p-empty", `The archive is not reachable: ${e.message}`)); return; }
+  showPrivacy(r.privacy || {});
+  const n = r.patients.length, studies = r.patients.reduce((a, p) => a + p.studies.length, 0);
+  $("p-count").textContent = n ? `${n} patient${n > 1 ? "s" : ""} · ${studies} stud${studies > 1 ? "ies" : "y"}` : "";
+  if (!n) {
+    const box = el("div", "p-empty");
+    if ($("p-search").value.trim()) box.append(el("h3", "", "No match"), el("p", "", "No patient or study matches this search."));
+    else box.append(el("h3", "", "No patients yet"),
+      el("p", "", "Import a DICOM folder, a CD or a .zip from PACS. Eidos copies the images into its private archive and lists each patient here."));
+    $("p-list").replaceChildren(box);
+    return;
+  }
+  $("p-list").replaceChildren(...r.patients.map((p) => {
+    const card = el("div", "pt");
+    const row = el("div", "pt-row");
+    const body = el("div");
+    const meta = el("div", "meta");
+    if (p.patient_id) meta.append(el("span", "", `ID ${p.patient_id}`));
+    if (p.birth_date) meta.append(el("span", "", `Born ${fmtDate(p.birth_date)}`));
+    if (p.sex) meta.append(el("span", "", p.sex));
+    body.append(el("b", "", p.name || "Unnamed patient"), meta);
+    const pAct = el("span", "acts");
+    pAct.append(el("span", "count", `${p.studies.length} stud${p.studies.length > 1 ? "ies" : "y"}`),
+                iconButton("trash", "Delete patient and all studies", () => deletePatient(p), true));
+    pAct.style.alignItems = "center"; pAct.style.gap = "8px";
+    row.append(el("div", "pt-av", initials(p.name)), body, pAct);
+    card.append(row);
+    for (const st of p.studies) {
+      const line = el("div", "st");
+      line.tabIndex = 0;
+      line.setAttribute("role", "button");
+      const desc = el("div", "desc");
+      const mods = el("span");
+      const rank = (m) => (MOD_ORDER.includes(m) ? MOD_ORDER.indexOf(m) : 99);
+      for (const m of [...st.modalities].sort((x, y) => rank(x) - rank(y)))
+        mods.append(el("span", "mod", m));
+      if (st.dti) { const d = el("span", "mod dti", "DTI"); d.title = `${st.dti} diffusion series detected`; mods.append(d); }
+      desc.append(el("b", "", st.label || st.description || "Study"));
+      if (st.label && st.description) desc.append(el("small", "", `${st.description} · `));
+      if (st.note) desc.append(el("span", "note", st.note));
+      const series = st.series.filter((x) => x.images > 0);
+      desc.append(el("small", "", `${series.length} series · ${series.reduce((a, x) => a + x.images, 0)} images`
+        + (st.accession ? ` · Acc ${st.accession}` : "")));
+      const acts = el("span", "acts");
+      acts.append(iconButton("edit", "Edit label and note", () => editStudy(line, st)),
+                  iconButton("trash", "Delete study", () => deleteStudy(p, st), true));
+      line.append(el("span", "date", fmtDate(st.date)), desc, mods, acts);
+      line.onclick = () => openStudy(st.id);
+      line.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openStudy(st.id); } };
+      card.append(line);
+    }
+    return card;
+  }));
+}
+
+async function openStudy(id) {
+  if (!state.cases.some((c) => c.id === id)) await loadCases();
+  if (state.cases.some((c) => c.id === id)) select(id, "case");
+}
+
+function importStatus(text, fraction, error) {
+  $("p-import").hidden = false;
+  $("p-import").classList.toggle("error", !!error);
+  $("p-import-text").textContent = text;
+  $("p-import-bar").parentElement.hidden = fraction == null;
+  $("p-import-bar").style.width = `${Math.round((fraction || 0) * 100)}%`;
+}
+
+async function postJSON(url, body) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || `${r.status} ${url}`);
+  return data;
+}
+
+function iconButton(name, title, fn, danger) {
+  const b = el("button", "ib" + (danger ? " danger" : "")); b.title = title; b.setAttribute("aria-label", title);
+  b.append(icon(name));
+  b.onclick = (e) => { e.stopPropagation(); fn(); };
+  b.onkeydown = (e) => e.stopPropagation();
+  return b;
+}
+
+function editStudy(line, st) {
+  if (line.nextElementSibling?.classList.contains("st-edit")) return line.nextElementSibling.querySelector("input").focus();
+  const form = el("form", "st-edit");
+  const l1 = el("label", "", "Label (empty shows the DICOM description)"), label = el("input"); label.maxLength = 120;
+  label.value = st.label || ""; label.placeholder = st.description || "Study"; l1.append(label);
+  const l2 = el("label", "", "Note"), note = el("textarea"); note.rows = 2; note.maxLength = 2000; note.value = st.note || ""; l2.append(note);
+  const row = el("div", "row"), cancel = el("button", "btn", "Cancel"), save = el("button", "btn primary", "Save");
+  cancel.type = "button"; cancel.onclick = () => form.remove();
+  row.append(cancel, save);
+  form.append(l1, l2, row);
+  form.onsubmit = async (e) => {
+    e.preventDefault(); save.disabled = true;
+    try {
+      await postJSON(`/api/archive/study/${st.id}`, { label: label.value, note: note.value });
+      importStatus("Study label and note saved.", null);
+      await loadCases(); renderCases(); await renderPatients();
+    } catch (err) { importStatus(`Could not save: ${err.message}`, null, true); save.disabled = false; }
+  };
+  form.onkeydown = (e) => { if (e.key === "Escape") form.remove(); e.stopPropagation(); };
+  line.after(form); label.focus();
+}
+
+async function afterDelete(ids, text) {
+  for (const [k, f] of [...state.frames]) if (ids.includes(k.split("/")[0])) { f.remove(); state.frames.delete(k); }
+  if (ids.includes(state.caseId)) state.caseId = null;
+  importStatus(text, null);
+  await loadCases(); renderCases(); await renderPatients();
+}
+
+async function deleteStudy(p, st) {
+  const n = st.series.reduce((a, x) => a + x.images, 0);
+  if (!confirm(`Delete this study of ${p.name || "this patient"} (${fmtDate(st.date)}, ${n} images) from the archive?\n\nThe images, converted volumes and drawings are removed from this computer. This cannot be undone.`)) return;
+  try {
+    const r = await postJSON(`/api/archive/study/${st.id}/delete`, { confirm: true });
+    await afterDelete([st.id], `Deleted 1 study: ${r.series} series, ${r.images} images.` + (r.patient_removed ? " The patient had no other study and was removed." : ""));
+  } catch (err) { importStatus(`Could not delete: ${err.message}`, null, true); }
+}
+
+async function deletePatient(p) {
+  const n = p.studies.length;
+  if (!confirm(`Delete ${p.name || "this patient"} and all ${n} stud${n > 1 ? "ies" : "y"} from the archive?\n\nEvery image, volume and drawing of this patient is removed from this computer. This cannot be undone.`)) return;
+  try {
+    const r = await postJSON(`/api/archive/patient/${p.studies[0].id}/delete`, { confirm: true });
+    await afterDelete(p.studies.map((s) => s.id), `Deleted 1 patient: ${r.studies} stud${r.studies > 1 ? "ies" : "y"}, ${r.images} images.`);
+  } catch (err) { importStatus(`Could not delete: ${err.message}`, null, true); }
+}
+
+async function startImport(path) {
+  setImportBusy(true);
+  try {
+    await postJSON("/api/archive/import", { path });
+    await pollImport();
+  } catch (e) {
+    importStatus(`Import failed: ${e.message}`, null, true);
+    setImportBusy(false);
+  }
+}
+
+async function pollImport() {
+  const s = await getJSON("/api/archive/import");
+  if (s.state === "running") {
+    importStatus(s.total ? `Importing… ${s.done} of ${s.total} files read` : "Importing… listing files", s.total ? s.done / s.total : 0);
+    return setTimeout(pollImport, 600);
+  }
+  setImportBusy(false);
+  if (s.state === "error") return importStatus(`Import failed: ${s.error}`, null, true);
+  if (s.state === "done") {
+    const r = s.report;
+    importStatus(`Imported ${r.added} new image${r.added === 1 ? "" : "s"} · ${r.already_in_archive} already in the archive · `
+      + `${r.patients} patient${r.patients === 1 ? "" : "s"}, ${r.studies} stud${r.studies === 1 ? "y" : "ies"}, ${r.series} series`
+      + (r.not_dicom ? ` · ${r.not_dicom} other files skipped` : ""), 1);
+    await loadCases();
+    await renderPatients();
+  }
+}
+
+function setImportBusy(on) { for (const id of ["p-folder", "p-zip"]) $(id).disabled = on; }
+
+async function chooseAndImport(kind) {
+  try {
+    const r = await postJSON("/api/archive/choose", { kind });
+    if (r.state === "chosen") return startImport(r.path);
+    if (r.state === "unsupported") { $("p-path-row").hidden = false; $("p-path").focus(); }
+  } catch (e) {
+    $("p-path-row").hidden = false;
+    importStatus(`The file dialog did not open (${e.message}). Type the path instead.`, null, true);
+  }
+}
+
+$("nav-patients").onclick = showPatients;
+$("p-folder").onclick = () => chooseAndImport("folder");
+$("p-zip").onclick = () => chooseAndImport("zip");
+$("p-search").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(renderPatients, 150); };
+$("p-search").onkeydown = (e) => { if (e.key === "Enter") $("p-list").querySelector(".st")?.click(); };
+$("p-path-form").onsubmit = (e) => { e.preventDefault(); const v = $("p-path").value.trim(); if (v) startImport(v); };
+
+(async () => {
+  try {
+    await loadCases();
+  } catch (e) {
+    return showStatus("The workbench server is not reachable", e.message, true);
+  }
+  const [hashCase, hashView] = decodeURIComponent(location.hash.slice(1)).split("/");
+  const first = state.cases.find((c) => c.id === hashCase);
+  if (first) return select(first.id, hashView || "case");
+  if (state.archive) {
+    const s = await getJSON("/api/archive/import").catch(() => null);
+    if (s?.state === "running") { setImportBusy(true); pollImport(); }
+    return showPatients();
+  }
+  if (state.cases.length) return select(state.cases[0].id, "case");
+  showStatus("No cases yet", "Open Patients (H) and import a DICOM folder, CD or zip.", true);
+})();
+</script>
+</body>
+</html>

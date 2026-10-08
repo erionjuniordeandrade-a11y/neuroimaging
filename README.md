@@ -14,6 +14,7 @@ that a surgeon can review and explain to a patient.
 | `capsule/` | Builds one offline HTML "case capsule" per case: CT/MR fusion, CTA vessels, DWI tractography, trust and QC gates, pt-BR patient tour. |
 | `tractlab/` | Loopback tractography workstation: ROI seeding, bundle banks, atlas, lesion-centred viewer, ingest and pipeline runner. |
 | `capsule-mac/` | Native macOS host app that finds and opens capsule files. |
+| `apps/shell/` | Eidos: one local window with a case list and one shared CT / MRI / CTA / tracts viewer. `uv run eidos`, then open http://127.0.0.1:8790/ (see `apps/shell/README.md`). |
 
 ## Install and test
 
@@ -23,6 +24,7 @@ The Python packages form one [uv](https://docs.astral.sh/uv/) workspace (Python 
 uv sync --all-packages
 uv run --package neuro-core pytest packages/neuro-core
 cd capsule && uv run pytest
+uv run --package neuro-workbench pytest apps/shell/tests
 cd tractlab && ./verify.sh
 cd capsule-mac && xcrun swift test
 ```

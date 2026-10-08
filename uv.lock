@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 members = [
     "case-capsule",
     "neuro-core",
+    "neuro-workbench",
     "tractlab",
 ]
 
@@ -534,6 +535,23 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "nibabel", specifier = ">=5" },
+    { name = "numpy", specifier = ">=1.26" },
+]
+
+[[package]]
+name = "neuro-workbench"
+version = "0.1.0"
+source = { editable = "apps/shell" }
+dependencies = [
+    { name = "case-capsule" },
+    { name = "nibabel" },
+    { name = "numpy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "case-capsule", editable = "capsule" },
     { name = "nibabel", specifier = ">=5" },
     { name = "numpy", specifier = ">=1.26" },
 ]

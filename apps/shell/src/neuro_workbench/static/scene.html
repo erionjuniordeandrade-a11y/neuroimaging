@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eidos · Case</title>
+<style>
+  :root {
+    --bg: #07090d; --bg2: #0d1017; --bg3: #11151d; --glass: rgba(16,19,26,.78); --hover: rgba(255,255,255,.05);
+    --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.14);
+    --text: #ece9e2; --muted: #8f8c85; --faint: #5f5d58; --accent: #C9A84C; --accent-soft: rgba(201,168,76,.13); --warn: #e0764f;
+    --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --serif: "Playfair Display", "Iowan Old Style", Georgia, serif;
+    --mono: ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.45 var(--sans); }
+  button { font: inherit; color: inherit; }
+  svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .app { display: grid; grid-template-columns: 1fr 292px 78px; height: 100%; }
+  .view { position: relative; min-width: 0; background: #000; overflow: hidden; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* Layout switcher, floating over the views */
+  .float { position: absolute; z-index: 2; background: var(--glass); border: 1px solid var(--line); border-radius: 12px;
+           backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .layouts { bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 3px; }
+  .layouts button { height: 28px; padding: 0 10px; display: flex; align-items: center; gap: 6px; border: 1px solid transparent; border-radius: 8px;
+                    background: none; color: var(--muted); cursor: pointer; font-size: 12px; }
+  .layouts button svg { width: 15px; height: 15px; }
+  .layouts button:hover { color: var(--text); background: var(--hover); }
+  .layouts button.active { color: var(--accent); background: var(--accent-soft); border-color: rgba(201,168,76,.35); }
+  .banner { right: 12px; bottom: 12px; max-width: 44%; padding: 7px 11px; font-size: 12px; color: #ffd9cc;
+            border-color: rgba(224,118,79,.5); background: rgba(80,24,14,.8); }
+  .banner[hidden] { display: none; }
+  .readout { left: 12px; bottom: 12px; max-width: calc(100% - 420px); min-width: 260px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 5px 9px; font: 11px var(--mono); color: var(--muted); border-radius: 8px; }
+  .readout b { color: var(--text); font-weight: 600; }
+  /* Series picker: every series of the case, drawn or not, over the views */
+  .series { left: 12px; bottom: 46px; width: 250px; max-height: 46%; display: flex; flex-direction: column; padding: 4px; font-size: 11.5px; }
+  .series > button.head { display: flex; justify-content: space-between; align-items: center; height: 24px; padding: 0 6px; border: 0; background: none;
+                          color: var(--muted); font: 600 11px var(--sans, inherit); letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
+  .series.closed .list { display: none; }
+  .series .list { overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  .series .s { display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: center; padding: 4px 4px 4px 7px; border-radius: 8px; border: 1px solid transparent; }
+  .series .s .pick { min-width: 0; text-align: left; border: 0; background: none; color: var(--text); cursor: pointer; padding: 0; }
+  .series .s .pick b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .series .s .pick span { display: block; color: var(--muted); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .series .s:hover { background: var(--hover); }
+  .series .s.base { border-color: rgba(201,168,76,.45); background: var(--accent-soft); }
+  .series .s .fuse { height: 22px; padding: 0 7px; border-radius: 6px; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; font-size: 10.5px; }
+  .series .s .fuse.on { color: var(--accent); border-color: rgba(201,168,76,.45); }
+  .series .s .fuse:disabled { opacity: .35; cursor: default; }
+  .series .s.off { opacity: .55; }
+  .series .s.off .pick { cursor: default; }
+  .series .tag { display: inline-block; margin-left: 4px; padding: 0 4px; border-radius: 4px; font-size: 9.5px; color: #9fd3ff; border: 1px solid rgba(120,180,240,.4); }
+
+  /* Per-view labels drawn over each NiiVue tile */
+  .tiles { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .tile { position: absolute; }
+  .tile .id { position: absolute; top: 6px; left: 8px; display: flex; gap: 7px; align-items: center; max-width: calc(100% - 30px);
+              padding: 3px 9px 3px 3px; border-radius: 9px; background: rgba(5,7,10,.72); border: 1px solid var(--line);
+              font-size: 11.5px; line-height: 1.3; text-shadow: 0 1px 2px #000; }
+  .tile .id svg { width: 24px; height: 24px; color: var(--accent); stroke-width: 1.3; }
+  .tile .id > div { min-width: 0; }
+  .tile .id b { display: block; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .id span { display: block; color: var(--muted); font-size: 10.5px; white-space: nowrap; }
+  .tile .o { position: absolute; font: 600 12px var(--mono); color: var(--accent); text-shadow: 0 1px 2px #000; }
+  .tile .o.t { top: 4px; left: 50%; transform: translateX(-50%); }
+  .tile .o.b { bottom: 4px; left: 50%; transform: translateX(-50%); }
+  .tile .o.l { left: 6px; top: 50%; transform: translateY(-50%); }
+  .tile .o.r { right: 6px; top: 50%; transform: translateY(-50%); }
+
+  /* Loading */
+  .status { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; padding: 24px; background: var(--bg); }
+  .status[hidden] { display: none; }
+  .card { width: min(380px, 100%); border: 1px solid var(--line); border-radius: 16px; background: var(--glass); padding: 20px 22px; text-align: center; }
+  .card h3 { margin: 0 0 4px; font: 600 17px var(--serif); }
+  .card p { margin: 0; color: var(--muted); font-size: 12.5px; }
+  .bar { height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 16px; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s ease; }
+  .status.error h3 { color: var(--warn); } .status.error .bar { display: none; }
+
+  /* Object panel */
+  aside { border-left: 1px solid var(--line); background: var(--bg2); overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
+  .ph { display: flex; align-items: baseline; gap: 8px; padding: 14px 14px 10px; }
+  .ph h2 { margin: 0; font: 600 16px var(--serif); }
+  .ph .count { margin-left: auto; color: var(--faint); font-size: 11.5px; }
+  .review { margin: 0 10px 6px; padding: 6px 10px; border-radius: 8px; font: 600 10.5px var(--sans); letter-spacing: .12em; text-transform: uppercase;
+            color: var(--warn); background: rgba(224,118,79,.1); border: 1px solid rgba(224,118,79,.3); display: flex; align-items: center; gap: 8px; }
+  .review.ok { color: var(--muted); background: var(--hover); border-color: var(--line); }
+  .review[hidden] { display: none; }
+  .group { padding: 8px 14px 3px; font: 600 10px var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+  .objects { padding: 0 8px 8px; }
+  .obj { position: relative; border-radius: 8px; margin-bottom: 2px; background: var(--bg3); border: 1px solid var(--line); overflow: hidden; }
+  .obj::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c); }
+  .obj:hover { border-color: var(--line2); }
+  .obj .top { display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 10px; cursor: pointer; }
+  .obj .txt { flex: 1; min-width: 0; }
+  .obj .name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .obj .sub { display: flex; gap: 6px; align-items: center; color: var(--faint); font-size: 10.5px; }
+  .obj .sub .warn { color: #f0b49c; }
+  .obj .val { font: 11.5px var(--mono); color: var(--muted); white-space: nowrap; }
+  .obj.off .name, .obj.off .val { opacity: .45; } .obj.off::before { opacity: .35; }
+  .obj .more { display: none; padding: 0 10px 8px 42px; }
+  .obj.open .more { display: block; }
+  .obj .more span { display: block; color: var(--faint); font-size: 10.5px; margin-bottom: 2px; }
+  .eye { width: 26px; height: 24px; display: grid; place-items: center; background: none; border: 0; border-radius: 6px; color: var(--muted); cursor: pointer; flex: none; }
+  .eye:hover { color: var(--text); background: var(--hover); }
+  .obj.off .eye { color: var(--faint); }
+  .flag { font-size: 9px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--warn);
+          border: 1px solid rgba(224,118,79,.45); border-radius: 4px; padding: 0 4px; line-height: 14px; }
+  .empty { color: var(--faint); font-size: 12px; padding: 2px 6px 6px; }
+
+  details { border-top: 1px solid var(--line); }
+  summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 11px 14px; cursor: pointer; user-select: none;
+            font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+  summary::-webkit-details-marker { display: none; }
+  summary:hover { color: var(--text); }
+  summary svg { width: 14px; height: 14px; transition: transform .15s; }
+  details[open] summary svg { transform: rotate(90deg); }
+  .sec { padding: 0 14px 12px; }
+  select { width: 100%; background: rgba(255,255,255,.04); color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; font: inherit; }
+  .field { margin: 8px 0 0; }
+  .field > span { display: flex; justify-content: space-between; color: var(--muted); font-size: 11.5px; margin-bottom: 4px; }
+  .seg { display: flex; gap: 4px; flex-wrap: wrap; }
+  .seg button { background: rgba(255,255,255,.03); color: var(--muted); border: 1px solid var(--line); border-radius: 7px; padding: 3px 9px;
+                font-size: 11.5px; cursor: pointer; }
+  .seg button:hover { color: var(--text); }
+  .seg button.active { color: var(--accent); border-color: rgba(201,168,76,.5); background: var(--accent-soft); }
+  input[type=range] { width: 100%; accent-color: var(--accent); height: 14px; margin: 0; }
+  .check { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
+  .check input { accent-color: var(--accent); }
+  .note { margin-top: auto; padding: 12px 14px; color: var(--faint); font-size: 11.5px; border-top: 1px solid var(--line); }
+  .note b { color: var(--warn); font-weight: 600; }
+
+  /* Tool rail */
+  .rail { border-left: 1px solid var(--line); background: var(--bg); display: flex; flex-direction: column; align-items: stretch;
+          gap: 2px; padding: 8px 6px; overflow-y: auto; }
+  .rail .lbl { font: 600 9px var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); text-align: center; margin: 6px 0 2px; }
+  .rail .lbl:first-child { margin-top: 0; }
+  .rail button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px 6px; border: 1px solid transparent;
+                 border-radius: 10px; background: none; color: var(--muted); cursor: pointer; font-size: 10.5px; line-height: 1.1; }
+  .rail button svg { width: 22px; height: 22px; }
+  .rail button:hover { color: var(--text); background: var(--hover); }
+  .rail button.active { color: var(--accent); background: var(--accent-soft); border-color: rgba(201,168,76,.35); }
+  .rail button kbd { font: 9px var(--mono); color: var(--faint); }
+  .rail .sp { flex: 1; }
+
+  /* Menu bar */
+  .menubar { top: 10px; left: 10px; display: flex; gap: 1px; padding: 3px; }
+  .menu { position: relative; }
+  .menu > button { height: 26px; padding: 0 11px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; font-size: 12px; }
+  .menu > button:hover, .menu.open > button { color: var(--text); background: var(--hover); }
+  .menu .items { display: none; position: absolute; top: 30px; left: 0; min-width: 220px; padding: 4px; z-index: 5;
+                 background: rgba(14,17,23,.97); border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+  .menu.open .items { display: block; }
+  .items button { display: flex; width: 100%; align-items: center; gap: 10px; padding: 6px 10px; border: 0; border-radius: 7px; background: none;
+                  color: var(--text); cursor: pointer; font-size: 12.5px; text-align: left; }
+  .items button:hover { background: var(--accent-soft); }
+  .items button kbd { margin-left: auto; font: 10.5px var(--mono); color: var(--faint); }
+  .items hr { border: 0; border-top: 1px solid var(--line); margin: 4px 6px; }
+  .save-state { height: 26px; margin-left: 6px; padding: 0 10px 0 8px; display: flex; align-items: center; gap: 6px; border: 1px solid transparent; border-radius: 8px;
+                background: none; color: var(--faint); cursor: default; font: 11.5px var(--sans); white-space: nowrap; }
+  .save-state i { width: 7px; height: 7px; border-radius: 50%; background: #5fbf7f; flex: none; }
+  .save-state.dirty i, .save-state.saving i { background: #d9b44a; }
+  .save-state.failed { color: #f0b49c; border-color: rgba(224,118,79,.5); background: rgba(224,118,79,.12); cursor: pointer; }
+  .save-state.failed i { background: #e0764f; }
+  .toast { top: 10px; right: 12px; padding: 6px 11px; font-size: 12px; color: var(--muted); }
+  .toast[hidden] { display: none; }
+
+  /* Path, points and probe overlays */
+  svg.over { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
+  svg.over text { font: 600 11px var(--sans); paint-order: stroke; stroke: #000; stroke-width: 3px; }
+  .probe { right: 12px; top: 48px; width: 236px; padding: 8px; }
+  .probe[hidden] { display: none; }
+  .probe .ph2 { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); margin-bottom: 6px; }
+  .probe .ph2 b { color: var(--text); font-weight: 600; }
+  .probe .ph2 button { margin-left: auto; background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; }
+  .probe canvas { position: static; width: 220px; height: 220px; border-radius: 8px; background: #000; display: block; }
+  .probe .cap { font: 10.5px var(--mono); color: var(--faint); margin: 3px 0 7px; }
+
+  /* Editable rows */
+  .obj input.name { width: 100%; background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--text); font: inherit; padding: 0 3px; margin-left: -4px; }
+  .obj input.name:hover { border-color: var(--line); } .obj input.name:focus { border-color: var(--accent); outline: none; background: rgba(0,0,0,.3); }
+  .obj.active { border-color: rgba(201,168,76,.55); }
+  .obj .x { width: 22px; height: 22px; border: 0; background: none; color: var(--faint); cursor: pointer; border-radius: 6px; font-size: 14px; flex: none; }
+  .obj .x:hover { color: var(--warn); background: var(--hover); }
+  .obj .dot { width: 18px; height: 18px; flex: none; display: grid; place-items: center; color: var(--c); font-size: 13px; }
+  .btnrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .btn { background: rgba(255,255,255,.04); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+  .btn:hover { border-color: var(--line2); } .btn.primary { color: var(--accent); border-color: rgba(201,168,76,.5); background: var(--accent-soft); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 11.5px; margin-top: 8px; }
+  .kv span { color: var(--faint); } .kv b { font: 500 11.5px var(--mono); color: var(--text); text-align: right; }
+  .dist { margin-top: 8px; font-size: 11.5px; }
+  .dist div { display: flex; gap: 6px; align-items: center; padding: 2px 0; }
+  .dist i { width: 8px; height: 8px; border-radius: 2px; background: var(--c); flex: none; }
+  .dist b { margin-left: auto; font: 500 11.5px var(--mono); }
+  .dist .hit b { color: var(--warn); }
+  .hint { color: var(--faint); font-size: 11.5px; margin-top: 6px; }
+
+  /* Case summary sheet (also the print layout) */
+  .report { position: fixed; inset: 0; z-index: 10; overflow: auto; background: rgba(0,0,0,.6); padding: 24px; }
+  .report[hidden] { display: none; }
+  .sheet { max-width: 780px; margin: 0 auto; background: #fff; color: #111; border-radius: 6px; padding: 28px 34px; font: 12px/1.45 var(--sans); }
+  .sheet h1 { font: 600 20px var(--serif); margin: 0; } .sheet h2 { font: 600 13px var(--sans); margin: 16px 0 4px; text-transform: uppercase; letter-spacing: .08em; color: #555; }
+  .sheet .meta { color: #555; margin: 2px 0 10px; } .sheet img { width: 100%; border-radius: 4px; background: #000; }
+  .sheet .imgs { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; } .sheet .imgs div img { margin-bottom: 6px; }
+  .sheet table { width: 100%; border-collapse: collapse; } .sheet td, .sheet th { border-bottom: 1px solid #ddd; padding: 3px 6px; text-align: left; }
+  .sheet th { font-weight: 600; color: #555; } .sheet td.n { text-align: right; font-family: var(--mono); }
+  .sheet .warn { margin-top: 14px; padding: 6px 10px; border: 1px solid #c55; color: #a33; border-radius: 4px; }
+  .sheet .bar2 { display: flex; gap: 8px; justify-content: flex-end; margin: -10px -14px 10px; }
+  .sheet .bar2 button { padding: 5px 12px; border: 1px solid #bbb; border-radius: 6px; background: #f4f4f4; cursor: pointer; color: #111; }
+  @media print {
+    html, body { background: #fff; height: auto; } .app { display: none; }
+    .report { position: static; background: none; padding: 0; overflow: visible; } .sheet { max-width: none; padding: 0; border-radius: 0; }
+    .sheet .bar2 { display: none; }
+  }
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: 58vh auto auto; }
+    .rail { order: 2; flex-direction: row; flex-wrap: wrap; border-left: 0; border-top: 1px solid var(--line); }
+    .rail .lbl, .rail .sp { display: none; } .rail button { flex: 1 0 60px; }
+    aside { order: 3; border-left: 0; } .banner { max-width: 70%; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2"/></symbol>
+  <symbol id="i-ax" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.6"/><path d="M12 8.6v6M8 11h8M12 14.6l-3 5.4M12 14.6l3 5.4"/><path d="M3.5 11h17" stroke-dasharray="2 2"/></symbol>
+  <symbol id="i-cor" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.6"/><path d="M12 8.6v6M8 11h8M12 14.6l-3 5.4M12 14.6l3 5.4"/><path d="M12 2.5v19" stroke-dasharray="2 2"/></symbol>
+  <symbol id="i-sag" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.6"/><path d="M12 8.6v6M12 11h3.5M12 14.6v5.4"/><path d="M5 4.5l14 15" stroke-dasharray="2 2"/></symbol>
+  <symbol id="i-3d" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></symbol>
+  <symbol id="i-pointer" viewBox="0 0 24 24"><path d="M6 3.5l12 7.2-5.2 1.3 3 6.2-2.4 1.2-3-6.2L6 17z"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-pan" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-2.5 2.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5"/></symbol>
+  <symbol id="i-ruler" viewBox="0 0 24 24"><path d="M3.5 16.5l13-13 4 4-13 13z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></symbol>
+  <symbol id="i-angle" viewBox="0 0 24 24"><path d="M4 19.5h16M4 19.5L15 5"/><path d="M10 19.5a6 6 0 0 0-2-4.6"/></symbol>
+  <symbol id="i-erase" viewBox="0 0 24 24"><path d="M4 15.5l9-9 6 6-7 7H8z"/><path d="M8.5 11l6 6M12 19.5h8"/></symbol>
+  <symbol id="i-cross" viewBox="0 0 24 24"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/><circle cx="12" cy="12" r="1.2"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></symbol>
+  <symbol id="i-shot" viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M4 4l16 16"/><path d="M9.9 5.8A9 9 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3 3.6M6.4 7.4A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 4-.9"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></symbol>
+  <symbol id="i-brush" viewBox="0 0 24 24"><path d="M14.5 4.5l5 5-8 8-5-5z"/><path d="M6.5 12.5c-2 0-3 1.5-3 3.5 0 1.5-.5 2.5-1 3 3 .5 6-.5 7-3.5"/></symbol>
+  <symbol id="i-eraser2" viewBox="0 0 24 24"><path d="M4 15.5l9-9 6 6-7 7H8z"/><path d="M8.5 11l6 6"/></symbol>
+  <symbol id="i-ai" viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z" opacity=".6"/></symbol>
+  <symbol id="i-grow" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.8" fill="currentColor"/><path d="M12 5.5a6.5 6.5 0 1 1-6.2 4.5" stroke-dasharray="2.2 2"/><path d="M12 2.5a9.5 9.5 0 1 1-9 6.5" opacity=".55"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></symbol>
+  <symbol id="i-entry" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M12 9v6M9 12h6"/></symbol>
+  <symbol id="i-probe" viewBox="0 0 24 24"><path d="M4 20L15 9"/><circle cx="17.5" cy="6.5" r="3.5"/><path d="M17.5 4.5v4M15.5 6.5h4"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 15.5h6M9 9h3"/></symbol>
+</svg>
+<div class="app">
+  <div class="view">
+    <canvas id="gl"></canvas>
+    <div class="tiles" id="tiles"></div>
+    <svg class="over" id="over"></svg>
+    <div class="float menubar" id="menubar">
+      <div class="menu"><button>File</button><div class="items">
+        <button data-act="save">Save annotations now<kbd>⌘S</kbd></button>
+        <hr><button data-act="report">Case summary (PDF)…</button>
+        <button data-act="shot">Save view as PNG<kbd>P</kbd></button>
+      </div></div>
+      <div class="menu"><button>View</button><div class="items">
+        <button data-act="layout:grid">2×2<kbd>G</kbd></button><button data-act="layout:axial">Axial<kbd>A</kbd></button>
+        <button data-act="layout:coronal">Coronal<kbd>C</kbd></button><button data-act="layout:sagittal">Sagittal<kbd>S</kbd></button>
+        <button data-act="layout:render">3D<kbd>R</kbd></button><hr>
+        <button data-act="probe">Probe view along the trajectory<kbd>J</kbd></button>
+        <button data-act="cross">Cursor on/off<kbd>X</kbd></button><button data-act="reset">Reset view<kbd>0</kbd></button>
+      </div></div>
+      <div class="menu"><button>Tools</button><div class="items">
+        <button data-act="tool:pointer">Point<kbd>V</kbd></button><button data-act="tool:window">Window<kbd>W</kbd></button>
+        <button data-act="tool:pan">Pan / zoom<kbd>Z</kbd></button><hr>
+        <button data-act="tool:measure">Distance<kbd>M</kbd></button><button data-act="tool:angle">Angle<kbd>N</kbd></button>
+        <button data-act="mark">Mark a point at the cursor<kbd>L</kbd></button><hr>
+        <button data-act="newobj">New structure</button>
+        <button data-act="tool:brush">Brush<kbd>B</kbd></button><button data-act="tool:erase">Erase<kbd>E</kbd></button>
+        <button data-act="tool:grow">Grow from a seed<kbd>F</kbd></button><button data-act="undo">Undo the last stroke<kbd>⌘Z</kbd></button><hr>
+        <button data-act="newtraj">New trajectory</button>
+        <button data-act="target">Set target at the cursor<kbd>T</kbd></button><button data-act="entry">Set entry at the cursor<kbd>Y</kbd></button>
+      </div></div>
+      <div class="menu"><button>Export</button><div class="items">
+        <button data-act="report">Case summary (PDF)…</button>
+        <button data-act="nii-all">Drawn structures as one label NIfTI</button>
+        <button data-act="nii-one">Selected structure as NIfTI</button>
+        <button data-act="csv">Findings as CSV</button>
+        <button data-act="shot">View as PNG<kbd>P</kbd></button>
+      </div></div>
+      <button class="save-state" id="save-state" title="Annotations are saved with the study a moment after each change."><i></i><span id="save-text">Saved</span></button>
+    </div>
+    <div class="float toast" id="toast" hidden></div>
+    <div class="float probe" id="probe" hidden>
+      <div class="ph2"><b id="probe-title">Probe view</b><span id="probe-depth"></span><button id="probe-close" title="Close">×</button></div>
+      <canvas id="probe-eye" width="220" height="220"></canvas>
+      <div class="cap">Across the path · 60 mm field</div>
+      <canvas id="probe-inline" width="220" height="220"></canvas>
+      <div class="cap">Along the path · entry at top, target at bottom</div>
+      <input id="probe-slider" type="range" min="0" max="1000" value="1000" aria-label="Depth along the path">
+    </div>
+    <div class="float layouts" id="layouts">
+      <button data-layout="grid" class="active" title="2×2 (G)"><svg class="i"><use href="#i-grid"/></svg>2×2</button>
+      <button data-layout="axial" title="Axial (A)"><svg class="i"><use href="#i-ax"/></svg>Axial</button>
+      <button data-layout="coronal" title="Coronal (C)"><svg class="i"><use href="#i-cor"/></svg>Coronal</button>
+      <button data-layout="sagittal" title="Sagittal (S)"><svg class="i"><use href="#i-sag"/></svg>Sagittal</button>
+      <button data-layout="render" title="3D (R)"><svg class="i"><use href="#i-3d"/></svg>3D</button>
+    </div>
+    <div class="float series" id="series"><button class="head" id="series-head" title="Show or hide the series list"><span id="series-title">Series</span><span id="series-chev">▾</span></button><div class="list" id="series-list"></div></div>
+    <div class="float readout" id="readout" title="Cursor position in scanner RAS millimetres (+x left→right, +y posterior→anterior, +z inferior→superior), the voxel index in the source series, and its value">—</div>
+    <div class="float banner" id="alignment" hidden></div>
+    <div class="status" id="status">
+      <div class="card"><h3 id="status-title">Loading the case</h3><p id="status-text">Fetching the scene description.</p><div class="bar"><i id="progress"></i></div></div>
+    </div>
+  </div>
+  <aside>
+    <div class="ph"><h2>Objects</h2><span class="count" id="obj-count"></span></div>
+    <div class="review" id="review" hidden></div>
+    <div class="group" id="g-labels">Structures</div>
+    <div class="objects" id="labels"></div>
+    <div class="group" id="g-tracts">Fibre bundles</div>
+    <div class="objects" id="tracts"></div>
+    <div class="group">Findings</div>
+    <div class="objects" id="findings"></div>
+    <details open id="d-seg">
+      <summary><svg class="i"><use href="#i-chev"/></svg>Segment</summary>
+      <div class="sec">
+        <div class="btnrow" style="margin-top:0"><button class="btn primary" id="seg-new">+ New structure</button><button class="btn" id="seg-undo">Undo</button></div>
+        <div class="field"><span>Brush size <em id="pen-val">3 voxels</em></span><input id="pen" type="range" min="1" max="15" value="3"></div>
+        <div class="field"><span>Grow range around the seed <em id="tol-val">±12% of window</em></span><input id="tol" type="range" min="1" max="50" value="12"></div>
+        <div class="field"><span>Grow limit <em id="rad-val">25 mm from the seed</em></span><input id="rad" type="range" min="3" max="80" value="25"></div>
+        <div class="ai" id="ai-box">
+          <div class="field"><span>AI segment (nnInteractive) <em id="ai-state">checking…</em></span></div>
+          <div class="btnrow"><button class="btn" id="ai-run" disabled>Segment from 0 points</button><button class="btn" id="ai-clear">Clear points</button></div>
+        </div>
+        <div class="hint" id="seg-hint">Brush paints on 2D slices. Grow fills the connected voxels inside the range, in 3D, from the clicked point. Painting never overwrites another structure. AI (I): click inside the structure, Shift-click outside it, then Segment. The AI result is a new structure, not reviewed.</div>
+      </div>
+    </details>
+    <details open id="d-plan">
+      <summary><svg class="i"><use href="#i-chev"/></svg>Trajectory</summary>
+      <div class="sec" id="plan"></div>
+    </details>
+    <details open>
+      <summary><svg class="i"><use href="#i-chev"/></svg>Images</summary>
+      <div class="sec">
+        <select id="base" aria-label="Base image"></select>
+        <div class="field" id="presets-field"><span>Window</span><div class="seg" id="presets"></div></div>
+        <div class="field"><span>Fusion</span><select id="overlay" aria-label="Fusion overlay"></select></div>
+        <div class="field"><span>Fusion opacity <em id="overlay-val">45%</em></span><input id="overlay-opacity" type="range" min="0" max="100" value="45"></div>
+      </div>
+    </details>
+    <details>
+      <summary><svg class="i"><use href="#i-chev"/></svg>Display</summary>
+      <div class="sec">
+        <div class="field"><span>Fibre slab on 2D slices <em id="slab-val">4 mm</em></span><input id="slab" type="range" min="1" max="20" value="4"></div>
+        <label class="check"><input type="checkbox" id="clip" checked> Cut away the front half in 3D</label>
+      </div>
+    </details>
+    <div class="note" id="note"><b>Research and teaching only</b>, not for clinical use. Volumes are voxel counts of each mask. The wheel moves the slice in every tool.</div>
+  </aside>
+  <nav class="rail" id="rail" aria-label="Tools">
+    <div class="lbl">View</div>
+    <button data-tool="pointer" class="active" title="Point: click sets the cursor (V)"><svg class="i"><use href="#i-pointer"/></svg>Point<kbd>V</kbd></button>
+    <button data-tool="window" title="Window: drag sets level and width (W)"><svg class="i"><use href="#i-window"/></svg>Window<kbd>W</kbd></button>
+    <button data-tool="pan" title="Pan: drag moves, wheel zooms (Z)"><svg class="i"><use href="#i-pan"/></svg>Pan/zoom<kbd>Z</kbd></button>
+    <div class="lbl">Measure</div>
+    <button data-tool="measure" title="Distance: drag a line (M)"><svg class="i"><use href="#i-ruler"/></svg>Distance<kbd>M</kbd></button>
+    <button data-tool="angle" title="Angle: drag two lines (N)"><svg class="i"><use href="#i-angle"/></svg>Angle<kbd>N</kbd></button>
+    <button id="t-clear" title="Clear measurements (Del)"><svg class="i"><use href="#i-erase"/></svg>Clear</button>
+    <button id="t-mark" title="Mark a point at the cursor (L)"><svg class="i"><use href="#i-pin"/></svg>Point<kbd>L</kbd></button>
+    <div class="lbl">Segment</div>
+    <button data-tool="brush" title="Brush: paint the selected structure (B)"><svg class="i"><use href="#i-brush"/></svg>Brush<kbd>B</kbd></button>
+    <button data-tool="erase" title="Erase: remove painted voxels (E)"><svg class="i"><use href="#i-eraser2"/></svg>Erase<kbd>E</kbd></button>
+    <button data-tool="grow" title="Grow: click a seed, the structure grows inside the range (F)"><svg class="i"><use href="#i-grow"/></svg>Grow<kbd>F</kbd></button>
+    <button data-tool="ai" title="AI segment: click inside the structure, Shift-click outside, then Segment (I)"><svg class="i"><use href="#i-ai"/></svg>AI<kbd>I</kbd></button>
+    <div class="lbl">Plan</div>
+    <button id="t-target" title="Set the trajectory target at the cursor (T)"><svg class="i"><use href="#i-target"/></svg>Target<kbd>T</kbd></button>
+    <button id="t-entry" title="Set the trajectory entry at the cursor (Y)"><svg class="i"><use href="#i-entry"/></svg>Entry<kbd>Y</kbd></button>
+    <button id="t-probe" title="Probe view along the trajectory (J)"><svg class="i"><use href="#i-probe"/></svg>Probe<kbd>J</kbd></button>
+    <div class="sp"></div>
+    <button id="t-cross" class="active" title="Crosshair (X)"><svg class="i"><use href="#i-cross"/></svg>Cursor<kbd>X</kbd></button>
+    <button id="t-reset" title="Reset view (0)"><svg class="i"><use href="#i-reset"/></svg>Reset<kbd>0</kbd></button>
+    <button id="t-shot" title="Save PNG (P)"><svg class="i"><use href="#i-shot"/></svg>PNG<kbd>P</kbd></button>
+  </nav>
+</div>
+<div class="report" id="report" hidden></div>
+<script src="/vendor/niivue.js"></script>
+<script>
+const caseId = location.pathname.split("/")[2];
+const $ = (id) => document.getElementById(id);
+const CT_PRESETS = [["Brain", 0, 80], ["Soft tissue", -160, 240], ["Bone", -500, 1500], ["Vessels", 100, 600]];
+const OVERLAY_COLORMAP = { CTA: "warm", CT: "warm", FA: "hot" };
+// NiiVue drag modes for the primary button: crosshair 8, windowing 9, pan 3, measurement 2, angle 7.
+const TOOLS = { pointer: 8, window: 9, pan: 3, measure: 2, angle: 7, brush: 8, erase: 8, grow: 8, ai: 8 };
+// Screen edges per view (top, bottom, left, right) in radiological convention with the nose to the right on sagittal.
+const VIEWS = { 0: ["Axial", "ax", ["A", "P", "R", "L"]], 1: ["Coronal", "cor", ["S", "I", "R", "L"]],
+                2: ["Sagittal", "sag", ["S", "I", "P", "A"]], 4: ["3D", "3d", null] };
+const S = { scene: null, vols: new Map(), labels: new Map(), tracts: new Map(), base: null, overlay: "",
+            showLabel: {}, showTract: {}, win: {}, layout: "grid", cross: true, tool: "pointer", tileSig: "" };
+
+function rgb(hex) { const n = parseInt(hex.replace("#", ""), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+async function bytes(url) { const r = await fetch(url, { cache: "no-store" }); if (!r.ok) throw Error(`${r.status} ${url}`); return r.arrayBuffer(); }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+function icon(name) {
+  const s = document.createElementNS("http://www.w3.org/2000/svg", "svg"); s.setAttribute("class", "i");
+  const u = document.createElementNS("http://www.w3.org/2000/svg", "use"); u.setAttribute("href", `#i-${name}`); s.append(u); return s;
+}
+function setStatus(title, text, fraction, error) {
+  $("status").hidden = !title;
+  $("status").classList.toggle("error", !!error);
+  $("status-title").textContent = title || "";
+  $("status-text").textContent = text || "";
+  $("progress").style.width = `${Math.round((fraction || 0) * 100)}%`;
+}
+function fmtDate(d) { return /^\d{8}$/.test(d || "") ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : (d || ""); }
+
+const nv = new niivue.Niivue({
+  backColor: [0, 0, 0, 1], crosshairColor: [.79, .66, .3, 1], crosshairWidth: 1, show3Dcrosshair: true,
+  isRadiologicalConvention: true, multiplanarShowRender: niivue.SHOW_RENDER.ALWAYS, multiplanarLayout: 2,
+  dragAndDropEnabled: false, isColorbar: false, loadingText: "", logLevel: "error", meshThicknessOn2D: 4,
+  fontColor: [.86, .84, .78, 1], isOrientationTextVisible: false, clipPlaneColor: [0, 0, 0, 0], isAlphaClipDark: true,
+  measureTextColor: [.79, .66, .3, 1], measureLineColor: [.79, .66, .3, 1], showMeasureUnits: true,
+});
+
+function applyLayers() {
+  const base = S.vols.get(S.base);
+  if (!base) return;
+  const list = [];
+  // The colormap setter recomputes cal_min/cal_max, so the window is set after it.
+  base.img.colormap = "gray"; base.img.opacity = 1;
+  [base.img.cal_min, base.img.cal_max] = S.win[S.base];
+  list.push(base.img);
+  if (S.overlay && S.overlay !== S.base) {
+    const o = S.vols.get(S.overlay);
+    o.img.colormap = OVERLAY_COLORMAP[o.meta.kind] || "warm";
+    [o.img.cal_min, o.img.cal_max] = S.win[S.overlay];
+    o.img.opacity = Number($("overlay-opacity").value) / 100;
+    list.push(o.img);
+  }
+  for (const [id, l] of S.labels) if (S.showLabel[id]) list.push(l.img);
+  nv.volumes = list; nv.back = list[0]; nv.overlays = list.slice(1);
+  nv.updateGLVolume();
+  applyTracts();
+  showSeg();
+}
+
+function applyTracts() {
+  // NiiVue 0.69 still draws meshes flagged visible=false, so hidden tracts are detached from nv.meshes.
+  const tracts = [...S.tracts].filter(([id]) => S.showTract[id]).map(([, t]) => t.mesh);
+  nv.meshes = tracts;
+  nv.opts.meshThicknessOn2D = Number($("slab").value);
+  nv.updateGLVolume();
+  S.tileSig = "";
+  trajMeshes().then((paths) => { if (paths.length) { nv.meshes = [...tracts, ...paths]; nv.updateGLVolume(); } });
+}
+
+// One label block per NiiVue tile: orientation glyph, series, study date, and the four edge letters.
+function placeTiles() {
+  const canvas = $("gl"), k = canvas.clientWidth / (canvas.width || 1);
+  const tiles = (nv.screenSlices || []).filter((s) => VIEWS[s.axCorSag] && s.leftTopWidthHeight[2] * k > 60);
+  const sig = tiles.map((s) => `${s.axCorSag}:${s.leftTopWidthHeight.map(Math.round)}`).join("|") + `|${k}`;
+  if (sig === S.tileSig) return;
+  S.tileSig = sig;
+  const base = S.vols.get(S.base), over = S.overlay && S.vols.get(S.overlay);
+  const date = fmtDate(S.scene?.date);
+  $("tiles").replaceChildren(...tiles.map((s) => {
+    const [name, glyph, edges] = VIEWS[s.axCorSag];
+    const [l, t, w, h] = s.leftTopWidthHeight.map((v) => v * k);
+    const tile = el("div", "tile");
+    Object.assign(tile.style, { left: `${l}px`, top: `${t}px`, width: `${w}px`, height: `${h}px` });
+    if (edges) ["t", "b", "l", "r"].forEach((side, i) => tile.append(el("span", `o ${side}`, edges[i])));
+    const id = el("div", "id"), txt = el("div");
+    txt.append(el("b", "", s.axCorSag === 4 ? "3D volume render" : base?.meta.label || ""));
+    const sub = [name, over ? `+ ${over.meta.label}` : "", date].filter(Boolean).join(" · ");
+    txt.append(el("span", "", sub));
+    id.append(icon(glyph), txt);
+    if (edges) id.style.top = "22px";
+    // Keep the first tile label clear of the floating menu bar.
+    if (l < 300 && t < 26) id.style.top = `${48 - t}px`;
+    tile.append(id);
+    return tile;
+  }));
+}
+
+function renderPresets() {
+  const meta = S.vols.get(S.base).meta, box = $("presets");
+  const ct = meta.kind === "CT" || meta.kind === "CTA";
+  const presets = ct ? CT_PRESETS : [["Auto", null, null]];
+  box.replaceChildren(...presets.map(([name, lo, hi]) => {
+    const b = el("button", "", name);
+    b.onclick = () => {
+      const img = S.vols.get(S.base).img;
+      S.win[S.base] = lo === null ? [img.robust_min ?? img.global_min, img.robust_max ?? img.global_max] : [lo, hi];
+      box.querySelectorAll("button").forEach((x) => x.classList.toggle("active", x === b));
+      applyLayers();
+    };
+    const [wl, wh] = S.win[S.base];
+    b.classList.toggle("active", lo === wl && hi === wh);
+    return b;
+  }));
+}
+
+function maskVolumeCm3(img) {
+  const d = img.img, p = img.hdr?.pixDims;
+  if (!d || !p) return null;
+  let n = 0;
+  for (let i = 0; i < d.length; i++) if (d[i] > 0) n++;
+  return (n * Math.abs(p[1] * p[2] * p[3])) / 1000;
+}
+
+// One row per object: colour stripe, eye toggle, name with review state, size; a click on the row shows its opacity.
+function objectRow({ color, label, kind, reviewed, value, visible, opacity, onToggle, onOpacity }) {
+  const row = el("div", "obj" + (visible ? "" : " off"));
+  row.style.setProperty("--c", color);
+  const top = el("div", "top");
+  const eye = el("button", "eye"); eye.title = visible ? "Hide" : "Show"; eye.append(icon(visible ? "eye" : "eyeoff"));
+  const txt = el("div", "txt"), sub = el("div", "sub");
+  sub.append(kind);
+  if (!reviewed) sub.append(el("span", "flag", "not reviewed"));
+  txt.append(el("span", "name", label), sub);
+  top.append(eye, txt, el("span", "val", value));
+  const more = el("div", "more"), slider = el("input");
+  slider.type = "range"; slider.min = 0; slider.max = 100; slider.value = Math.round(opacity * 100);
+  slider.oninput = () => onOpacity(Number(slider.value) / 100);
+  more.append(el("span", "", "Opacity"), slider);
+  eye.onclick = (e) => {
+    e.stopPropagation();
+    const on = row.classList.toggle("off") === false;
+    eye.replaceChildren(icon(on ? "eye" : "eyeoff")); eye.title = on ? "Hide" : "Show";
+    onToggle(on);
+  };
+  top.onclick = () => row.classList.toggle("open");
+  row.append(top, more);
+  return row;
+}
+
+// One line per series: label, modality, series number, image count. Click sets the base; Fuse sets the overlay.
+function seriesLine(m) {
+  return [m.modality || m.kind, m.series != null ? `series ${m.series}` : "", m.images ? `${m.images} images` : ""].filter(Boolean).join(" · ");
+}
+function renderSeries() {
+  const vols = [...S.vols.values()], off = S.scene.not_drawn || [];
+  $("series-title").textContent = `Series · ${vols.length} shown${off.length ? `, ${off.length} not drawn` : ""}`;
+  const rows = vols.map(({ meta: m }) => {
+    const row = document.createElement("div");
+    row.className = "s" + (m.id === S.base ? " base" : "");
+    const pick = document.createElement("button");
+    pick.className = "pick"; pick.title = "Show as the base image";
+    const b = document.createElement("b"); b.textContent = m.label;
+    if (m.dti) { const t = document.createElement("span"); t.className = "tag"; t.textContent = "DTI"; b.append(t); }
+    const sp = document.createElement("span"); sp.textContent = seriesLine(m);
+    pick.append(b, sp);
+    pick.onclick = () => setBase(m.id);
+    const fuse = document.createElement("button");
+    fuse.className = "fuse" + (m.id === S.overlay ? " on" : "");
+    fuse.textContent = m.id === S.overlay ? "Fused" : "Fuse";
+    fuse.title = m.id === S.base ? "This is the base image" : (m.id === S.overlay ? "Remove the fusion overlay" : "Fuse over the base image");
+    fuse.disabled = m.id === S.base;
+    fuse.onclick = () => setOverlay(m.id === S.overlay ? "" : m.id);
+    row.append(pick, fuse);
+    return row;
+  });
+  for (const n of off) {
+    const row = document.createElement("div");
+    row.className = "s off"; row.title = `Not drawn: ${n.reason}`;
+    const pick = document.createElement("div"); pick.className = "pick";
+    const b = document.createElement("b"); b.textContent = n.label || `Series ${n.series}`;
+    const sp = document.createElement("span"); sp.textContent = `${seriesLine({ ...n, kind: n.modality })} · ${n.reason}`;
+    pick.append(b, sp); row.append(pick, document.createElement("span"));
+    rows.push(row);
+  }
+  $("series-list").replaceChildren(...rows);
+}
+function setBase(id) {
+  if (!S.vols.has(id)) return;
+  S.base = id; if (S.overlay === S.base) S.overlay = "";
+  renderControls(); applyLayers(); updateReadout();
+}
+function setOverlay(id) {
+  S.overlay = id && id !== S.base ? id : "";
+  renderControls(); applyLayers(); updateReadout();
+}
+
+// Readout: scanner RAS mm, the voxel index in the source series, the value with its unit, and the series.
+function unitOf(meta) {
+  const m = (meta.modality || meta.kind || "").toUpperCase();
+  if (m.startsWith("CT")) return "HU";
+  if (m === "PT" || m === "PET") return "";
+  return "a.u.";
+}
+// Native voxel index (the file's own i, j, k) from the inverse of its NIfTI affine. NiiVue's mm2vox answers
+// in its RAS-reordered grid, which differs on flipped axes. The value is read from that same native voxel.
+function nativeInv(img) {
+  if (img._ninv) return img._ninv;
+  const A = img.hdr.affine, c = (r) => [A[0][r], A[1][r], A[2][r]];
+  const ex = c(0), ey = c(1), ez = c(2), det = dot3(ex, cross3(ey, ez));
+  return (img._ninv = { o: c(3), inv: [cross3(ey, ez), cross3(ez, ex), cross3(ex, ey)].map((r) => mul3(r, 1 / det)) });
+}
+function sampleAt(v, mm) {
+  const img = v.img, h = img.hdr, [nx, ny, nz] = [h.dims[1], h.dims[2], h.dims[3]];
+  const t = nativeInv(img), q = sub3(mm, t.o);
+  const ijk = t.inv.map((r) => Math.round(dot3(r, q)));
+  if (ijk.some((x, a) => x < 0 || x >= [nx, ny, nz][a])) return null;
+  const raw = img.img[ijk[0] + nx * (ijk[1] + ny * ijk[2])];
+  return { value: raw * (h.scl_slope || 1) + (h.scl_inter || 0), ijk };
+}
+function fmtVal(x, meta) {
+  if (x === null || x === undefined || !Number.isFinite(x)) return "—";
+  const u = unitOf(meta), v = Math.abs(x) >= 100 || Number.isInteger(x) ? x.toFixed(0) : x.toFixed(2);
+  return u ? `${v} ${u}` : v;
+}
+function updateReadout() {
+  const el = $("readout"), base = S.vols.get(S.base);
+  if (!base || !nv.back) { el.textContent = "—"; return; }
+  const mm = cursorMM(), at = sampleAt(base, mm);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const name = (m) => esc(`${m.label}${m.series != null ? ` (series ${m.series})` : ""}`);
+  const parts = [`RAS <b>${mm.map((v) => v.toFixed(1)).join(", ")}</b> mm`];
+  if (!at) parts.push(`outside ${name(base.meta)}`);
+  else parts.push(`voxel ${at.ijk ? at.ijk.join(", ") : "—"}`, `<b>${fmtVal(at.value, base.meta)}</b> in ${name(base.meta)}`);
+  const ov = S.overlay && S.vols.get(S.overlay);
+  if (ov) { const o = sampleAt(ov, mm); parts.push(`fusion ${o ? fmtVal(o.value, ov.meta) : "outside"} in ${name(ov.meta)}`); }
+  for (const [id, l] of S.labels) {
+    if (!l.lut || !S.showLabel[id]) continue;
+    const hit = l.lut.get(sampleAt(l, mm)?.value);
+    if (hit) parts.push(`<b>${esc(hit.name)}</b> (auto, not reviewed)`);
+  }
+  el.innerHTML = parts.join(" · ");
+  el.title = `LPS ${[-mm[0], -mm[1], mm[2]].map((v) => v.toFixed(1)).join(", ")} mm (DICOM patient axes). ` + el.textContent;
+}
+
+function renderControls() {
+  renderSeries();
+  const vols = [...S.vols.values()];
+  $("base").replaceChildren(...vols.map((v) => new Option(`${v.meta.label} · ${seriesLine(v.meta)}`, v.meta.id, false, v.meta.id === S.base)));
+  $("overlay").replaceChildren(new Option("None", ""), ...vols.map((v) => new Option(`${v.meta.label} · ${seriesLine(v.meta)}`, v.meta.id, false, v.meta.id === S.overlay)));
+  $("labels").replaceChildren(...[...S.labels.values()].map((l) => objectRow({
+    color: l.meta.color, label: l.meta.label, reviewed: !!l.meta.reviewed,
+    kind: l.lut ? `Anatomy · ${l.lut.size} labels · ${l.meta.source}` : l.meta.id.includes("vessel") ? "Vessels" : "Structure",
+    value: l.cm3 === null ? "" : `${l.cm3.toFixed(l.cm3 < 10 ? 2 : 1)} cm³`,
+    visible: !!S.showLabel[l.meta.id], opacity: l.img.opacity,
+    onToggle: (on) => { S.showLabel[l.meta.id] = on; applyLayers(); },
+    onOpacity: (v) => { l.img.opacity = v; nv.updateGLVolume(); },
+  })));
+  $("tracts").replaceChildren(...[...S.tracts.values()].map((t) => objectRow({
+    color: t.meta.color, label: t.meta.label, kind: "Fibre bundle", reviewed: !!t.meta.reviewed,
+    value: t.meta.n_streamlines ? `${Number(t.meta.n_streamlines).toLocaleString("en")} fib` : "",
+    visible: !!S.showTract[t.meta.id], opacity: t.mesh.opacity ?? 1,
+    onToggle: (on) => { S.showTract[t.meta.id] = on; applyTracts(); },
+    onOpacity: (v) => { t.mesh.opacity = v; nv.updateGLVolume(); },
+  })));
+  $("g-labels").hidden = $("labels").hidden = !S.labels.size;
+  $("g-tracts").hidden = $("tracts").hidden = !S.tracts.size;
+  const all = [...S.labels.values(), ...S.tracts.values()];
+  const open = all.filter((o) => !o.meta.reviewed).length;
+  $("obj-count").textContent = all.length ? `${all.length} in this case` : "";
+  const review = $("review");
+  review.hidden = false;
+  review.classList.toggle("ok", !open);
+  review.replaceChildren(...(open ? [icon("alert"), `${open} not reviewed`] : [all.length ? "All reviewed" : "No objects in this case"]));
+  renderPresets();
+}
+
+function setLayout(name) {
+  const types = { grid: nv.sliceTypeMultiplanar, axial: nv.sliceTypeAxial, coronal: nv.sliceTypeCoronal,
+                  sagittal: nv.sliceTypeSagittal, render: nv.sliceTypeRender };
+  S.layout = name;
+  nv.setSliceType(types[name]);
+  document.querySelectorAll("[data-layout]").forEach((b) => b.classList.toggle("active", b.dataset.layout === name));
+}
+
+function setTool(name) {
+  S.tool = name;
+  nv.opts.dragModePrimary = TOOLS[name];
+  document.querySelectorAll("[data-tool]").forEach((b) => b.classList.toggle("active", b.dataset.tool === name));
+  if ((name === "brush" || name === "erase") && !(S.seg?.active && segObj(S.seg.active))) newStructure();
+  setPen();
+}
+
+function setClip(on) { nv.setClipPlane(on ? [0, 180, 0] : [2, 0, 0]); }
+
+function setCrosshair(on) {
+  S.cross = on;
+  nv.setCrosshairWidth(on ? 1 : 0);
+  nv.opts.show3Dcrosshair = on;
+  $("t-cross").classList.toggle("active", on);
+  nv.drawScene();
+}
+
+function resetView() {
+  nv.scene.pan2Dxyzmm = [0, 0, 0, 1];
+  nv.scene.crosshairPos = [0.5, 0.5, 0.5];
+  nv.setRenderAzimuthElevation(120, 15);
+  nv.drawScene();
+  toast("View reset: zoom, pan, cursor and 3D angle.");
+}
+
+function clearMeasures() {
+  const doc = nv.document, n = (doc.completedMeasurements?.length || 0) + (doc.completedAngles?.length || 0);
+  if (!n) return toast("No distances or angles to clear.");
+  nv.clearAllMeasurements?.();
+  if (doc.completedAngles) doc.completedAngles.length = 0;
+  nv.drawScene(); renderFindings(); scheduleSave();
+  toast(`Cleared ${n} measurement${n > 1 ? "s" : ""}.`);
+}
+
+function screenshot() {
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  nv.saveScene(`${caseId}-${S.layout}-${stamp}.png`);
+  toast("PNG of the current view saved to Downloads.");
+}
+
+async function load() {
+  await nv.attachToCanvas($("gl"));
+  S.scene = await (await fetch(`/case/${caseId}/scene.json`, { cache: "no-store" })).json();
+  if (S.scene.alignment) { $("alignment").hidden = false; $("alignment").textContent = `Alignment ${S.scene.alignment}.`; }
+  if (!S.scene.volumes.length) throw Error("this case has no image volume");
+  let i = 0;
+  const total = S.scene.volumes.length + S.scene.labels.length + S.scene.tracts.length;
+  const step = (kind, what) => setStatus("Loading the case", `${kind}: ${what} (${++i} of ${total})`, (i - 1) / total);
+  for (const meta of S.scene.volumes) {
+    step("Image", meta.label);
+    const img = await niivue.NVImage.new(await bytes(meta.url), `${meta.id}.nii.gz`, "gray");
+    S.vols.set(meta.id, { meta, img });
+    S.win[meta.id] = meta.cal_min !== undefined ? [meta.cal_min, meta.cal_max]
+      : [img.robust_min ?? img.cal_min, img.robust_max ?? img.cal_max];
+  }
+  for (const meta of S.scene.labels) {
+    step("Structure", meta.label);
+    const img = await niivue.NVImage.new(await bytes(meta.url), `${meta.id}.nii.gz`, "gray", 1, null, 0, 1);
+    let lut = null, cm3;
+    if (meta.multi) {
+      // Automatic anatomy: one label map, one colour and name per value.
+      lut = new Map(meta.labels.map((lb) => [lb.value, { name: lb.name, c: rgb(lb.color), ml: lb.volume_ml }]));
+      const n = Math.max(...lut.keys()) + 1, cm = { R: [], G: [], B: [], A: [], I: [], labels: [] };
+      for (let v = 0; v < n; v++) {
+        const e = lut.get(v), c = e ? e.c : [0, 0, 0];
+        cm.R.push(c[0]); cm.G.push(c[1]); cm.B.push(c[2]); cm.A.push(e ? 255 : 0); cm.I.push(v); cm.labels.push(e ? e.name : "");
+      }
+      img.setColormapLabel(cm);
+      img.opacity = .4;
+      cm3 = null;
+    } else {
+      const [r, g, b] = rgb(meta.color);
+      img.setColormapLabel({ R: [0, r], G: [0, g], B: [0, b], A: [0, 255], I: [0, 1], labels: ["", meta.label] });
+      img.opacity = .55;
+      cm3 = meta.volume_ml ? Number(meta.volume_ml) : maskVolumeCm3(img);
+    }
+    S.labels.set(meta.id, { meta, img, cm3, lut });
+    S.showLabel[meta.id] = !meta.multi && (meta.reviewed || /lesion|tumou?r/i.test(meta.id + meta.label));
+  }
+  for (const meta of S.scene.tracts) {
+    step("Tract", meta.label);
+    const [r, g, b] = rgb(meta.color);
+    const mesh = await niivue.NVMesh.readMesh(await bytes(meta.url), `${meta.id}.tck`, nv.gl, 1, new Uint8Array([r, g, b, 255]), true);
+    mesh.fiberColor = "Fixed"; mesh.fiberDither = 0; mesh.rgba255 = new Uint8Array([r, g, b, 255]);
+    mesh.updateMesh?.(nv.gl);
+    S.tracts.set(meta.id, { meta, mesh });
+    S.showTract[meta.id] = true;
+  }
+  setStatus("Loading the case", "Drawing the views.", 1);
+  const order = ["CT", "MR", "T1", "CTA"];
+  const sorted = [...S.vols.values()].sort((a, b) => (order.indexOf(a.meta.kind) + 99) % 99 - (order.indexOf(b.meta.kind) + 99) % 99);
+  S.base = sorted[0].meta.id;
+  S.overlay = "";
+  nv.addVolume(S.vols.get(S.base).img);
+  renderControls();
+  applyLayers();
+  setLayout("grid");
+  setTool("pointer");
+  setClip(true);
+  nv.onLocationChange = updateReadout;
+  updateReadout();
+  // Windowing with the mouse changes cal_min/cal_max on the image without a callback in every drag mode,
+  // so the stored window is read back after each drag; otherwise the next layer change would undo it.
+  const syncWindow = () => {
+    for (const id of [S.base, S.overlay]) {
+      const v = S.vols.get(id);
+      if (v) S.win[id] = [v.img.cal_min, v.img.cal_max];
+    }
+    renderPresets();
+  };
+  nv.onIntensityChange = syncWindow;
+  $("gl").addEventListener("pointerup", syncWindow);
+  setInterval(placeTiles, 250);
+  setInterval(drawOverlay, 120);
+  await loadAnnotations();
+  aiCheck();
+  setStatus("");
+}
+
+// ---------- Shared geometry ----------
+const PALETTE = ["#e8665a", "#58b4e8", "#7bd389", "#e8c14f", "#b58be8", "#e88fc7", "#5fd6c8", "#f0a35a"];
+const TRAJ_COLOR = "#C9A84C";
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const mul3 = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const len3 = (a) => Math.hypot(a[0], a[1], a[2]);
+const norm3 = (a) => mul3(a, 1 / (len3(a) || 1));
+const fmt1 = (v) => (Math.abs(v) < 10 ? v.toFixed(1) : v.toFixed(0));
+const fmtMM = (p) => p.map((v) => v.toFixed(1)).join(", ");
+const cursorMM = () => [...nv.frac2mm(nv.scene.crosshairPos)].slice(0, 3);
+function toast(text) {
+  const t = $("toast"); t.textContent = text; t.hidden = false;
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => (t.hidden = true), 2600);
+}
+
+// Voxel grid of an image in RAS order (the order of img2RAS and of the drawing bitmap), with its voxel/mm affine.
+function grid(img) {
+  if (img._grid) return img._grid;
+  const d = img.dimsRAS, o = img.vox2mm([0, 0, 0], img.matRAS);
+  const ex = sub3(img.vox2mm([1, 0, 0], img.matRAS), o), ey = sub3(img.vox2mm([0, 1, 0], img.matRAS), o),
+        ez = sub3(img.vox2mm([0, 0, 1], img.matRAS), o);
+  const det = dot3(ex, cross3(ey, ez));
+  const inv = [cross3(ey, ez), cross3(ez, ex), cross3(ex, ey)].map((r) => mul3(r, 1 / det));
+  img._grid = { nx: d[1], ny: d[2], nz: d[3], o: [...o].slice(0, 3), ex, ey, ez, inv,
+                vox: Math.abs(det) };
+  return img._grid;
+}
+function rasData(img) {
+  if (img._ras) return img._ras;
+  const raw = img.img2RAS(), slope = img.hdr.scl_slope || 1, inter = img.hdr.scl_inter || 0;
+  const out = new Float32Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw[i] * slope + inter;
+  return (img._ras = out);
+}
+function mm2idx(g, p) {
+  const q = sub3(p, g.o);
+  const i = Math.round(dot3(g.inv[0], q)), j = Math.round(dot3(g.inv[1], q)), k = Math.round(dot3(g.inv[2], q));
+  if (i < 0 || j < 0 || k < 0 || i >= g.nx || j >= g.ny || k >= g.nz) return -1;
+  return i + g.nx * (j + g.ny * k);
+}
+function idx2mm(g, n) {
+  const i = n % g.nx, j = Math.floor(n / g.nx) % g.ny, k = Math.floor(n / (g.nx * g.ny));
+  return [g.o[0] + i * g.ex[0] + j * g.ey[0] + k * g.ez[0], g.o[1] + i * g.ex[1] + j * g.ey[1] + k * g.ez[1],
+          g.o[2] + i * g.ex[2] + j * g.ey[2] + k * g.ez[2]];
+}
+
+// ---------- Segment: drawn structures ----------
+// S.seg.bitmap is the truth; NiiVue's drawing layer shows a copy with hidden structures removed.
+S.seg = null; S.undo = []; S.traj = []; S.tsel = -1; S.points = []; S.probe = false; S.depth = 1;
+
+function segEnsure() {
+  if (S.seg) return S.seg.ref === S.base;
+  const img = S.vols.get(S.base).img, g = grid(img);
+  S.seg = { ref: S.base, dims: [g.nx, g.ny, g.nz], bitmap: new Uint8Array(g.nx * g.ny * g.nz), objects: [], active: 0, counts: {} };
+  return true;
+}
+function segObj(k) { return S.seg?.objects.find((o) => o.k === k); }
+function newStructure() {
+  if (!segEnsure()) return toast(`Structures are drawn on ${S.vols.get(S.seg.ref)?.meta.label}. Show it as the base image first.`);
+  const used = new Set(S.seg.objects.map((o) => o.k));
+  let k = 1; while (used.has(k)) k++;
+  if (k > 250) return toast("Too many structures.");
+  S.seg.objects.push({ k, name: `Structure ${k}`, color: PALETTE[(k - 1) % PALETTE.length], visible: true });
+  S.seg.active = k;
+  showSeg(); renderFindings(); setPen(); scheduleSave();
+  return k;
+}
+function showSeg() {
+  const seg = S.seg;
+  if (!seg || seg.ref !== S.base || !nv.back) { if (nv.drawBitmap) nv.closeDrawing(); nv.drawScene(); return; }
+  const max = Math.max(1, ...seg.objects.map((o) => o.k));
+  const lut = { R: [0], G: [0], B: [0], A: [0], I: [0], labels: [""] };
+  for (let k = 1; k <= max; k++) {
+    const o = segObj(k), [r, g, b] = rgb(o?.color || "#ffffff");
+    lut.R.push(r); lut.G.push(g); lut.B.push(b); lut.A.push(o ? 255 : 0); lut.I.push(k); lut.labels.push(o?.name || "");
+  }
+  nv.setDrawColormap(lut);
+  nv.drawOpacity = 0.5;
+  const hidden = new Set(seg.objects.filter((o) => !o.visible).map((o) => o.k));
+  const view = seg.bitmap.slice();
+  if (hidden.size) for (let i = 0; i < view.length; i++) if (hidden.has(view[i])) view[i] = 0;
+  if (!nv.drawBitmap || nv.drawBitmap.length !== view.length) nv.createEmptyDrawing();
+  nv.drawBitmap.set(view);
+  nv.refreshDrawing(true);
+}
+function pushUndo() { S.undo.push(S.seg.bitmap.slice()); if (S.undo.length > 6) S.undo.shift(); }
+function segUndo() {
+  if (!S.undo.length) return toast("Nothing to undo.");
+  S.seg.bitmap = S.undo.pop(); segChanged();
+}
+// A brush stroke may only add to empty voxels or change the selected structure; other structures stay intact.
+function mergeStroke() {
+  const seg = S.seg, d = nv.drawBitmap;
+  if (!seg || !d || seg.ref !== S.base || d.length !== seg.bitmap.length) return;
+  pushUndo();
+  const a = seg.active, t = seg.bitmap;
+  for (let i = 0; i < t.length; i++) {
+    const v = t[i];
+    if (v === 0 || v === a) t[i] = d[i] === a || d[i] === 0 ? d[i] : v;
+  }
+  segChanged();
+}
+function segCounts() {
+  const c = {}, t = S.seg.bitmap;
+  for (let i = 0; i < t.length; i++) if (t[i]) c[t[i]] = (c[t[i]] || 0) + 1;
+  S.seg.counts = c;
+}
+function segCm3(k) { return ((S.seg.counts[k] || 0) * grid(S.vols.get(S.seg.ref).img).vox) / 1000; }
+function segChanged() { segCounts(); showSeg(); renderFindings(); scheduleSave(); invalidateDist(); drawOverlay(true); drawProbe(); }
+// ---------- AI segment: nnInteractive on the server, from clicked points ----------
+// Points are scanner RAS mm. The result arrives on the image's own voxel grid and is resampled
+// onto the drawing grid by voxel centre; it only fills empty voxels, like every other tool.
+S.ai = { points: [], status: null, busy: false };
+let aiShift = false;
+async function aiCheck() {
+  try { S.ai.status = await (await fetch("/api/segment-ai", { cache: "no-store" })).json(); }
+  catch { S.ai.status = { available: false, reason: "the server did not answer" }; }
+  aiShow();
+}
+function aiShow() {
+  const st = S.ai.status, n = S.ai.points.length, pos = S.ai.points.filter((p) => p.positive).length;
+  $("ai-state").textContent = !st ? "checking…" : S.ai.busy ? "running…" : st.available ? `ready (${st.device})` : `unavailable: ${st.reason}`;
+  $("ai-run").disabled = !st?.available || S.ai.busy || !pos;
+  $("ai-run").textContent = S.ai.busy ? "Segmenting…" : `Segment from ${n} point${n === 1 ? "" : "s"}${n > pos ? ` (${n - pos} outside)` : ""}`;
+}
+function aiAddPoint(positive) {
+  if (S.ai.points.length >= 32) return toast("At most 32 points. Run or clear them first.");
+  S.ai.points.push({ ras: cursorMM(), positive });
+  aiShow(); drawOverlay(true);
+  toast(positive ? "Point inside added. Shift-click marks a point outside." : "Point outside added.");
+}
+async function aiRun() {
+  if (S.ai.busy || !S.ai.points.length) return;
+  if (!segEnsure()) return toast(`Structures are drawn on ${S.vols.get(S.seg.ref)?.meta.label}. Show it as the base image first.`);
+  S.ai.busy = true; aiShow();
+  let res;
+  try {
+    const r = await fetch(`/api/case/${caseId}/segment-ai`, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ layer: S.seg.ref, points: S.ai.points }) });
+    res = await r.json();
+    if (!r.ok) throw new Error(res.error || `HTTP ${r.status}`);
+  } catch (err) {
+    S.ai.busy = false; aiShow();
+    return toast(`AI segment failed: ${err.message}`);
+  }
+  S.ai.busy = false;
+  const raw = atob(res.indices), bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  const idx = new Uint32Array(bytes.buffer), [nx, ny] = res.dims, A = res.affine;
+  const k = newStructure();
+  if (!k) return aiShow();
+  const o = segObj(k);
+  o.name = `AI structure ${k}`; o.source = res.source;
+  pushUndo();
+  const g = grid(S.vols.get(S.seg.ref).img), t = S.seg.bitmap;
+  let added = 0;
+  for (const n of idx) {
+    const i = n % nx, j = Math.floor(n / nx) % ny, kk = Math.floor(n / (nx * ny));
+    const mm = [0, 1, 2].map((r) => A[r][0] * i + A[r][1] * j + A[r][2] * kk + A[r][3]);
+    const m = mm2idx(g, mm);
+    if (m >= 0 && t[m] === 0) { t[m] = k; added++; }
+  }
+  S.ai.points = [];
+  segChanged(); aiShow();
+  toast(`${o.name}: ${((added * g.vox) / 1000).toFixed(2)} cm³ from ${res.points} point${res.points === 1 ? "" : "s"}. Automatic, not reviewed.`);
+}
+
+function setPen() {
+  const draw = S.tool === "brush" || S.tool === "erase";
+  if (draw && S.seg?.ref === S.base) {
+    nv.opts.penSize = Number($("pen").value);
+    nv.setPenValue(S.tool === "erase" ? 0 : S.seg.active, false);
+    nv.setDrawingEnabled(true);
+    showSeg();
+  } else if (nv.opts.drawingEnabled) { nv.setDrawingEnabled(false); showSeg(); }
+}
+
+// Seed grow: 6-connected 3D flood fill from the cursor, inside seed ± range, within a radius; empty voxels only.
+const GROW_LIMIT_FRACTION = 0.3;
+function growFromCursor() {
+  if (!segEnsure()) return toast(`Structures are drawn on ${S.vols.get(S.seg.ref)?.meta.label}. Show it as the base image first.`);
+  const img = S.vols.get(S.base).img, g = grid(img), data = rasData(img), t = S.seg.bitmap;
+  const seed = mm2idx(g, cursorMM());
+  if (seed < 0) return toast("The cursor is outside the image.");
+  if (t[seed] !== 0 && t[seed] !== S.seg.active) return toast(`The cursor is inside ${segObj(t[seed])?.name || "another structure"}. Select that structure to grow it.`);
+  if (!S.seg.active || !segObj(S.seg.active)) newStructure();
+  const a = S.seg.active;
+  // Median of the 3×3×3 neighbourhood resists a noisy seed voxel.
+  const near = [];
+  for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    const n = seed + dx + g.nx * (dy + g.ny * dz); if (n >= 0 && n < data.length) near.push(data[n]);
+  }
+  near.sort((x, y) => x - y);
+  const c = near[near.length >> 1], [wl, wh] = S.win[S.base];
+  const tol = (Math.abs(wh - wl) * Number($("tol").value)) / 100, lo = c - tol, hi = c + tol;
+  const r = Number($("rad").value), r2 = r * r, sm = idx2mm(g, seed);
+  pushUndo();
+  const seen = new Uint8Array(t.length), queue = new Int32Array(t.length);
+  // Boundary faces stopped by the grow limit versus by intensity. A boundary mostly on the limit is a sphere, not anatomy.
+  let head = 0, tail = 0, added = 0, atLimit = 0, atEdge = 0;
+  queue[tail++] = seed; seen[seed] = 1;
+  while (head < tail) {
+    const n = queue[head++];
+    if (t[n] !== 0 && t[n] !== a) continue;
+    if (t[n] === 0) { t[n] = a; added++; }
+    const i = n % g.nx, j = Math.floor(n / g.nx) % g.ny, k = Math.floor(n / (g.nx * g.ny));
+    for (const [di, dj, dk] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) {
+      const ii = i + di, jj = j + dj, kk = k + dk;
+      if (ii < 0 || jj < 0 || kk < 0 || ii >= g.nx || jj >= g.ny || kk >= g.nz) continue;
+      const m = ii + g.nx * (jj + g.ny * kk);
+      if (seen[m]) continue;
+      const v = data[m];
+      if (v < lo || v > hi || (t[m] !== 0 && t[m] !== a)) { atEdge++; continue; }
+      const p = sub3(idx2mm(g, m), sm);
+      if (dot3(p, p) > r2) { atLimit++; continue; }
+      seen[m] = 1;
+      queue[tail++] = m;
+    }
+  }
+  const o = segObj(a), frac = atLimit / Math.max(1, atLimit + atEdge);
+  o.limit = frac > GROW_LIMIT_FRACTION ? { r, pct: Math.round(frac * 100) } : null;
+  segChanged();
+  toast(o.limit ? `Grew ${o.name}: +${((added * g.vox) / 1000).toFixed(2)} cm³. ${o.limit.pct}% of the boundary is the ${r} mm grow limit, not anatomy. Check it before you use the volume.`
+    : `Grew ${o.name}: +${((added * g.vox) / 1000).toFixed(2)} cm³ (range ${fmt1(lo)} to ${fmt1(hi)}).`);
+}
+
+function rle(b) {
+  const out = []; let v = b[0], n = 0;
+  for (let i = 0; i < b.length; i++) { if (b[i] === v) n++; else { out.push(v, n); v = b[i]; n = 1; } }
+  out.push(v, n); return out;
+}
+function unrle(runs, size) {
+  const b = new Uint8Array(size); let p = 0;
+  for (let i = 0; i < runs.length; i += 2) { b.fill(runs[i], p, p + runs[i + 1]); p += runs[i + 1]; }
+  return p === size ? b : null;
+}
+
+// ---------- Trajectory ----------
+function curTraj() { return S.traj[S.tsel]; }
+function newTrajectory() {
+  S.traj.push({ name: `Trajectory ${S.traj.length + 1}`, target: null, entry: null });
+  S.tsel = S.traj.length - 1; trajChanged();
+}
+function setTrajPoint(which) {
+  if (!curTraj()) newTrajectory();
+  curTraj()[which] = cursorMM();
+  trajChanged();
+  const t = curTraj();
+  toast(t.target && t.entry ? (len3(sub3(t.target, t.entry)) < 0.5 ? "Target and entry are the same point. Move the cursor and set one again." : `${t.name}: ${trajState(t)}`) : `${which === "target" ? "Target" : "Entry"} set. Now set the ${which === "target" ? "entry (Y)" : "target (T)"}.`);
+}
+function trajChanged() { invalidateDist(); applyTracts(); renderPlan(); renderFindings(); drawOverlay(true); drawProbe(); scheduleSave(); }
+// One-streamline TCK so NiiVue draws the path in 3D like a tract.
+async function trajMeshes() {
+  const out = [];
+  for (const t of S.traj) {
+    if (!t.target || !t.entry) continue;
+    const key = `${t.entry}|${t.target}`;
+    if (t._mesh && t._key === key) { out.push(t._mesh); continue; }
+    const head0 = "mrtrix tracks\ndatatype: Float32LE\nfile: . 000\ncount: 1\nEND\n";
+    const off = head0.length, head = head0.replace("000", String(off).padStart(3, "0"));
+    const pts = [];
+    for (let s = 0; s <= 20; s++) pts.push(...add3(t.entry, mul3(sub3(t.target, t.entry), s / 20)));
+    const buf = new ArrayBuffer(off + 4 * (pts.length + 6));
+    new Uint8Array(buf).set(new TextEncoder().encode(head));
+    new Float32Array(buf, off).set([...pts, NaN, NaN, NaN, Infinity, Infinity, Infinity]);
+    const [r, g, b] = rgb(TRAJ_COLOR);
+    const mesh = await niivue.NVMesh.readMesh(buf, "trajectory.tck", nv.gl, 1, new Uint8Array([r, g, b, 255]), true);
+    mesh.fiberColor = "Fixed"; mesh.fiberRadius = 1; mesh.rgba255 = new Uint8Array([r, g, b, 255]); mesh.updateMesh?.(nv.gl);
+    t._mesh = mesh; t._key = key; out.push(mesh);
+  }
+  return out;
+}
+
+// Closest distance from each trajectory segment to each structure, from voxel centres.
+let distCache = null;
+function invalidateDist() { distCache = null; }
+function segDist(p, a, u, L) { const s = Math.max(0, Math.min(L, dot3(sub3(p, a), u))); return len3(sub3(p, add3(a, mul3(u, s)))); }
+function structureSources() {
+  const out = [];
+  if (S.seg) {
+    const g = grid(S.vols.get(S.seg.ref).img);
+    for (const o of S.seg.objects) out.push({ name: o.name, color: o.color, g, data: S.seg.bitmap, match: o.k });
+  }
+  for (const l of S.labels.values()) if (!l.lut) out.push({ name: l.meta.label, color: l.meta.color, g: grid(l.img), data: rasData(l.img), match: null });
+  return out;
+}
+function distances(t) {
+  if (!t?.target || !t?.entry) return [];
+  distCache ??= new Map();
+  const key = `${t.entry}|${t.target}`;
+  if (distCache.has(key)) return distCache.get(key);
+  const a = t.entry, L = len3(sub3(t.target, a)), u = norm3(sub3(t.target, a));
+  const res = structureSources().map((s) => {
+    let best = Infinity; const g = s.g, d = s.data;
+    for (let n = 0; n < d.length; n++) {
+      if (s.match === null ? !(d[n] > 0) : d[n] !== s.match) continue;
+      const dd = segDist(idx2mm(g, n), a, u, L); if (dd < best) best = dd;
+    }
+    const half = Math.cbrt(g.vox) * 0.87;
+    return { name: s.name, color: s.color, mm: best === Infinity ? null : Math.max(0, best - half), hit: best <= half };
+  }).filter((r) => r.mm !== null);
+  distCache.set(key, res);
+  return res;
+}
+
+function renderPlan() {
+  const box = $("plan"), t = curTraj();
+  const sel = el("select"); sel.style.width = "100%";
+  S.traj.forEach((x, i) => sel.append(new Option(x.name, i, false, i === S.tsel)));
+  sel.onchange = () => { S.tsel = Number(sel.value); trajChanged(); };
+  const buttons = el("div", "btnrow");
+  const b = (text, fn, primary, dis) => { const x = el("button", "btn" + (primary ? " primary" : ""), text); x.onclick = fn; x.disabled = !!dis; return x; };
+  buttons.append(b("+ New", newTrajectory, !S.traj.length), b("Target ⌖ T", () => setTrajPoint("target")), b("Entry Y", () => setTrajPoint("entry")),
+                 b("Probe J", toggleProbe, false, !(t?.target && t?.entry)));
+  const kids = [];
+  if (S.traj.length) kids.push(sel);
+  kids.push(buttons);
+  if (!t) kids.push(el("div", "hint", "Place the cursor on the target and press T, then on the entry and press Y. The path appears on every view."));
+  else {
+    const kv = el("div", "kv");
+    const row = (k, v) => kv.append(el("span", "", k), el("b", "", v));
+    row("Target", t.target ? fmtMM(t.target) : "not set");
+    row("Entry", t.entry ? fmtMM(t.entry) : "not set");
+    if (t.target && t.entry) {
+      const d = sub3(t.target, t.entry), L = len3(d), u = mul3(d, 1 / L);
+      row("Length", `${L.toFixed(1)} mm`);
+      row("Angle to axial", `${(Math.asin(Math.abs(u[2])) * 180 / Math.PI).toFixed(0)}°`);
+      row("Angle to sagittal", `${(Math.asin(Math.abs(u[0])) * 180 / Math.PI).toFixed(0)}°`);
+    }
+    kids.push(kv);
+    const dl = distances(t);
+    if (dl.length) {
+      const dist = el("div", "dist");
+      dist.append(el("div", "hint", "Closest distance from the path"));
+      for (const r of dl.sort((x, y) => x.mm - y.mm)) {
+        const line = el("div", r.hit ? "hit" : ""); line.style.setProperty("--c", r.color);
+        line.append(el("i"), el("span", "", r.name), el("b", "", r.hit ? "crosses" : `${r.mm.toFixed(1)} mm`));
+        dist.append(line);
+      }
+      kids.push(dist);
+    }
+  }
+  box.replaceChildren(...kids);
+}
+
+// ---------- Points and the findings list ----------
+function markPoint() {
+  S.points.push({ name: `Point ${S.points.length + 1}`, mm: cursorMM() });
+  renderFindings(); drawOverlay(true); scheduleSave();
+}
+function measurements() {
+  const doc = nv.document || {};
+  const m = (doc.completedMeasurements || []).map((x, i) => ({ key: `m${i}`, kind: "Distance", value: `${len3(sub3(x.endMM, x.startMM)).toFixed(1)} mm`, x }));
+  const a = (doc.completedAngles || []).map((x, i) => ({ key: `a${i}`, kind: "Angle", value: `${Number(x.angle).toFixed(1)}°`, x }));
+  return [...m, ...a];
+}
+function mName(m) { return m.x.name || `${m.kind} ${m.key.slice(1) * 1 + 1}`; }
+function goTo(mm) { nv.scene.crosshairPos = nv.mm2frac(mm); nv.updateGLVolume(); drawOverlay(true); }
+function findingRow({ color, glyph, name, onName, value, sub, onClick, onDelete, active, eye }) {
+  const row = el("div", "obj" + (active ? " active" : "")); row.style.setProperty("--c", color);
+  const top = el("div", "top");
+  if (eye) {
+    const e = el("button", "eye"); e.append(icon(eye.on ? "eye" : "eyeoff")); e.title = eye.on ? "Hide" : "Show";
+    e.onclick = (ev) => { ev.stopPropagation(); eye.toggle(); }; top.append(e);
+  } else top.append(el("span", "dot", glyph));
+  const txt = el("div", "txt");
+  const inp = el("input", "name"); inp.value = name; inp.title = "Rename";
+  inp.onclick = (ev) => ev.stopPropagation();
+  inp.onchange = () => onName(inp.value.trim() || name);
+  inp.onkeydown = (ev) => { ev.stopPropagation(); if (ev.key === "Enter") inp.blur(); };
+  const subEl = el("div", "sub"); subEl.append(sub ?? ""); txt.append(inp, subEl);
+  top.append(txt, el("span", "val", value));
+  if (onDelete) { const x = el("button", "x", "×"); x.title = "Delete"; x.onclick = (ev) => { ev.stopPropagation(); onDelete(); }; top.append(x); }
+  top.onclick = onClick || null;
+  row.append(top); return row;
+}
+function renderFindings() {
+  const rows = [];
+  for (const o of S.seg?.objects || []) rows.push(findingRow({
+    color: o.color, name: o.name, value: `${segCm3(o.k).toFixed(2)} cm³`, active: o.k === S.seg.active,
+    sub: o.limit ? el("span", "warn", `Boundary = ${o.limit.r} mm grow limit (${o.limit.pct}%), not anatomy`)
+      : o.source ? el("span", "warn", `${o.source} · automatic, not reviewed`)
+      : o.k === S.seg.active ? "Drawn structure · selected" : "Drawn structure · click to select",
+    eye: { on: o.visible, toggle: () => { o.visible = !o.visible; showSeg(); renderFindings(); scheduleSave(); } },
+    onName: (v) => { o.name = v; renderFindings(); renderPlan(); scheduleSave(); },
+    onClick: () => { S.seg.active = o.k; setPen(); renderFindings(); },
+    onDelete: () => {
+      if (!confirm(`Delete ${o.name}?`)) return;
+      pushUndo(); const t = S.seg.bitmap; for (let i = 0; i < t.length; i++) if (t[i] === o.k) t[i] = 0;
+      S.seg.objects = S.seg.objects.filter((x) => x !== o);
+      if (S.seg.active === o.k) S.seg.active = S.seg.objects[0]?.k || 0;
+      segChanged(); setPen();
+    },
+  }));
+  S.traj.forEach((t, i) => rows.push(findingRow({
+    color: TRAJ_COLOR, glyph: "⟋", name: t.name, active: i === S.tsel,
+    value: trajState(t), sub: "Trajectory",
+    onName: (v) => { t.name = v; renderPlan(); renderFindings(); scheduleSave(); },
+    onClick: () => { S.tsel = i; trajChanged(); if (t.target) goTo(t.target); },
+    onDelete: () => { S.traj.splice(i, 1); S.tsel = Math.min(S.tsel, S.traj.length - 1); trajChanged(); },
+  })));
+  S.points.forEach((p, i) => rows.push(findingRow({
+    color: "#f2f2f2", glyph: "◉", name: p.name, value: "", sub: fmtMM(p.mm) + " mm",
+    onName: (v) => { p.name = v; scheduleSave(); drawOverlay(true); },
+    onClick: () => goTo(p.mm),
+    onDelete: () => { S.points.splice(i, 1); renderFindings(); drawOverlay(true); scheduleSave(); },
+  })));
+  for (const m of measurements()) rows.push(findingRow({
+    color: "#C9A84C", glyph: m.kind === "Angle" ? "∠" : "↔", name: mName(m),
+    value: m.value, sub: m.kind, onName: (v) => { m.x.name = v; renderFindings(); scheduleSave(); },
+    onClick: () => goTo(Array.from(m.kind === "Angle" ? m.x.firstLineMM.end : m.x.startMM)),
+    onDelete: () => {
+      const list = m.kind === "Angle" ? nv.document.completedAngles : nv.document.completedMeasurements;
+      list.splice(list.indexOf(m.x), 1); nv.drawScene(); renderFindings(); scheduleSave();
+      toast(`${mName(m)} deleted.`);
+    },
+  }));
+  if (!rows.length) rows.push(el("div", "hint", "Measurements, points (L), structures and trajectories appear here."));
+  $("findings").replaceChildren(...rows);
+}
+
+// ---------- 2D overlay: path, entry, target and points on every slice view ----------
+const AXES = { 0: [0, 1, 2], 1: [0, 2, 1], 2: [1, 2, 0] }; // screen u, screen v, slice normal
+let overlaySig = "";
+function drawOverlay(force) {
+  const svg = $("over"), canvas = $("gl"), k = canvas.clientWidth / (canvas.width || 1);
+  const c = nv.back ? cursorMM() : [0, 0, 0];
+  const tiles = (nv.screenSlices || []).filter((s) => AXES[s.axCorSag] && s.fovMM);
+  const sig = JSON.stringify([c, tiles.map((s) => [s.leftTopWidthHeight, s.leftTopMM, s.fovMM]), k, S.tsel]);
+  if (!force && sig === overlaySig) return;
+  overlaySig = sig;
+  const NS = "http://www.w3.org/2000/svg", mk = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const a in attrs) e.setAttribute(a, attrs[a]); return e; };
+  const kids = [], defs = mk("defs", {});
+  kids.push(defs);
+  tiles.forEach((s, ti) => {
+    const [l, t, w, h] = s.leftTopWidthHeight.map((v) => v * k), [ui, vi, ni] = AXES[s.axCorSag];
+    const P = (p) => [l + ((p[ui] - s.leftTopMM[0]) / s.fovMM[0]) * w, t + (1 - (p[vi] - s.leftTopMM[1]) / s.fovMM[1]) * h];
+    const cp = mk("clipPath", { id: `cl${ti}` }); cp.append(mk("rect", { x: l, y: t, width: w, height: h })); defs.append(cp);
+    const g = mk("g", { "clip-path": `url(#cl${ti})` });
+    for (const p of S.ai.points) if (Math.abs(p.ras[ni] - c[ni]) < 2) {
+      const [x, y] = P(p.ras);
+      g.append(mk("circle", { cx: x, cy: y, r: 4.5, fill: p.positive ? "#4CAF50" : "#E53935", stroke: "#fff", "stroke-width": 1.2 }));
+    }
+    S.traj.forEach((tr, i) => {
+      const sel = i === S.tsel, col = TRAJ_COLOR, op = sel ? 1 : 0.5;
+      if (tr.target && tr.entry) {
+        const [x1, y1] = P(tr.entry), [x2, y2] = P(tr.target);
+        g.append(mk("line", { x1, y1, x2, y2, stroke: "#000", "stroke-width": 4, opacity: 0.5 * op }));
+        g.append(mk("line", { x1, y1, x2, y2, stroke: col, "stroke-width": 1.6, opacity: op }));
+        // Where the path pierces the current slice.
+        const dn = tr.target[ni] - tr.entry[ni];
+        if (Math.abs(dn) > 1e-6) {
+          const f = (c[ni] - tr.entry[ni]) / dn;
+          if (f >= 0 && f <= 1) { const [x, y] = P(add3(tr.entry, mul3(sub3(tr.target, tr.entry), f))); g.append(mk("circle", { cx: x, cy: y, r: 5, fill: "none", stroke: "#fff", "stroke-width": 1.4, opacity: op })); }
+        }
+      }
+      if (tr.entry) { const [x, y] = P(tr.entry); g.append(mk("rect", { x: x - 4, y: y - 4, width: 8, height: 8, fill: "none", stroke: col, "stroke-width": 1.8, opacity: op })); }
+      if (tr.target) {
+        const [x, y] = P(tr.target), near = Math.abs(tr.target[ni] - c[ni]) < 2;
+        g.append(mk("circle", { cx: x, cy: y, r: 6, fill: near ? col : "none", "fill-opacity": 0.35, stroke: col, "stroke-width": 1.8, opacity: op }));
+        g.append(mk("circle", { cx: x, cy: y, r: 1.5, fill: col, opacity: op }));
+      }
+    });
+    for (const p of S.points) {
+      const dz = Math.abs(p.mm[ni] - c[ni]);
+      if (dz > 3) continue;
+      const [x, y] = P(p.mm);
+      g.append(mk("circle", { cx: x, cy: y, r: 4, fill: "#fff", stroke: "#000", "stroke-width": 1, opacity: 1 - dz / 4 }));
+      const tx = mk("text", { x: x + 7, y: y - 6, fill: "#fff" }); tx.textContent = p.name; g.append(tx);
+    }
+    kids.push(g);
+  });
+  svg.replaceChildren(...kids);
+}
+
+// ---------- Probe view: reslices across and along the selected path ----------
+function toggleProbe() {
+  const t = curTraj();
+  if (!S.probe && !(t?.target && t?.entry)) return toast("Set a target (T) and an entry (Y) first.");
+  S.probe = !S.probe; $("probe").hidden = !S.probe; drawProbe();
+}
+function sampler() {
+  const base = S.vols.get(S.base), g = grid(base.img), data = rasData(base.img), [wl, wh] = S.win[S.base];
+  const layers = [];
+  if (S.seg && S.seg.ref === S.base) {
+    const vis = {}; for (const o of S.seg.objects) if (o.visible) vis[o.k] = rgb(o.color);
+    layers.push({ g, data: S.seg.bitmap, color: (v) => vis[v] });
+  }
+  for (const [id, l] of S.labels) {
+    if (!S.showLabel[id]) continue;
+    const c = rgb(l.meta.color);
+    layers.push({ g: grid(l.img), data: rasData(l.img), color: l.lut ? (v) => l.lut.get(v)?.c : (v) => (v > 0 ? c : null) });
+  }
+  return (p) => {
+    const n = mm2idx(g, p);
+    let v = n < 0 ? 0 : Math.max(0, Math.min(255, ((data[n] - wl) / (wh - wl)) * 255));
+    let r = v, gg = v, b = v;
+    for (const L of layers) {
+      const m = mm2idx(L.g, p); if (m < 0) continue;
+      const c = L.color(L.data[m]); if (!c) continue;
+      r = r * 0.45 + c[0] * 0.55; gg = gg * 0.45 + c[1] * 0.55; b = b * 0.45 + c[2] * 0.55;
+    }
+    return [r, gg, b];
+  };
+}
+function drawProbe() {
+  if (!S.probe) return;
+  const t = curTraj();
+  if (!(t?.target && t?.entry) || !S.vols.get(S.base)) { S.probe = false; $("probe").hidden = true; return; }
+  const d = sub3(t.target, t.entry), L = len3(d), u = mul3(d, 1 / L);
+  const ref = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [0, 0, 1];
+  const a = norm3(cross3(ref, u)), b = norm3(cross3(u, a));
+  const depth = S.depth * (L + 10), at = add3(t.entry, mul3(u, depth));
+  $("probe-title").textContent = t.name;
+  $("probe-depth").textContent = depth <= L ? `${(L - depth).toFixed(1)} mm to target` : `${(depth - L).toFixed(1)} mm past target`;
+  const sample = sampler();
+  const paint = (cv, fn) => {
+    const ctx = cv.getContext("2d"), W = cv.width, H = cv.height, im = ctx.createImageData(W, H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const [r, g, bb] = sample(fn(x / W, y / H)), o = 4 * (y * W + x);
+      im.data[o] = r; im.data[o + 1] = g; im.data[o + 2] = bb; im.data[o + 3] = 255;
+    }
+    ctx.putImageData(im, 0, 0); return ctx;
+  };
+  // Across: 60 mm field centred on the path at the chosen depth.
+  const F = 60;
+  let ctx = paint($("probe-eye"), (x, y) => add3(at, add3(mul3(a, (x - 0.5) * F), mul3(b, (0.5 - y) * F))));
+  const W = $("probe-eye").width, px = W / F;
+  ctx.strokeStyle = TRAJ_COLOR; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(W / 2, W / 2, Math.max(2, px), 0, 7); ctx.stroke();
+  ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.arc(W / 2, W / 2, 5 * px, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+  ctx.fillStyle = "#ddd"; ctx.font = "10px sans-serif"; ctx.fillText("ring 5 mm", 6, W - 6);
+  // Along: the plane holding the path, entry at the top.
+  const span = Math.max(L + 20, 60), mid = add3(t.entry, mul3(u, L / 2));
+  ctx = paint($("probe-inline"), (x, y) => add3(mid, add3(mul3(a, (x - 0.5) * span), mul3(u, (y - 0.5) * span))));
+  const H = $("probe-inline").height, yOf = (s) => (0.5 + (s - L / 2) / span) * H;
+  ctx.strokeStyle = TRAJ_COLOR; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(H / 2, yOf(0)); ctx.lineTo(H / 2, yOf(L)); ctx.stroke();
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(H / 2 - 14, yOf(depth)); ctx.lineTo(H / 2 + 14, yOf(depth)); ctx.stroke();
+}
+
+// ---------- Save and load with the study ----------
+// Every change goes first to a write-ahead copy in this browser (localStorage), then to the server.
+// A failed save stays visible in the menu bar and retries with backoff until it succeeds.
+// The local copy holds annotation geometry and names only, and is removed once the server has it.
+let saveTimer = null, walTimer = null, retryTimer = null, loading = false;
+const SAVE = { gen: 0, savedGen: 0, inflight: false, tries: 0, error: "", at: "", walOk: true };
+const walKey = () => `eidos.wal.${caseId}`;
+function annotationDoc() {
+  return {
+    version: 1,
+    seg: S.seg && { ref: S.seg.ref, dims: S.seg.dims, rle: rle(S.seg.bitmap), objects: S.seg.objects.map(({ k, name, color, visible, limit, source }) => ({ k, name, color, visible, limit: limit || null, ...(source ? { source } : {}) })), active: S.seg.active },
+    trajectories: S.traj.map(({ name, target, entry }) => ({ name, target, entry })),
+    points: S.points,
+    measurements: (nv.document.completedMeasurements || []).map((x) => ({
+      name: x.name || "", startMM: Array.from(x.startMM), endMM: Array.from(x.endMM),
+      sliceIndex: x.sliceIndex, sliceType: x.sliceType, slicePosition: x.slicePosition })),
+    angles: (nv.document.completedAngles || []).map((x) => ({
+      name: x.name || "", angle: x.angle, sliceIndex: x.sliceIndex, sliceType: x.sliceType, slicePosition: x.slicePosition,
+      firstLineMM: { start: Array.from(x.firstLineMM.start), end: Array.from(x.firstLineMM.end) },
+      secondLineMM: { start: Array.from(x.secondLineMM.start), end: Array.from(x.secondLineMM.end) } })),
+  };
+}
+function walWrite(doc) {
+  try { localStorage.setItem(walKey(), JSON.stringify({ t: Date.now(), gen: SAVE.gen, doc })); SAVE.walOk = true; }
+  catch { SAVE.walOk = false; }
+}
+function walRead() { try { return JSON.parse(localStorage.getItem(walKey()) || "null"); } catch { return null; } }
+function walClear(gen) {
+  try { const w = walRead(); if (!w || w.gen <= gen) localStorage.removeItem(walKey()); } catch { /* storage blocked */ }
+}
+function showSaveState() {
+  const el = $("save-state"), dirty = SAVE.gen !== SAVE.savedGen;
+  el.className = "save-state" + (SAVE.error ? " failed" : SAVE.inflight ? " saving" : dirty ? " dirty" : "");
+  const backup = SAVE.walOk ? "a copy is kept in this browser" : "no copy in this browser (storage blocked)";
+  $("save-text").textContent = SAVE.error ? `Not saved (${SAVE.error}). Retrying…` : SAVE.inflight ? "Saving…" : dirty ? "Unsaved changes" : SAVE.at ? `Saved ${SAVE.at}` : "Saved";
+  el.title = SAVE.error ? `The server refused the last save: ${SAVE.error}. Attempt ${SAVE.tries}; ${backup}. Click to retry now.`
+    : dirty ? `Changes wait to be saved; ${backup}.` : "All annotations are saved with the study.";
+}
+function scheduleSave() {
+  if (loading) return;
+  SAVE.gen++; showSaveState();
+  clearTimeout(walTimer); walTimer = setTimeout(() => walWrite(annotationDoc()), 150);
+  clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 800);
+}
+async function saveNow(manual) {
+  clearTimeout(saveTimer); clearTimeout(retryTimer); clearTimeout(walTimer);
+  if (SAVE.inflight) { saveTimer = setTimeout(saveNow, 400); return; }
+  const gen = SAVE.gen, doc = annotationDoc();
+  walWrite(doc);
+  SAVE.inflight = true; showSaveState();
+  try {
+    const r = await fetch(`/api/case/${caseId}/annotations`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(doc) });
+    let out = {}; try { out = await r.json(); } catch { /* not JSON */ }
+    if (!r.ok) throw Error(out.error ? `${r.status}: ${out.error}` : String(r.status));
+    SAVE.savedGen = Math.max(SAVE.savedGen, gen); SAVE.error = ""; SAVE.tries = 0;
+    SAVE.at = (out.saved || "").slice(11, 16);
+    walClear(gen);
+    if (manual) toast("Annotations saved with the study.");
+  } catch (e) {
+    SAVE.error = e.message === "Failed to fetch" ? "Eidos is not reachable" : e.message;
+    SAVE.tries++;
+    retryTimer = setTimeout(saveNow, Math.min(60, 2 ** SAVE.tries) * 1000);
+  } finally {
+    SAVE.inflight = false; showSaveState();
+    if (!SAVE.error && SAVE.gen !== SAVE.savedGen) saveTimer = setTimeout(saveNow, 400);
+  }
+}
+addEventListener("online", () => { if (SAVE.error) saveNow(); });
+addEventListener("beforeunload", (e) => { if (SAVE.gen !== SAVE.savedGen) { walWrite(annotationDoc()); e.preventDefault(); e.returnValue = ""; } });
+async function loadAnnotations() {
+  let doc = {};
+  try { doc = await (await fetch(`/api/case/${caseId}/annotations`, { cache: "no-store" })).json(); } catch { doc = {}; }
+  // A browser copy newer than the server copy holds changes that never reached the server: use it and save it.
+  const wal = walRead(), restored = wal && wal.doc && (!doc.saved_ms || wal.t > doc.saved_ms);
+  if (restored) doc = wal.doc;
+  else if (wal) walClear(Infinity);
+  SAVE.at = (doc.saved || "").slice(11, 16);
+  loading = true;
+  const sg = doc.seg, ref = sg && S.vols.get(sg.ref);
+  if (ref) {
+    const g = grid(ref.img), bm = unrle(sg.rle || [], g.nx * g.ny * g.nz);
+    if (bm && sg.dims?.join() === [g.nx, g.ny, g.nz].join()) {
+      S.seg = { ref: sg.ref, dims: sg.dims, bitmap: bm, objects: sg.objects || [], active: sg.active || 0, counts: {} };
+      segCounts();
+    }
+  }
+  S.traj = (doc.trajectories || []).filter((t) => t && t.name);
+  S.tsel = S.traj.length ? 0 : -1;
+  S.points = (doc.points || []).filter((p) => p && Array.isArray(p.mm));
+  const v3 = (a) => (Array.isArray(a) && a.length === 3 ? new Float32Array(a) : null);
+  nv.document.completedMeasurements = (doc.measurements || []).map((x) => {
+    const a = v3(x.startMM), b = v3(x.endMM);
+    return a && b && { ...x, startMM: a, endMM: b, distance: len3(sub3(b, a)) };
+  }).filter(Boolean);
+  nv.document.completedAngles = (doc.angles || []).map((x) => {
+    const l1 = x.firstLineMM || {}, l2 = x.secondLineMM || {};
+    const p = [v3(l1.start), v3(l1.end), v3(l2.start), v3(l2.end)];
+    return p.every(Boolean) && { ...x, firstLineMM: { start: p[0], end: p[1] }, secondLineMM: { start: p[2], end: p[3] } };
+  }).filter(Boolean);
+  loading = false;
+  showSeg(); applyTracts(); renderPlan(); renderFindings(); drawOverlay(true); showSaveState();
+  if (restored) { toast("Restored changes that had not reached the server. Saving them now."); scheduleSave(); }
+}
+
+// ---------- Exports ----------
+function download(name, blob) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 500);
+}
+async function exportNifti(one) {
+  if (!S.seg || !S.seg.objects.length) return toast("Draw a structure first.");
+  const ref = S.vols.get(S.seg.ref).img;
+  let data = S.seg.bitmap, name = "structures";
+  if (one) {
+    const o = segObj(S.seg.active); if (!o) return toast("Select a structure first.");
+    data = S.seg.bitmap.map((v) => (v === o.k ? 1 : 0)); name = o.name.replace(/[^\w-]+/g, "_");
+  }
+  await ref.saveToDisk(`${caseId}-${name}.nii.gz`, data);
+  if (!one) download(`${caseId}-structures.json`, new Blob([JSON.stringify(S.seg.objects.map(({ k, name, color }) => ({ value: k, name, color, cm3: Number(segCm3(k).toFixed(3)) })), null, 1)], { type: "application/json" }));
+}
+function trajState(t) {
+  if (!t.target && !t.entry) return "no points";
+  if (!t.entry) return "entry missing";
+  if (!t.target) return "target missing";
+  const L = len3(sub3(t.target, t.entry));
+  return L < 0.5 ? "target = entry" : `${L.toFixed(1)} mm`;
+}
+function findingsTable() {
+  const rows = [["type", "name", "value", "unit", "detail"]];
+  for (const o of S.seg?.objects || []) rows.push(["structure", o.name, segCm3(o.k).toFixed(3), "cm3", `label ${o.k} on ${S.vols.get(S.seg.ref)?.meta.label}${o.limit ? `; boundary is the ${o.limit.r} mm grow limit (${o.limit.pct}%), not anatomy` : ""}${o.source ? `; ${o.source}, automatic, not reviewed` : ""}`]);
+  for (const l of S.labels.values()) if (l.cm3 !== null) rows.push(["structure", l.meta.label, l.cm3.toFixed(3), "cm3", l.meta.reviewed ? "reviewed" : "not reviewed"]);
+  for (const l of S.labels.values()) for (const e of l.lut?.values() || []) if (e.ml != null) rows.push(["anatomy", e.name, Number(e.ml).toFixed(3), "cm3", `${l.meta.source}; automatic, not reviewed`]);
+  for (const t of S.traj) {
+    if (!(t.target && t.entry)) continue;
+    rows.push(["trajectory", t.name, len3(sub3(t.target, t.entry)).toFixed(1), "mm", `entry ${fmtMM(t.entry)}; target ${fmtMM(t.target)}`]);
+    for (const d of distances(t)) rows.push(["clearance", `${t.name} to ${d.name}`, d.hit ? "0" : d.mm.toFixed(1), "mm", d.hit ? "path crosses the structure" : ""]);
+  }
+  for (const p of S.points) rows.push(["point", p.name, "", "mm", fmtMM(p.mm)]);
+  for (const m of measurements()) rows.push([m.kind.toLowerCase(), mName(m), m.value.replace(/[^0-9.\-]/g, ""), m.kind === "Angle" ? "deg" : "mm", ""]);
+  return rows;
+}
+function exportCsv() {
+  const csv = findingsTable().map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  download(`${caseId}-findings.csv`, new Blob([csv], { type: "text/csv" }));
+}
+function snapshot() { nv.drawScene(); return $("gl").toDataURL("image/png"); }
+function openReport() {
+  const R = $("report"), sheet = el("div", "sheet");
+  const bar = el("div", "bar2"), pr = el("button", "", "Print / Save as PDF"), cl = el("button", "", "Close");
+  pr.onclick = () => window.print(); cl.onclick = () => (R.hidden = true);
+  bar.append(pr, cl);
+  const base = S.vols.get(S.base);
+  sheet.append(bar, el("h1", "", S.scene?.title || "Case summary"),
+    el("div", "meta", [base?.meta.label, fmtDate(S.scene?.date), `printed ${new Date().toISOString().slice(0, 16).replace("T", " ")}`].filter(Boolean).join(" · ")));
+  const imgs = el("div", "imgs"), main = el("img"); main.src = snapshot(); imgs.append(main);
+  if (S.probe) { const side = el("div"); for (const id of ["probe-eye", "probe-inline"]) { const i = el("img"); i.src = $(id).toDataURL(); side.append(i); } imgs.append(side); }
+  else imgs.style.gridTemplateColumns = "1fr";
+  sheet.append(imgs);
+  const rows = findingsTable(), groups = [["Structures", ["structure"]], ["Trajectories", ["trajectory", "clearance"]], ["Points", ["point"]], ["Measurements", ["distance", "angle"]]];
+  for (const [title, types] of groups) {
+    const rs = rows.slice(1).filter((r) => types.includes(r[0]));
+    if (!rs.length) continue;
+    const tb = el("table"), hd = el("tr");
+    for (const h of ["Name", "Value", "Detail"]) hd.append(el("th", "", h));
+    tb.append(hd);
+    for (const r of rs) { const tr = el("tr"); tr.append(el("td", "", r[1]), el("td", "n", r[2] === "" ? "" : `${r[2]} ${r[3].replace("cm3", "cm³").replace("deg", "°")}`), el("td", "", r[4])); tb.append(tr); }
+    sheet.append(el("h2", "", title), tb);
+  }
+  const open = [...S.labels.values(), ...S.tracts.values()].filter((o) => !o.meta.reviewed).length;
+  if (open) sheet.append(el("div", "warn", `${open} imported object(s) are not reviewed. Drawn structures and trajectories are the user's own and are not checked by Eidos.`));
+  sheet.append(el("div", "warn", "Eidos is for research and teaching only. Not for clinical use or surgical planning."));
+  R.replaceChildren(sheet); R.hidden = false;
+}
+
+// ---------- Menu ----------
+function act(a) {
+  const [k, v] = a.split(":");
+  ({
+    save: () => saveNow(true), report: openReport, shot: screenshot, probe: toggleProbe, cross: () => setCrosshair(!S.cross), reset: resetView,
+    layout: () => setLayout(v), tool: () => setTool(v), mark: markPoint, newobj: newStructure, undo: segUndo, newtraj: newTrajectory,
+    target: () => setTrajPoint("target"), entry: () => setTrajPoint("entry"), "nii-all": () => exportNifti(false), "nii-one": () => exportNifti(true), csv: exportCsv,
+  })[k]?.();
+}
+document.querySelectorAll(".menu").forEach((m) => {
+  m.querySelector(":scope > button").onclick = (e) => {
+    e.stopPropagation(); const open = !m.classList.contains("open");
+    document.querySelectorAll(".menu.open").forEach((x) => x.classList.remove("open")); m.classList.toggle("open", open);
+  };
+  m.querySelectorAll(".items button").forEach((b) => (b.onclick = () => { m.classList.remove("open"); act(b.dataset.act); }));
+});
+document.addEventListener("click", () => document.querySelectorAll(".menu.open").forEach((x) => x.classList.remove("open")));
+// While a menu is open, a press outside it only closes the menu. The whole gesture is kept from the viewer,
+// so it cannot move the cursor, draw, or start a grow.
+let swallow = false;
+addEventListener("pointerdown", (e) => {
+  const open = document.querySelectorAll(".menu.open");
+  if (!open.length || e.target.closest(".menu")) return;
+  open.forEach((x) => x.classList.remove("open"));
+  swallow = true; e.stopPropagation(); e.preventDefault();
+}, true);
+for (const type of ["mousedown", "pointermove", "mousemove", "pointerup", "mouseup", "click", "contextmenu", "dblclick"]) {
+  addEventListener(type, (e) => {
+    if (!swallow) return;
+    e.stopPropagation(); e.preventDefault();
+    if (type === "pointerup") setTimeout(() => (swallow = false), 250);
+    if (type === "click") swallow = false;
+  }, true);
+}
+$("save-state").onclick = () => { if (SAVE.error) saveNow(true); };
+
+$("seg-new").onclick = newStructure;
+$("ai-run").onclick = aiRun;
+$("ai-clear").onclick = () => { S.ai.points = []; aiShow(); drawOverlay(true); };
+$("gl").addEventListener("pointerdown", (e) => (aiShift = e.shiftKey), true);
+$("seg-undo").onclick = segUndo;
+$("pen").oninput = (e) => { $("pen-val").textContent = `${e.target.value} voxel${e.target.value > 1 ? "s" : ""}`; nv.opts.penSize = Number(e.target.value); };
+$("tol").oninput = (e) => ($("tol-val").textContent = `±${e.target.value}% of window`);
+$("rad").oninput = (e) => ($("rad-val").textContent = `${e.target.value} mm from the seed`);
+$("t-mark").onclick = markPoint;
+$("t-target").onclick = () => setTrajPoint("target");
+$("t-entry").onclick = () => setTrajPoint("entry");
+$("t-probe").onclick = toggleProbe;
+$("probe-close").onclick = toggleProbe;
+$("probe-slider").oninput = (e) => { S.depth = Number(e.target.value) / 1000; drawProbe(); };
+nv.onDrawingChanged = (what) => { if (what === "draw") mergeStroke(); };
+$("gl").addEventListener("pointerup", () => {
+  if (S.tool === "grow") setTimeout(growFromCursor, 0);
+  if (S.tool === "ai") { const pos = !aiShift; setTimeout(() => aiAddPoint(pos), 0); }
+  setTimeout(() => {
+    const n = (nv.document.completedMeasurements || []).length + (nv.document.completedAngles || []).length;
+    if (n !== S.nmeas) { S.nmeas = n; scheduleSave(); }
+    renderFindings(); drawOverlay(true); if (S.probe) drawProbe();
+  }, 30);
+});
+
+$("base").onchange = (e) => setBase(e.target.value);
+$("overlay").onchange = (e) => setOverlay(e.target.value);
+$("series-head").onclick = () => { const c = $("series").classList.toggle("closed"); $("series-chev").textContent = c ? "▸" : "▾"; };
+$("overlay-opacity").oninput = (e) => { $("overlay-val").textContent = `${e.target.value}%`; applyLayers(); };
+$("slab").oninput = (e) => { $("slab-val").textContent = `${e.target.value} mm`; applyTracts(); };
+$("clip").onchange = (e) => setClip(e.target.checked);
+$("t-cross").onclick = () => setCrosshair(!S.cross);
+$("t-reset").onclick = resetView;
+$("t-shot").onclick = screenshot;
+$("t-clear").onclick = clearMeasures;
+document.querySelectorAll("[data-layout]").forEach((b) => (b.onclick = () => setLayout(b.dataset.layout)));
+document.querySelectorAll("[data-tool]").forEach((b) => (b.onclick = () => setTool(b.dataset.tool)));
+const KEYS = { g: "grid", a: "axial", c: "coronal", s: "sagittal", r: "render" };
+const TOOL_KEYS = { v: "pointer", w: "window", z: "pan", m: "measure", n: "angle", b: "brush", e: "erase", f: "grow", i: "ai" };
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches?.("input, select, textarea") || !S.base) return;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveNow(true); return; }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); segUndo(); return; }
+  if (e.key === "Escape") { $("report").hidden = true; return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (KEYS[k]) setLayout(KEYS[k]);
+  else if (TOOL_KEYS[k]) setTool(TOOL_KEYS[k]);
+  else if (k === "x") setCrosshair(!S.cross);
+  else if (k === "0") resetView();
+  else if (k === "p") screenshot();
+  else if (k === "l") markPoint();
+  else if (k === "t") setTrajPoint("target");
+  else if (k === "y") setTrajPoint("entry");
+  else if (k === "j") toggleProbe();
+  else if (k === "delete" || k === "backspace") clearMeasures();
+  else if (/^[1-4k]$/.test(k)) parent?.postMessage({ workbenchKey: k }, location.origin);
+});
+load().catch((e) => setStatus("Could not open this case", e.message, 0, true));
+</script>
+</body>
+</html>
