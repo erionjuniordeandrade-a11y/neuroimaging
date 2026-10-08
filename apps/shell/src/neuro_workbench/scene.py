@@ -164,6 +164,24 @@ def _resolve_input(manifest: dict, manifest_path: Path, rel: str) -> Path:
     return (path if path.is_absolute() else root / path).resolve()
 
 
+def _bank_cst_identity(name: str, item: dict) -> str | None:
+    """CST identity from the input key or a declared role only, never from label prose (TractLab A3 rule)."""
+    tokens = set(str(name).casefold().replace("-", "_").split("_"))
+    if str(item.get("role", "")).casefold() not in {"true_cst", "soft_cst"} and "cst" not in tokens:
+        return None
+    sides = tokens & {"l", "r"}
+    return f"CST-{next(iter(sides)).upper() if len(sides) == 1 else '?'}"
+
+
+def public_bank_label(name: str, item: dict) -> str:
+    """Display label for a bundle bank: a recipe output, not a verified tract identity."""
+    identity = _bank_cst_identity(name, item)
+    if identity is not None:
+        return f"BANK · {identity} · recipe"
+    label = str(item.get("label") or name)
+    return "BANK · tract · recipe" if "true cst" in label.casefold() else label
+
+
 def tractlab_scene(manifest_path: Path) -> tuple[dict, dict[str, Path]]:
     """Describe a TractLab manifest's images and bundle banks as layers, by key only."""
     manifest_path = manifest_path.resolve()
@@ -207,7 +225,7 @@ def tractlab_scene(manifest_path: Path) -> tuple[dict, dict[str, Path]]:
             continue
         key = f"tract-{name}"
         files[key] = path
-        scene["tracts"].append({"id": key, "label": item.get("label") or name,
+        scene["tracts"].append({"id": key, "label": public_bank_label(name, item),
                                 "color": DEFAULT_COLOURS[colour % len(DEFAULT_COLOURS)],
                                 "n_streamlines": item.get("n_streamlines"),
                                 "reviewed": False, "source": item.get("engine") or "tractlab"})

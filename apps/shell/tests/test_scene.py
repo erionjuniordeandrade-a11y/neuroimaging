@@ -12,7 +12,7 @@ from pathlib import Path
 import nibabel as nib
 import numpy as np
 
-from neuro_workbench.scene import capsule_scene, merge_scenes, tractlab_scene
+from neuro_workbench.scene import capsule_scene, merge_scenes, public_bank_label, tractlab_scene
 
 from test_server import _get, _poll_ready
 
@@ -108,8 +108,16 @@ def test_tractlab_manifest_lists_images_lesion_and_banks_only(tmp_path):
     scene, files = tractlab_scene(synthetic_manifest(tmp_path))
     assert [v["id"] for v in scene["volumes"]] == ["vol-b0"]
     assert [l["id"] for l in scene["labels"]] == ["mask-lesion"]
-    assert [t["label"] for t in scene["tracts"]] == ["CST right"]
+    assert [t["label"] for t in scene["tracts"]] == ["BANK · CST-R · recipe"]
     assert set(files) == {"vol-b0", "mask-lesion", "tract-bank_cst_r"}
+
+
+def test_bank_labels_never_take_cst_identity_from_label_prose():
+    assert public_bank_label("bank_cst_l", {"label": "True CST left"}) == "BANK · CST-L · recipe"
+    assert public_bank_label("bank_motor", {"label": "True CST (verified)"}) == "BANK · tract · recipe"
+    assert public_bank_label("bank_motor", {"label": "Motor", "role": "soft_cst"}) == "BANK · CST-? · recipe"
+    assert public_bank_label("bank_af_l", {"label": "Arcuate left"}) == "Arcuate left"
+    assert public_bank_label("bank_cst_l_r", {}) == "BANK · CST-? · recipe"
 
 
 def test_linked_scene_states_alignment_is_assumed(tmp_path):
