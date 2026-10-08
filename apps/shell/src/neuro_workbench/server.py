@@ -38,6 +38,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from neuro_workbench.archive import Archive, default_archive_dir
 from neuro_workbench.derived import Derived
+from neuro_workbench import privacy
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 DEFAULT_REPO = Path(__file__).resolve().parents[4]
@@ -132,6 +133,7 @@ class Workbench:
         self.repo = repo
         self.archive = archive
         self.derived = Derived(repo, archive) if archive else None
+        self.filevault = privacy.filevault()  # measured once at startup
         self.importer = {"state": "idle"}
         self._import_lock = threading.Lock()
         self.cache_dir = cache_dir
@@ -187,7 +189,7 @@ class Workbench:
             self._add_case(st["id"], {
                 "title": st["patient"] or "Unnamed patient",
                 "subtitle": subtitle,
-                "scope": "Patient study from the Eidos archive. Identifiable data: it stays on this Mac.",
+                "scope": "Patient study from the Eidos archive. Identifiable data, kept in the local archive.",
                 "synthetic": False, "archive": True, "dti": st.get("dti", 0),
             }, scene=Job(lambda job, c=st["id"]: self._scene(job, c, [("archive", c)])),
                 imaging=Job(lambda job, c=st["id"]: self._derived_capsule(job, c)),
@@ -546,10 +548,12 @@ def make_handler(bench: Workbench):
             path = url.path
             if path == "/api/archive":
                 if not bench.archive:
-                    return self._json(200, {"enabled": False, "patients": [], "import": bench.importer})
+                    return self._json(200, {"enabled": False, "patients": [], "import": bench.importer,
+                                            "privacy": privacy.report(None, bench.filevault)})
                 q = (parse_qs(url.query).get("q") or [""])[0]
                 return self._json(200, {"enabled": True, "patients": bench.archive.patients(q),
-                                        "import": bench.importer})
+                                        "import": bench.importer,
+                                        "privacy": privacy.report(bench.archive.root, bench.filevault)})
             if path == "/api/archive/import":
                 return self._json(200, bench.importer)
             if path in ("/", "/index.html"):
@@ -646,7 +650,8 @@ def main(argv: list[str] | None = None) -> None:
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
     print(json.dumps({"url": f"http://127.0.0.1:{httpd.server_address[1]}/",
-                      "scope": "research and teaching only; not for clinical use"}), flush=True)
+                      "scope": "research and teaching only; not for clinical use",
+                      "filevault": bench.filevault}), flush=True)
     try:
         stop.wait()
     finally:

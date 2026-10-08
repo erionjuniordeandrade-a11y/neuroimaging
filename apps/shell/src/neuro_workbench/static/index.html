@@ -157,7 +157,8 @@
   .p-empty { margin: 60px auto; max-width: 440px; text-align: center; color: var(--muted); }
   .p-empty h3 { font: 600 20px var(--serif); color: var(--text); margin: 0 0 8px; }
   .p-foot { padding: 10px 22px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; display: flex; gap: 8px; align-items: center; }
-  .p-foot svg { width: 14px; height: 14px; }
+  .p-foot svg { width: 14px; height: 14px; flex: none; }
+  .p-foot.warn { color: #ffb59b; }
 
   @media (max-width: 760px) {
     .st { grid-template-columns: 1fr auto auto; padding-left: 14px; } .st-edit { padding-left: 14px; } .st .date { grid-column: 1 / -1; }
@@ -230,7 +231,7 @@
       </div>
       <div class="p-import" id="p-import" hidden><span id="p-import-text"></span><div class="bar"><i id="p-import-bar"></i></div></div>
       <div class="p-list" id="p-list"></div>
-      <div class="p-foot"><svg class="i"><use href="#i-lock"/></svg>Identifiable data. The archive stays on this computer, in a private folder on an encrypted disk.</div>
+      <div class="p-foot" id="p-privacy"><svg class="i"><use href="#i-lock"/></svg><span id="p-privacy-text">Identifiable data.</span></div>
     </section>
   </main>
 </div>
@@ -471,11 +472,27 @@ async function showPatients() {
   if (!matchMedia("(max-width: 760px)").matches) $("p-search").focus();
 }
 
+// The banner states only what the server measured: folder mode, loopback, FileVault and the volume.
+function showPrivacy(f) {
+  const out = ["Identifiable data."];
+  let warn = false;
+  if (f.folder_private === true) out.push("The archive folder opens only for your user account.");
+  else if (f.folder_private === false) { out.push("The archive folder is open to other accounts."); warn = true; }
+  if (f.loopback) out.push("Eidos serves it to this computer only.");
+  if (f.filevault === "on" && f.same_volume_as_home !== false) out.push("FileVault is on for this disk.");
+  else if (f.filevault === "on") { out.push("FileVault is on, but the archive is on another disk, which Eidos did not check."); warn = true; }
+  else if (f.filevault === "off") { out.push("FileVault is off: this disk is not encrypted. Turn it on in System Settings, Privacy & Security."); warn = true; }
+  else { out.push("Eidos could not check disk encryption."); warn = true; }
+  $("p-privacy-text").textContent = out.join(" ");
+  $("p-privacy").classList.toggle("warn", warn);
+}
+
 let searchTimer = null;
 async function renderPatients() {
   let r;
   try { r = await getJSON(`/api/archive?q=${encodeURIComponent($("p-search").value.trim())}`); }
   catch (e) { $("p-list").replaceChildren(el("div", "p-empty", `The archive is not reachable: ${e.message}`)); return; }
+  showPrivacy(r.privacy || {});
   const n = r.patients.length, studies = r.patients.reduce((a, p) => a + p.studies.length, 0);
   $("p-count").textContent = n ? `${n} patient${n > 1 ? "s" : ""} · ${studies} stud${studies > 1 ? "ies" : "y"}` : "";
   if (!n) {
