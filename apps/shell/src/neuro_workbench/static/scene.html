@@ -572,7 +572,7 @@ function clearMeasures() {
   if (!n) return toast("No distances or angles to clear.");
   nv.clearAllMeasurements?.();
   if (doc.completedAngles) doc.completedAngles.length = 0;
-  nv.drawScene(); renderFindings();
+  nv.drawScene(); renderFindings(); scheduleSave();
   toast(`Cleared ${n} measurement${n > 1 ? "s" : ""}.`);
 }
 
@@ -696,7 +696,7 @@ function idx2mm(g, n) {
 
 // ---------- Segment: drawn structures ----------
 // S.seg.bitmap is the truth; NiiVue's drawing layer shows a copy with hidden structures removed.
-S.seg = null; S.undo = []; S.traj = []; S.tsel = -1; S.points = []; S.mnames = {}; S.probe = false; S.depth = 1;
+S.seg = null; S.undo = []; S.traj = []; S.tsel = -1; S.points = []; S.probe = false; S.depth = 1;
 
 function segEnsure() {
   if (S.seg) return S.seg.ref === S.base;
@@ -939,6 +939,7 @@ function measurements() {
   const a = (doc.completedAngles || []).map((x, i) => ({ key: `a${i}`, kind: "Angle", value: `${Number(x.angle).toFixed(1)}°`, x }));
   return [...m, ...a];
 }
+function mName(m) { return m.x.name || `${m.kind} ${m.key.slice(1) * 1 + 1}`; }
 function goTo(mm) { nv.scene.crosshairPos = nv.mm2frac(mm); nv.updateGLVolume(); drawOverlay(true); }
 function findingRow({ color, glyph, name, onName, value, sub, onClick, onDelete, active, eye }) {
   const row = el("div", "obj" + (active ? " active" : "")); row.style.setProperty("--c", color);
@@ -988,8 +989,14 @@ function renderFindings() {
     onDelete: () => { S.points.splice(i, 1); renderFindings(); drawOverlay(true); scheduleSave(); },
   })));
   for (const m of measurements()) rows.push(findingRow({
-    color: "#C9A84C", glyph: m.kind === "Angle" ? "∠" : "↔", name: S.mnames[m.key] || `${m.kind} ${m.key.slice(1) * 1 + 1}`,
-    value: m.value, sub: m.kind, onName: (v) => { S.mnames[m.key] = v; },
+    color: "#C9A84C", glyph: m.kind === "Angle" ? "∠" : "↔", name: mName(m),
+    value: m.value, sub: m.kind, onName: (v) => { m.x.name = v; renderFindings(); scheduleSave(); },
+    onClick: () => goTo(Array.from(m.kind === "Angle" ? m.x.firstLineMM.end : m.x.startMM)),
+    onDelete: () => {
+      const list = m.kind === "Angle" ? nv.document.completedAngles : nv.document.completedMeasurements;
+      list.splice(list.indexOf(m.x), 1); nv.drawScene(); renderFindings(); scheduleSave();
+      toast(`${mName(m)} deleted.`);
+    },
   }));
   if (!rows.length) rows.push(el("div", "hint", "Measurements, points (L), structures and trajectories appear here."));
   $("findings").replaceChildren(...rows);
@@ -1117,6 +1124,13 @@ async function saveNow(manual) {
     seg: S.seg && { ref: S.seg.ref, dims: S.seg.dims, rle: rle(S.seg.bitmap), objects: S.seg.objects.map(({ k, name, color, visible }) => ({ k, name, color, visible })), active: S.seg.active },
     trajectories: S.traj.map(({ name, target, entry }) => ({ name, target, entry })),
     points: S.points,
+    measurements: (nv.document.completedMeasurements || []).map((x) => ({
+      name: x.name || "", startMM: Array.from(x.startMM), endMM: Array.from(x.endMM),
+      sliceIndex: x.sliceIndex, sliceType: x.sliceType, slicePosition: x.slicePosition })),
+    angles: (nv.document.completedAngles || []).map((x) => ({
+      name: x.name || "", angle: x.angle, sliceIndex: x.sliceIndex, sliceType: x.sliceType, slicePosition: x.slicePosition,
+      firstLineMM: { start: Array.from(x.firstLineMM.start), end: Array.from(x.firstLineMM.end) },
+      secondLineMM: { start: Array.from(x.secondLineMM.start), end: Array.from(x.secondLineMM.end) } })),
   };
   try {
     const r = await fetch(`/api/case/${caseId}/annotations`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(doc) });
@@ -1139,6 +1153,16 @@ async function loadAnnotations() {
   S.traj = (doc.trajectories || []).filter((t) => t && t.name);
   S.tsel = S.traj.length ? 0 : -1;
   S.points = (doc.points || []).filter((p) => p && Array.isArray(p.mm));
+  const v3 = (a) => (Array.isArray(a) && a.length === 3 ? new Float32Array(a) : null);
+  nv.document.completedMeasurements = (doc.measurements || []).map((x) => {
+    const a = v3(x.startMM), b = v3(x.endMM);
+    return a && b && { ...x, startMM: a, endMM: b, distance: len3(sub3(b, a)) };
+  }).filter(Boolean);
+  nv.document.completedAngles = (doc.angles || []).map((x) => {
+    const l1 = x.firstLineMM || {}, l2 = x.secondLineMM || {};
+    const p = [v3(l1.start), v3(l1.end), v3(l2.start), v3(l2.end)];
+    return p.every(Boolean) && { ...x, firstLineMM: { start: p[0], end: p[1] }, secondLineMM: { start: p[2], end: p[3] } };
+  }).filter(Boolean);
   loading = false;
   showSeg(); applyTracts(); renderPlan(); renderFindings(); drawOverlay(true);
 }
@@ -1176,7 +1200,7 @@ function findingsTable() {
     for (const d of distances(t)) rows.push(["clearance", `${t.name} to ${d.name}`, d.hit ? "0" : d.mm.toFixed(1), "mm", d.hit ? "path crosses the structure" : ""]);
   }
   for (const p of S.points) rows.push(["point", p.name, "", "mm", fmtMM(p.mm)]);
-  for (const m of measurements()) rows.push([m.kind.toLowerCase(), S.mnames[m.key] || m.kind, m.value.replace(/[^0-9.\-]/g, ""), m.kind === "Angle" ? "deg" : "mm", ""]);
+  for (const m of measurements()) rows.push([m.kind.toLowerCase(), mName(m), m.value.replace(/[^0-9.\-]/g, ""), m.kind === "Angle" ? "deg" : "mm", ""]);
   return rows;
 }
 function exportCsv() {
@@ -1244,7 +1268,11 @@ $("probe-slider").oninput = (e) => { S.depth = Number(e.target.value) / 1000; dr
 nv.onDrawingChanged = (what) => { if (what === "draw") mergeStroke(); };
 $("gl").addEventListener("pointerup", () => {
   if (S.tool === "grow") setTimeout(growFromCursor, 0);
-  setTimeout(() => { renderFindings(); drawOverlay(true); if (S.probe) drawProbe(); }, 30);
+  setTimeout(() => {
+    const n = (nv.document.completedMeasurements || []).length + (nv.document.completedAngles || []).length;
+    if (n !== S.nmeas) { S.nmeas = n; scheduleSave(); }
+    renderFindings(); drawOverlay(true); if (S.probe) drawProbe();
+  }, 30);
 });
 
 $("base").onchange = (e) => { S.base = e.target.value; if (S.overlay === S.base) S.overlay = ""; renderControls(); applyLayers(); };

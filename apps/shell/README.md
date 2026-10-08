@@ -25,6 +25,10 @@ Eidos keeps a local archive of patient studies, in the way a PACS viewer does:
 - The Patients screen lists each patient with their studies and series. Search matches name,
   ID, birth date, study date, accession, modality and series description. A click opens the study in the Case tab.
 - Series with fewer than 3 images (scouts, reports) are listed but not drawn.
+- The pencil on a study sets a label and a note. The label replaces the DICOM description in the
+  list and the case drawer; the DICOM fields stay unchanged. Search also matches labels and notes.
+- The bin on a study or a patient deletes it after a confirmation: images, cached volumes and drawings
+  leave this computer. A patient with no study left is removed. This cannot be undone.
 
 The archive is **not de-identified**. It holds patient names and IDs, so it stays on the
 computer that imported it:
@@ -79,7 +83,9 @@ The Case tab loads all layers into one NiiVue view in scanner RAS millimetres. I
 
 ### Findings and export
 
-- **Findings** lists drawn structures, trajectories, points (L) and measurements. Names are editable.
+- **Findings** lists drawn structures, trajectories, points (L), distances and angles. Every row has an
+  editable name and a delete button (×); a click goes to the object.
+- Structures, trajectories, points, distances and angles, with their names, save with the case and reload with it.
 - The case saves itself to `<cache>/annotations/` (archive studies: `<archive>/annotations/`):
   hashed file names, folder 0700, files 0600.
 - **Export** writes a structure as NIfTI (one label file plus a JSON key), the findings as CSV, or a

@@ -161,3 +161,66 @@ def test_server_imports_lists_and_opens_a_study(tmp_path, dicom_folder):
     finally:
         proc.terminate()
         proc.wait(timeout=10)
+
+
+def test_edit_label_and_note_keep_the_dicom_fields(tmp_path, dicom_folder):
+    archive = Archive(tmp_path / "archive")
+    archive.import_path(dicom_folder)
+    study = archive.patients("alpha")[0]["studies"][0]
+    uid = archive.study_uid(study["id"])
+    assert archive.edit_study(uid, label="  Pre-op plan ", note="x" * 3000) == {"label": "Pre-op plan", "note": "x" * 2000}
+    assert archive.edit_study(uid, note="tumour follow-up")["label"] == "Pre-op plan"
+    edited = archive.patients("follow-up")[0]["studies"][0]
+    assert (edited["label"], edited["note"], edited["description"]) == ("Pre-op plan", "tumour follow-up", "SYNTHETIC HEAD")
+    assert archive.edit_study(uid, label="")["label"] == ""
+
+
+def test_delete_study_and_patient_remove_files_and_rows(tmp_path, dicom_folder):
+    root = tmp_path / "archive"
+    archive = Archive(root)
+    archive.import_path(dicom_folder)
+    alpha = archive.patients("alpha")[0]["studies"][0]
+    uid = archive.study_uid(alpha["id"])
+    archive.study_scene(uid)  # converted volumes in the cache must go too
+    archive.edit_study(uid, note="to delete")
+    assert archive.delete_study(uid) == {"studies": 1, "series": 3, "images": 10, "patient_removed": True}
+    assert archive.patients("alpha") == [] and archive.study_uid(alpha["id"]) is None
+    assert len(list((root / "dicom").rglob("*.dcm"))) == 3 and not list((root / "cache").glob("*.nii.gz"))
+    with pytest.raises(KeyError):
+        archive.delete_study(uid)
+    beta = archive.patients("beta")[0]["studies"][0]
+    out = archive.delete_patient(archive.patient_key(beta["id"]))
+    assert (out["studies"], out["images"]) == (1, 3) and archive.patients() == []
+    assert not list((root / "dicom").rglob("*.dcm"))
+    # Re-import works after a delete.
+    assert archive.import_path(dicom_folder)["added"] == 13
+
+
+def test_server_edits_and_deletes_with_confirmation(tmp_path, dicom_folder):
+    Archive(tmp_path / "archive").import_path(dicom_folder)
+    proc = subprocess.Popen([sys.executable, "-m", "neuro_workbench.server", "--port", "0",
+                             "--cache-dir", str(tmp_path / "cache"), "--archive-dir", str(tmp_path / "archive"),
+                             "--phantom", str(tmp_path / "none.html")], stdout=subprocess.PIPE, text=True)
+    try:
+        port = int(json.loads(proc.stdout.readline())["url"].rsplit(":", 1)[1].strip("/"))
+        json_h = {"Content-Type": "application/json"}
+        alpha = _req(port, "GET", "/api/archive?q=alpha")[1]["patients"][0]["studies"][0]["id"]
+        beta = _req(port, "GET", "/api/archive?q=beta")[1]["patients"][0]["studies"][0]["id"]
+        assert _req(port, "POST", f"/api/archive/study/{alpha}", {"label": "Plan"},
+                    {**json_h, "Origin": "http://evil.example"})[0] == 403
+        assert _req(port, "POST", f"/api/archive/study/{alpha}", {"label": "Plan", "note": "n"}, json_h) \
+            == (200, {"label": "Plan", "note": "n"})
+        case = next(c for c in _req(port, "GET", "/api/cases")[1]["cases"] if c["id"] == alpha)
+        assert case["subtitle"].endswith("· Plan")
+        assert _req(port, "POST", f"/api/case/{alpha}/annotations", {"points": []}, json_h)[0] == 200
+        assert _req(port, "POST", f"/api/archive/study/{alpha}/delete", {}, json_h)[0] == 400  # no confirm
+        assert _req(port, "POST", f"/api/archive/study/{alpha}/delete", {"confirm": True}, json_h)[1]["images"] == 10
+        assert not list((tmp_path / "archive" / "annotations").glob("*.json"))
+        assert alpha not in [c["id"] for c in _req(port, "GET", "/api/cases")[1]["cases"]]
+        assert _req(port, "GET", f"/api/case/{alpha}/annotations")[0] == 404
+        assert _req(port, "POST", f"/api/archive/study/{alpha}/delete", {"confirm": True}, json_h)[0] == 404
+        assert _req(port, "POST", f"/api/archive/patient/{beta}/delete", {"confirm": True}, json_h)[1]["studies"] == 1
+        assert _req(port, "GET", "/api/archive")[1]["patients"] == []
+    finally:
+        proc.terminate()
+        proc.wait(timeout=10)

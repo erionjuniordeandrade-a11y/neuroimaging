@@ -42,7 +42,12 @@ CREATE TABLE IF NOT EXISTS series (
 CREATE TABLE IF NOT EXISTS instances (
   sop_uid TEXT PRIMARY KEY, series_uid TEXT NOT NULL REFERENCES series(uid), file TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS instances_series ON instances(series_uid);
+CREATE TABLE IF NOT EXISTS study_edits (
+  uid TEXT PRIMARY KEY REFERENCES studies(uid), label TEXT NOT NULL DEFAULT '', note TEXT NOT NULL DEFAULT '');
 """
+# Local edits are short text; the imported DICOM fields are never changed.
+MAX_LABEL = 120
+MAX_NOTE = 2000
 
 
 def default_archive_dir() -> Path:
@@ -161,7 +166,9 @@ class Archive:
             series = db.execute("""SELECT s.uid, s.study_uid, s.modality, s.description, s.number,
                                           COUNT(i.sop_uid) AS n FROM series s
                                    LEFT JOIN instances i ON i.series_uid = s.uid GROUP BY s.uid""").fetchall()
-            studies = db.execute("SELECT * FROM studies ORDER BY date DESC, time DESC").fetchall()
+            studies = db.execute("""SELECT st.*, COALESCE(e.label, '') AS label, COALESCE(e.note, '') AS note
+                                    FROM studies st LEFT JOIN study_edits e ON e.uid = st.uid
+                                    ORDER BY st.date DESC, st.time DESC""").fetchall()
             patients = db.execute("SELECT * FROM patients").fetchall()
         by_study: dict[str, list[dict]] = {}
         for s in series:
@@ -172,6 +179,7 @@ class Archive:
             items = sorted(by_study.get(st["uid"], []), key=lambda x: (x["number"] is None, x["number"] or 0))
             by_patient.setdefault(st["patient_key"], []).append({
                 "id": study_case_id(st["uid"]), "date": st["date"], "description": st["description"],
+                "label": st["label"], "note": st["note"],
                 "accession": st["accession"], "modalities": sorted({x["modality"] for x in items if x["modality"]}),
                 "series": items})
         out = []
@@ -179,7 +187,7 @@ class Archive:
         for p in patients:
             studies_p = by_patient.get(p["key"], [])
             hay = " ".join([p["name"], p["patient_id"], p["birth_date"]] + [
-                f"{s['date']} {s['description']} {s['accession']} {' '.join(s['modalities'])} "
+                f"{s['date']} {s['description']} {s['label']} {s['note']} {s['accession']} {' '.join(s['modalities'])} "
                 + " ".join(x["description"] for x in s["series"]) for s in studies_p]).lower()
             if all(t in hay for t in terms):
                 out.append({"name": p["name"].replace("^", " ").strip(), "patient_id": p["patient_id"],
@@ -197,6 +205,65 @@ class Archive:
                 if study_case_id(uid) == case_id:
                     return uid
         return None
+
+    def patient_key(self, case_id: str) -> str | None:
+        uid = self.study_uid(case_id)
+        if uid is None:
+            return None
+        with self._db() as db:
+            row = db.execute("SELECT patient_key FROM studies WHERE uid=?", (uid,)).fetchone()
+        return row[0] if row else None
+
+    # Edits ----------------------------------------------------------------
+    def edit_study(self, study_uid: str, label: str | None = None, note: str | None = None) -> dict:
+        """Set the local label and note of a study. An empty label shows the DICOM description again."""
+        with self._lock, self._db() as db:
+            row = db.execute("SELECT label, note FROM study_edits WHERE uid=?", (study_uid,)).fetchone()
+            cur = {"label": row["label"], "note": row["note"]} if row else {"label": "", "note": ""}
+            if label is not None:
+                cur["label"] = str(label).strip()[:MAX_LABEL]
+            if note is not None:
+                cur["note"] = str(note).strip()[:MAX_NOTE]
+            db.execute("INSERT OR REPLACE INTO study_edits VALUES (?,?,?)", (study_uid, cur["label"], cur["note"]))
+        return cur
+
+    # Delete ---------------------------------------------------------------
+    def delete_study(self, study_uid: str) -> dict:
+        """Remove a study: its image files, its converted volumes and its index rows. Returns counts only."""
+        with self._lock, self._db() as db:
+            study = db.execute("SELECT patient_key FROM studies WHERE uid=?", (study_uid,)).fetchone()
+            if study is None:
+                raise KeyError("study not in archive")
+            series = db.execute("SELECT uid, folder FROM series WHERE study_uid=?", (study_uid,)).fetchall()
+            files = 0
+            for s in series:
+                files += db.execute("SELECT COUNT(*) FROM instances WHERE series_uid=?", (s["uid"],)).fetchone()[0]
+                (self.root / "cache" / f"{_h(s['uid'])}.nii.gz").unlink(missing_ok=True)
+                db.execute("DELETE FROM instances WHERE series_uid=?", (s["uid"],))
+            db.execute("DELETE FROM series WHERE study_uid=?", (study_uid,))
+            db.execute("DELETE FROM study_edits WHERE uid=?", (study_uid,))
+            db.execute("DELETE FROM studies WHERE uid=?", (study_uid,))
+            left = db.execute("SELECT COUNT(*) FROM studies WHERE patient_key=?", (study["patient_key"],)).fetchone()[0]
+            if not left:
+                db.execute("DELETE FROM patients WHERE key=?", (study["patient_key"],))
+        shutil.rmtree(self.root / "dicom" / _h(study_uid), ignore_errors=True)
+        return {"studies": 1, "series": len(series), "images": files, "patient_removed": not left}
+
+    def delete_patient(self, patient_key: str) -> dict:
+        """Remove a patient and every study of that patient."""
+        with self._db() as db:
+            uids = [r[0] for r in db.execute("SELECT uid FROM studies WHERE patient_key=?", (patient_key,))]
+            known = db.execute("SELECT 1 FROM patients WHERE key=?", (patient_key,)).fetchone()
+        if not known:
+            raise KeyError("patient not in archive")
+        total = {"studies": 0, "series": 0, "images": 0, "study_ids": [study_case_id(u) for u in uids]}
+        for uid in uids:
+            r = self.delete_study(uid)
+            for k in ("studies", "series", "images"):
+                total[k] += r[k]
+        with self._lock, self._db() as db:
+            db.execute("DELETE FROM patients WHERE key=?", (patient_key,))
+        return total
 
     # Scenes ---------------------------------------------------------------
     def study_scene(self, study_uid: str) -> tuple[dict, dict[str, Path]]:

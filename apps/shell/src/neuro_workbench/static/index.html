@@ -129,13 +129,23 @@
   .pt-row b { font-size: 14.5px; font-weight: 600; }
   .pt-row .meta { color: var(--muted); font-size: 12px; display: flex; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
   .pt-row .count { color: var(--faint); font-size: 12px; }
-  .st { display: grid; grid-template-columns: 96px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px 10px 66px;
+  .st { display: grid; grid-template-columns: 96px 1fr auto auto; gap: 12px; align-items: center; padding: 10px 14px 10px 66px;
         border-top: 1px solid var(--line); cursor: pointer; }
   .st:hover { background: var(--hover); }
   .st .date { font-variant-numeric: tabular-nums; color: var(--text); }
   .st .desc { min-width: 0; }
   .st .desc b { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .st .desc small { color: var(--muted); }
+  .st .desc .note { display: block; color: var(--text); opacity: .8; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .acts { display: flex; gap: 2px; }
+  .ib { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 7px; border: 0; background: none; color: var(--muted); cursor: pointer; }
+  .ib:hover { background: var(--hover); color: var(--text); } .ib.danger:hover { color: #ff7a6b; }
+  .ib svg { width: 15px; height: 15px; }
+  .st-edit { display: grid; gap: 8px; padding: 10px 14px 14px 66px; border-top: 1px solid var(--line); background: var(--hover); }
+  .st-edit label { display: grid; gap: 4px; font-size: 11.5px; color: var(--muted); }
+  .st-edit input, .st-edit textarea { font: 13px var(--sans); color: var(--text); background: var(--bg); border: 1px solid var(--line);
+                                       border-radius: 8px; padding: 7px 9px; resize: vertical; }
+  .st-edit .row { display: flex; gap: 8px; justify-content: flex-end; }
   .mod { font: 600 10px var(--sans); letter-spacing: .06em; color: var(--accent); border: 1px solid rgba(201,168,76,.4);
          border-radius: 5px; padding: 1px 6px; margin-right: 4px; }
   .p-empty { margin: 60px auto; max-width: 440px; text-align: center; color: var(--muted); }
@@ -144,7 +154,7 @@
   .p-foot svg { width: 14px; height: 14px; }
 
   @media (max-width: 760px) {
-    .st { grid-template-columns: 1fr auto; padding-left: 14px; } .st .date { grid-column: 1 / -1; }
+    .st { grid-template-columns: 1fr auto auto; padding-left: 14px; } .st-edit { padding-left: 14px; } .st .date { grid-column: 1 / -1; }
     nav .home-sep { display: none; }
     .app { grid-template-columns: 1fr; grid-template-rows: 52px 1fr 60px; }
     .brand { width: 52px; } .app-name, .sep, .ruo { display: none; }
@@ -167,6 +177,8 @@
   <symbol id="i-patients" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.4-.3 4.4 1.2 5 4.3"/></symbol>
   <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4 17v1.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V17"/></symbol>
   <symbol id="i-zip" viewBox="0 0 24 24"><path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M10 4v2m0 2v2m0 2v2"/><rect x="8.5" y="14" width="3" height="3" rx=".6"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V4.5h6V7"/><path d="M6.5 7l1 13h9l1-13"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
 </svg>
 <div class="app">
@@ -414,8 +426,11 @@ async function renderPatients() {
     if (p.birth_date) meta.append(el("span", "", `Born ${fmtDate(p.birth_date)}`));
     if (p.sex) meta.append(el("span", "", p.sex));
     body.append(el("b", "", p.name || "Unnamed patient"), meta);
-    row.append(el("div", "pt-av", initials(p.name)), body,
-               el("span", "count", `${p.studies.length} stud${p.studies.length > 1 ? "ies" : "y"}`));
+    const pAct = el("span", "acts");
+    pAct.append(el("span", "count", `${p.studies.length} stud${p.studies.length > 1 ? "ies" : "y"}`),
+                iconButton("trash", "Delete patient and all studies", () => deletePatient(p), true));
+    pAct.style.alignItems = "center"; pAct.style.gap = "8px";
+    row.append(el("div", "pt-av", initials(p.name)), body, pAct);
     card.append(row);
     for (const st of p.studies) {
       const line = el("div", "st");
@@ -426,11 +441,16 @@ async function renderPatients() {
       const rank = (m) => (MOD_ORDER.includes(m) ? MOD_ORDER.indexOf(m) : 99);
       for (const m of [...st.modalities].sort((x, y) => rank(x) - rank(y)))
         mods.append(el("span", "mod", m));
-      desc.append(el("b", "", st.description || "Study"));
+      desc.append(el("b", "", st.label || st.description || "Study"));
+      if (st.label && st.description) desc.append(el("small", "", `${st.description} · `));
+      if (st.note) desc.append(el("span", "note", st.note));
       const series = st.series.filter((x) => x.images > 0);
       desc.append(el("small", "", `${series.length} series · ${series.reduce((a, x) => a + x.images, 0)} images`
         + (st.accession ? ` · Acc ${st.accession}` : "")));
-      line.append(el("span", "date", fmtDate(st.date)), desc, mods);
+      const acts = el("span", "acts");
+      acts.append(iconButton("edit", "Edit label and note", () => editStudy(line, st)),
+                  iconButton("trash", "Delete study", () => deleteStudy(p, st), true));
+      line.append(el("span", "date", fmtDate(st.date)), desc, mods, acts);
       line.onclick = () => openStudy(st.id);
       line.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openStudy(st.id); } };
       card.append(line);
@@ -457,6 +477,61 @@ async function postJSON(url, body) {
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data.error || `${r.status} ${url}`);
   return data;
+}
+
+function iconButton(name, title, fn, danger) {
+  const b = el("button", "ib" + (danger ? " danger" : "")); b.title = title; b.setAttribute("aria-label", title);
+  b.append(icon(name));
+  b.onclick = (e) => { e.stopPropagation(); fn(); };
+  b.onkeydown = (e) => e.stopPropagation();
+  return b;
+}
+
+function editStudy(line, st) {
+  if (line.nextElementSibling?.classList.contains("st-edit")) return line.nextElementSibling.querySelector("input").focus();
+  const form = el("form", "st-edit");
+  const l1 = el("label", "", "Label (empty shows the DICOM description)"), label = el("input"); label.maxLength = 120;
+  label.value = st.label || ""; label.placeholder = st.description || "Study"; l1.append(label);
+  const l2 = el("label", "", "Note"), note = el("textarea"); note.rows = 2; note.maxLength = 2000; note.value = st.note || ""; l2.append(note);
+  const row = el("div", "row"), cancel = el("button", "btn", "Cancel"), save = el("button", "btn primary", "Save");
+  cancel.type = "button"; cancel.onclick = () => form.remove();
+  row.append(cancel, save);
+  form.append(l1, l2, row);
+  form.onsubmit = async (e) => {
+    e.preventDefault(); save.disabled = true;
+    try {
+      await postJSON(`/api/archive/study/${st.id}`, { label: label.value, note: note.value });
+      importStatus("Study label and note saved.", null);
+      await loadCases(); renderCases(); await renderPatients();
+    } catch (err) { importStatus(`Could not save: ${err.message}`, null, true); save.disabled = false; }
+  };
+  form.onkeydown = (e) => { if (e.key === "Escape") form.remove(); e.stopPropagation(); };
+  line.after(form); label.focus();
+}
+
+async function afterDelete(ids, text) {
+  for (const [k, f] of [...state.frames]) if (ids.includes(k.split("/")[0])) { f.remove(); state.frames.delete(k); }
+  if (ids.includes(state.caseId)) state.caseId = null;
+  importStatus(text, null);
+  await loadCases(); renderCases(); await renderPatients();
+}
+
+async function deleteStudy(p, st) {
+  const n = st.series.reduce((a, x) => a + x.images, 0);
+  if (!confirm(`Delete this study of ${p.name || "this patient"} (${fmtDate(st.date)}, ${n} images) from the archive?\n\nThe images, converted volumes and drawings are removed from this computer. This cannot be undone.`)) return;
+  try {
+    const r = await postJSON(`/api/archive/study/${st.id}/delete`, { confirm: true });
+    await afterDelete([st.id], `Deleted 1 study: ${r.series} series, ${r.images} images.` + (r.patient_removed ? " The patient had no other study and was removed." : ""));
+  } catch (err) { importStatus(`Could not delete: ${err.message}`, null, true); }
+}
+
+async function deletePatient(p) {
+  const n = p.studies.length;
+  if (!confirm(`Delete ${p.name || "this patient"} and all ${n} stud${n > 1 ? "ies" : "y"} from the archive?\n\nEvery image, volume and drawing of this patient is removed from this computer. This cannot be undone.`)) return;
+  try {
+    const r = await postJSON(`/api/archive/patient/${p.studies[0].id}/delete`, { confirm: true });
+    await afterDelete(p.studies.map((s) => s.id), `Deleted 1 patient: ${r.studies} stud${r.studies > 1 ? "ies" : "y"}, ${r.images} images.`);
+  } catch (err) { importStatus(`Could not delete: ${err.message}`, null, true); }
 }
 
 async function startImport(path) {

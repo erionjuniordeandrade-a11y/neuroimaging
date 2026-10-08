@@ -165,13 +165,15 @@ class Workbench:
         if not self.archive:
             return
         for st in self.archive.studies():
-            if st["id"] in self.cases:
-                continue
             date = st["date"]
             when = f"{date[:4]}-{date[4:6]}-{date[6:]}" if len(date) == 8 else date or "no date"
+            subtitle = f"{when} · {' '.join(st['modalities']) or 'DICOM'} · {st['label'] or st['description'] or 'Study'}"
+            if st["id"] in self.cases:
+                self.cases[st["id"]]["subtitle"] = subtitle  # a label edit shows in the case list
+                continue
             self._add_case(st["id"], {
                 "title": st["patient"] or "Unnamed patient",
-                "subtitle": f"{when} · {' '.join(st['modalities']) or 'DICOM'} · {st['description'] or 'Study'}",
+                "subtitle": subtitle,
                 "scope": "Patient study from the Eidos archive. Identifiable data: it stays on this Mac.",
                 "synthetic": False, "archive": True,
             }, scene=Job(lambda job, c=st["id"]: self._scene(job, c, [("archive", c)])))
@@ -271,6 +273,43 @@ class Workbench:
         os.chmod(tmp, 0o600)
         os.replace(tmp, file)
         return {"saved": doc["saved"]}
+
+    # Archive edits and deletes ---------------------------------------------
+    def edit_study(self, case_id: str, body: dict) -> dict:
+        uid = self.archive.study_uid(case_id) if self.archive else None
+        if uid is None:
+            raise KeyError(case_id)
+        out = self.archive.edit_study(uid, label=body.get("label"), note=body.get("note"))
+        self.refresh_archive()
+        return out
+
+    def _forget_case(self, case_id: str) -> None:
+        if case_id in self.cases:
+            self._annotation_file(case_id).unlink(missing_ok=True)
+        for table in (self.cases, self.scenes, self.imaging, self.tracts):
+            job = table.pop(case_id, None)
+            if table is self.tracts and job is not None:
+                job.stop()
+
+    def delete_study(self, case_id: str) -> dict:
+        uid = self.archive.study_uid(case_id) if self.archive else None
+        if uid is None:
+            raise KeyError(case_id)
+        self.refresh_archive()
+        out = self.archive.delete_study(uid)
+        self._forget_case(case_id)
+        return out
+
+    def delete_patient(self, case_id: str) -> dict:
+        """Delete the patient who owns this study, with all of their studies."""
+        key = self.archive.patient_key(case_id) if self.archive else None
+        if key is None:
+            raise KeyError(case_id)
+        self.refresh_archive()
+        out = self.archive.delete_patient(key)
+        for cid in out.pop("study_ids"):
+            self._forget_case(cid)
+        return out
 
     # Imaging --------------------------------------------------------------
     def capsule_path(self, case_id: str) -> Path | None:
@@ -403,6 +442,22 @@ def make_handler(bench: Workbench):
                     return self._json(200, bench.start_import(source))
                 except RuntimeError as exc:
                     return self._json(409, {"error": str(exc)})
+            if len(parts) in (4, 5) and parts[:2] == ["api", "archive"] and parts[2] in ("study", "patient"):
+                # /api/archive/study/<id> edits; /api/archive/{study,patient}/<id>/delete removes.
+                if not bench.archive:
+                    return self._json(404, {"error": "no archive"})
+                action = parts[4] if len(parts) == 5 else "edit"
+                try:
+                    if parts[2] == "study" and action == "edit":
+                        return self._json(200, bench.edit_study(parts[3], body))
+                    if action == "delete" and body.get("confirm") is True:
+                        fn = bench.delete_study if parts[2] == "study" else bench.delete_patient
+                        return self._json(200, fn(parts[3]))
+                    if action == "delete":
+                        return self._json(400, {"error": "confirm is required"})
+                except KeyError:
+                    return self._json(404, {"error": "not found"})
+                return self._json(404, {"error": "not found"})
             if path == "/api/archive/choose":
                 return self._json(200, choose_folder("zip" if body.get("kind") == "zip" else "folder"))
             return self._json(404, {"error": "not found"})
