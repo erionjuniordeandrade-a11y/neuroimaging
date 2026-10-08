@@ -1,0 +1,19 @@
+[project]
+name = "neuro-workbench"
+version = "0.1.0"
+description = "One local window for the neuroimaging apps: case list, imaging (Capsule) and tract evidence (TractLab)"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26", "nibabel>=5", "case-capsule"]
+
+[project.scripts]
+neuro-workbench = "neuro_workbench.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/neuro_workbench"]
+
+[tool.uv.sources]
+case-capsule = { workspace = true }

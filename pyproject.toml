@@ -1,7 +1,7 @@
 # One uv workspace and one lockfile for every Python package in the monorepo.
 # Set up with `uv sync --all-packages`; run tests with `uv run pytest` inside each member.
 [tool.uv.workspace]
-members = ["packages/neuro-core", "capsule", "tractlab"]
+members = ["packages/neuro-core", "capsule", "tractlab", "apps/shell"]
 
 [dependency-groups]
 dev = ["pytest>=8", "playwright>=1.45", "pillow>=10"]

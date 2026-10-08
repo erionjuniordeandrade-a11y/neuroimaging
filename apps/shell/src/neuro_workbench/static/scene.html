@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Case Viewer</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: rgba(255,255,255,.04); --line: rgba(255,255,255,.09);
+    --text: #e8e6e1; --muted: #9a978f; --accent: #C9A84C; --warn: #e0764f;
+    --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.4 var(--sans); }
+  .app { display: grid; grid-template-columns: 1fr 290px; height: 100%; }
+  .view { position: relative; min-width: 0; background: #000; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .toolbar { position: absolute; top: 10px; left: 10px; display: flex; gap: 4px; z-index: 2; flex-wrap: wrap; }
+  .toolbar button, .seg button { background: rgba(12,14,19,.82); color: var(--muted); border: 1px solid var(--line);
+    border-radius: 8px; padding: 5px 10px; font: 500 12px var(--sans); cursor: pointer; backdrop-filter: blur(8px); }
+  .toolbar button.active, .seg button.active { color: var(--text); border-color: rgba(201,168,76,.6); background: rgba(201,168,76,.14); }
+  .readout { position: absolute; left: 10px; bottom: 10px; z-index: 2; font: 12px ui-monospace, Menlo, monospace;
+    color: var(--muted); background: rgba(12,14,19,.75); padding: 4px 8px; border-radius: 6px; }
+  .banner { position: absolute; right: 10px; top: 10px; z-index: 2; max-width: 46%; font-size: 12px; color: #fff;
+    background: rgba(179,38,30,.85); padding: 6px 10px; border-radius: 6px; }
+  .banner[hidden] { display: none; }
+  aside { border-left: 1px solid var(--line); overflow-y: auto; padding: 12px 14px 20px; }
+  h2 { font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 16px 0 8px; }
+  h2:first-child { margin-top: 2px; }
+  select, input[type=range] { width: 100%; }
+  select { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; font: inherit; }
+  label.row { display: flex; align-items: center; gap: 8px; padding: 5px 2px; cursor: pointer; }
+  label.row .sw { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  label.row small { margin-left: auto; color: var(--muted); }
+  .flag { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--warn);
+    border: 1px solid rgba(224,118,79,.5); border-radius: 4px; padding: 0 4px; }
+  .seg { display: flex; gap: 4px; flex-wrap: wrap; }
+  .field { margin: 6px 0; }
+  .field > span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 3px; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 18px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .status { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted);
+    z-index: 3; background: #000; text-align: center; padding: 24px; }
+  .status[hidden] { display: none; }
+  .status.error { color: var(--warn); }
+  @media (max-width: 760px) { .app { grid-template-columns: 1fr; grid-template-rows: 60vh auto; } aside { border-left: 0; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="view">
+    <canvas id="gl"></canvas>
+    <div class="toolbar" id="layouts">
+      <button data-layout="grid" class="active">2×2</button>
+      <button data-layout="axial">Axial</button>
+      <button data-layout="coronal">Coronal</button>
+      <button data-layout="sagittal">Sagittal</button>
+      <button data-layout="render">3D</button>
+    </div>
+    <div class="banner" id="alignment" hidden></div>
+    <div class="readout" id="readout"></div>
+    <div class="status" id="status">Loading the case…</div>
+  </div>
+  <aside>
+    <h2>Base image</h2>
+    <select id="base"></select>
+    <div class="field" id="presets-field"><span>Window</span><div class="seg" id="presets"></div></div>
+    <h2>Fusion</h2>
+    <select id="overlay"></select>
+    <div class="field"><span>Overlay opacity</span><input id="overlay-opacity" type="range" min="0" max="100" value="45"></div>
+    <h2>Structures</h2>
+    <div id="labels"></div>
+    <h2>Tracts</h2>
+    <div id="tracts"></div>
+    <div class="field"><span>Slab on 2D slices (mm)</span><input id="slab" type="range" min="1" max="20" value="4"></div>
+    <h2>3D</h2>
+    <label class="row"><input type="checkbox" id="clip" checked> Cut away the front half</label>
+    <div class="note" id="note">Research and teaching only, not for clinical use. Right-drag changes the window; scroll moves the slice.</div>
+  </aside>
+</div>
+<script src="/vendor/niivue.js"></script>
+<script>
+const caseId = location.pathname.split("/")[2];
+const $ = (id) => document.getElementById(id);
+const CT_PRESETS = [["Brain", 0, 80], ["Soft tissue", -160, 240], ["Bone", -500, 1500], ["Vessels", 100, 600]];
+const OVERLAY_COLORMAP = { CTA: "warm", CT: "warm", FA: "hot" };
+const S = { scene: null, vols: new Map(), labels: new Map(), tracts: new Map(), base: null, overlay: "",
+            showLabel: {}, showTract: {}, win: {} };
+
+function rgb(hex) { const n = parseInt(hex.replace("#", ""), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+async function bytes(url) { const r = await fetch(url, { cache: "no-store" }); if (!r.ok) throw Error(`${r.status} ${url}`); return r.arrayBuffer(); }
+function setStatus(text, error) { $("status").hidden = !text; $("status").textContent = text || ""; $("status").classList.toggle("error", !!error); }
+
+const nv = new niivue.Niivue({
+  backColor: [0, 0, 0, 1], crosshairColor: [.79, .66, .3, 1], crosshairWidth: 1, show3Dcrosshair: true,
+  isRadiologicalConvention: true, multiplanarShowRender: niivue.SHOW_RENDER.ALWAYS, multiplanarLayout: 2,
+  dragAndDropEnabled: false, isColorbar: false, loadingText: "", logLevel: "error", meshThicknessOn2D: 4,
+  fontColor: [.86, .84, .78, 1], isOrientationTextVisible: true, clipPlaneColor: [0, 0, 0, 0], isAlphaClipDark: true,
+});
+
+function applyLayers() {
+  const base = S.vols.get(S.base);
+  if (!base) return;
+  const list = [];
+  // The colormap setter recomputes cal_min/cal_max, so the window is set after it.
+  base.img.colormap = "gray"; base.img.opacity = 1;
+  [base.img.cal_min, base.img.cal_max] = S.win[S.base];
+  list.push(base.img);
+  if (S.overlay && S.overlay !== S.base) {
+    const o = S.vols.get(S.overlay);
+    o.img.colormap = OVERLAY_COLORMAP[o.meta.kind] || "warm";
+    [o.img.cal_min, o.img.cal_max] = S.win[S.overlay];
+    o.img.opacity = Number($("overlay-opacity").value) / 100;
+    list.push(o.img);
+  }
+  for (const [id, l] of S.labels) if (S.showLabel[id]) list.push(l.img);
+  nv.volumes = list; nv.back = list[0]; nv.overlays = list.slice(1);
+  nv.updateGLVolume();
+  applyTracts();
+}
+
+function applyTracts() {
+  // NiiVue 0.69 still draws meshes flagged visible=false, so hidden tracts are detached from nv.meshes.
+  nv.meshes = [...S.tracts].filter(([id]) => S.showTract[id]).map(([, t]) => t.mesh);
+  nv.opts.meshThicknessOn2D = Number($("slab").value);
+  nv.updateGLVolume();
+}
+
+function renderPresets() {
+  const meta = S.vols.get(S.base).meta, box = $("presets");
+  const ct = meta.kind === "CT" || meta.kind === "CTA";
+  const presets = ct ? CT_PRESETS : [["Auto", null, null]];
+  box.replaceChildren(...presets.map(([name, lo, hi]) => {
+    const b = document.createElement("button");
+    b.textContent = name;
+    b.onclick = () => {
+      const img = S.vols.get(S.base).img;
+      S.win[S.base] = lo === null ? [img.robust_min ?? img.global_min, img.robust_max ?? img.global_max] : [lo, hi];
+      box.querySelectorAll("button").forEach((x) => x.classList.toggle("active", x === b));
+      applyLayers();
+    };
+    const [wl, wh] = S.win[S.base];
+    b.classList.toggle("active", lo === wl && hi === wh);
+    return b;
+  }));
+}
+
+function row(color, text, checked, onchange, extra) {
+  const label = document.createElement("label"); label.className = "row";
+  const box = document.createElement("input"); box.type = "checkbox"; box.checked = checked; box.onchange = () => onchange(box.checked);
+  const sw = document.createElement("span"); sw.className = "sw"; sw.style.background = color;
+  const name = document.createElement("span"); name.textContent = text;
+  label.append(box, sw, name);
+  if (extra) label.append(extra);
+  return label;
+}
+
+function flag(text) { const f = document.createElement("span"); f.className = "flag"; f.textContent = text; return f; }
+
+function renderControls() {
+  const vols = [...S.vols.values()];
+  $("base").replaceChildren(...vols.map((v) => new Option(`${v.meta.label} · ${v.meta.kind}`, v.meta.id, false, v.meta.id === S.base)));
+  $("overlay").replaceChildren(new Option("None", ""), ...vols.map((v) => new Option(`${v.meta.label} · ${v.meta.kind}`, v.meta.id, false, v.meta.id === S.overlay)));
+  $("labels").replaceChildren(...[...S.labels.values()].map((l) => row(l.meta.color, l.meta.label, !!S.showLabel[l.meta.id],
+    (on) => { S.showLabel[l.meta.id] = on; applyLayers(); }, l.meta.reviewed ? null : flag("unreviewed"))));
+  if (!S.labels.size) $("labels").textContent = "None in this case.";
+  $("tracts").replaceChildren(...[...S.tracts.values()].map((t) => {
+    const extra = document.createElement("small");
+    extra.textContent = t.meta.n_streamlines ? `${t.meta.n_streamlines}` : "";
+    if (!t.meta.reviewed) extra.prepend(flag("unreviewed"), " ");
+    return row(t.meta.color, t.meta.label, !!S.showTract[t.meta.id], (on) => { S.showTract[t.meta.id] = on; applyTracts(); }, extra);
+  }));
+  if (!S.tracts.size) $("tracts").textContent = "None in this case.";
+  renderPresets();
+}
+
+function setLayout(name) {
+  const types = { grid: nv.sliceTypeMultiplanar, axial: nv.sliceTypeAxial, coronal: nv.sliceTypeCoronal,
+                  sagittal: nv.sliceTypeSagittal, render: nv.sliceTypeRender };
+  nv.setSliceType(types[name]);
+  document.querySelectorAll("[data-layout]").forEach((b) => b.classList.toggle("active", b.dataset.layout === name));
+}
+
+function setClip(on) { nv.setClipPlane(on ? [0, 180, 0] : [2, 0, 0]); }
+
+async function load() {
+  await nv.attachToCanvas($("gl"));
+  S.scene = await (await fetch(`/case/${caseId}/scene.json`, { cache: "no-store" })).json();
+  if (S.scene.alignment) { $("alignment").hidden = false; $("alignment").textContent = `Alignment ${S.scene.alignment}.`; }
+  if (!S.scene.volumes.length) throw Error("this case has no image volume");
+  let i = 0;
+  const total = S.scene.volumes.length + S.scene.labels.length + S.scene.tracts.length;
+  const step = (what) => setStatus(`Loading ${what} (${++i}/${total})…`);
+  for (const meta of S.scene.volumes) {
+    step(meta.label);
+    const img = await niivue.NVImage.new(await bytes(meta.url), `${meta.id}.nii.gz`, "gray");
+    S.vols.set(meta.id, { meta, img });
+    S.win[meta.id] = meta.cal_min !== undefined ? [meta.cal_min, meta.cal_max]
+      : [img.robust_min ?? img.cal_min, img.robust_max ?? img.cal_max];
+  }
+  for (const meta of S.scene.labels) {
+    step(meta.label);
+    const img = await niivue.NVImage.new(await bytes(meta.url), `${meta.id}.nii.gz`, "gray", 1, null, 0, 1);
+    const [r, g, b] = rgb(meta.color);
+    img.setColormapLabel({ R: [0, r], G: [0, g], B: [0, b], A: [0, 255], I: [0, 1], labels: ["", meta.label] });
+    img.opacity = .55;
+    S.labels.set(meta.id, { meta, img });
+    S.showLabel[meta.id] = meta.reviewed || /lesion|tumou?r/i.test(meta.id + meta.label);
+  }
+  for (const meta of S.scene.tracts) {
+    step(meta.label);
+    const [r, g, b] = rgb(meta.color);
+    const mesh = await niivue.NVMesh.readMesh(await bytes(meta.url), `${meta.id}.tck`, nv.gl, 1, new Uint8Array([r, g, b, 255]), true);
+    mesh.fiberColor = "Fixed"; mesh.fiberDither = 0; mesh.rgba255 = new Uint8Array([r, g, b, 255]);
+    mesh.updateMesh?.(nv.gl);
+    S.tracts.set(meta.id, { meta, mesh });
+    S.showTract[meta.id] = true;
+  }
+  const order = ["CT", "MR", "T1", "CTA"];
+  const sorted = [...S.vols.values()].sort((a, b) => (order.indexOf(a.meta.kind) + 99) % 99 - (order.indexOf(b.meta.kind) + 99) % 99);
+  S.base = sorted[0].meta.id;
+  S.overlay = "";
+  nv.addVolume(S.vols.get(S.base).img);
+  renderControls();
+  applyLayers();
+  setLayout("grid");
+  setClip(true);
+  nv.onLocationChange = (d) => { $("readout").textContent = d?.string || ""; };
+  setStatus("");
+}
+
+$("base").onchange = (e) => { S.base = e.target.value; if (S.overlay === S.base) S.overlay = ""; renderControls(); applyLayers(); };
+$("overlay").onchange = (e) => { S.overlay = e.target.value; applyLayers(); };
+$("overlay-opacity").oninput = applyLayers;
+$("slab").oninput = applyTracts;
+$("clip").onchange = (e) => setClip(e.target.checked);
+document.querySelectorAll("[data-layout]").forEach((b) => (b.onclick = () => setLayout(b.dataset.layout)));
+load().catch((e) => setStatus(`Could not open this case: ${e.message}`, true));
+</script>
+</body>
+</html>
