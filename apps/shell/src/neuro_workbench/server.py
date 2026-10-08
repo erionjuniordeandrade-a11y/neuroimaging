@@ -43,6 +43,8 @@ DEMO_ID = "demo-phantom"
 NIIVUE_JS = "capsule/vendor/niivue-0.69.0.umd.js"
 FILE_TYPES = {".tck": "application/octet-stream", ".gz": "application/gzip", ".nii": "application/octet-stream"}
 CHILD_START_TIMEOUT_S = 90.0
+MAX_JSON_BYTES = 65536
+MAX_ANNOTATION_BYTES = 64 << 20
 
 
 def default_cache_dir() -> Path:
@@ -242,6 +244,34 @@ class Workbench:
         files = getattr(job, "files", None) if job and job.state == "ready" else None
         return files.get(key) if files else None
 
+    # Annotations ----------------------------------------------------------
+    def _annotation_file(self, case_id: str) -> Path:
+        """Segments, points, trajectories and findings drawn on one case.
+
+        Archive studies keep them in the archive folder, so they stay with the
+        patient data; other cases keep them in the cache. File names are hashes.
+        """
+        root = self.archive.root if self.archive and self.cases.get(case_id, {}).get("archive") else self.cache_dir
+        folder = root / "annotations"
+        folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+        return folder / f"{hashlib.sha256(case_id.encode()).hexdigest()[:24]}.json"
+
+    def load_annotations(self, case_id: str) -> dict:
+        file = self._annotation_file(case_id)
+        try:
+            return json.loads(file.read_text())
+        except (OSError, ValueError):
+            return {}
+
+    def save_annotations(self, case_id: str, doc: dict) -> dict:
+        file = self._annotation_file(case_id)
+        doc = {**doc, "saved": time.strftime("%Y-%m-%dT%H:%M:%S")}
+        tmp = file.with_name(f".{file.name}.{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(doc))
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, file)
+        return {"saved": doc["saved"]}
+
     # Imaging --------------------------------------------------------------
     def capsule_path(self, case_id: str) -> Path | None:
         job = self.imaging.get(case_id)
@@ -351,11 +381,20 @@ def make_handler(bench: Workbench):
             if not self._host_ok() or (origin and origin not in (f"http://127.0.0.1:{port}", f"http://localhost:{port}")) \
                     or not (self.headers.get("Content-Type") or "").startswith("application/json"):
                 return self._json(403, {"error": "forbidden"})
+            path = urlsplit(self.path).path
+            parts = path.strip("/").split("/")
+            annotations = len(parts) == 4 and parts[:2] == ["api", "case"] and parts[3] == "annotations"
+            size = int(self.headers.get("Content-Length") or 0)
+            if size > (MAX_ANNOTATION_BYTES if annotations else MAX_JSON_BYTES):
+                return self._json(413, {"error": "too large"})
             try:
-                body = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 65536)) or b"{}")
+                body = json.loads(self.rfile.read(size) or b"{}")
             except ValueError:
                 return self._json(400, {"error": "bad json"})
-            path = urlsplit(self.path).path
+            if annotations:
+                if not bench.case_known(parts[2]) or not isinstance(body, dict):
+                    return self._json(404, {"error": "not found"})
+                return self._json(200, bench.save_annotations(parts[2], body))
             if path == "/api/archive/import":
                 source = str(body.get("path") or "").strip()
                 if not source:
@@ -399,6 +438,8 @@ def make_handler(bench: Workbench):
                     return self._json(200, bench.tracts[case_id].ensure())
                 if view == "atlas":
                     return self._json(200, bench.atlas(case_id))
+                if view == "annotations":
+                    return self._json(200, bench.load_annotations(case_id))
             if len(parts) == 3 and parts[0] == "case" and parts[2] == "scene.html" and bench.scene_json(parts[1]):
                 return self._send(200, (STATIC_DIR / "scene.html").read_bytes(), "text/html; charset=utf-8")
             if len(parts) == 3 and parts[0] == "case" and parts[2] == "scene.json":

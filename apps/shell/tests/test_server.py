@@ -92,3 +92,46 @@ def test_rejects_foreign_host_and_unknown_routes(server):
     assert _get(server, "/api/cases", host="evil.example")[0] == 403
     assert _get(server, "/api/case/nope/imaging")[0] == 404
     assert _get(server, "/case/demo-phantom/../../etc/passwd")[0] == 404
+
+
+def _post(port: int, path: str, body: bytes, headers: dict | None = None):
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    conn.request("POST", path, body=body, headers={"Host": f"127.0.0.1:{port}", "Content-Type": "application/json",
+                                                  **(headers or {})})
+    resp = conn.getresponse()
+    data = resp.read()
+    conn.close()
+    return resp.status, data
+
+
+def test_annotations_round_trip_privately(server, tmp_path):
+    path = "/api/case/demo-phantom/annotations"
+    status, body = _get(server, path)
+    assert status == 200 and json.loads(body) == {}
+    doc = {"version": 1, "points": [{"name": "Point 1", "mm": [1.0, 2.0, 3.0]}],
+           "trajectories": [{"name": "Trajectory 1", "target": [0, 0, 0], "entry": [10, 0, 0]}]}
+    origin = {"Origin": f"http://127.0.0.1:{server}"}
+    status, body = _post(server, path, json.dumps(doc).encode(), origin)
+    assert status == 200 and "saved" in json.loads(body)
+    status, body = _get(server, path)
+    back = json.loads(body)
+    assert back["points"] == doc["points"] and back["trajectories"] == doc["trajectories"]
+    files = list((tmp_path / "cache" / "annotations").glob("*.json"))
+    assert len(files) == 1 and "demo" not in files[0].name
+    assert files[0].stat().st_mode & 0o777 == 0o600
+    assert files[0].parent.stat().st_mode & 0o777 == 0o700
+
+
+def test_annotations_refuse_other_origins_unknown_cases_and_oversize(server):
+    path = "/api/case/demo-phantom/annotations"
+    assert _post(server, path, b"{}", {"Origin": "http://evil.example"})[0] == 403
+    assert _post(server, path, b"{}", {"Content-Type": "text/plain"})[0] == 403
+    assert _post(server, "/api/case/no-such-case/annotations", b"{}")[0] == 404
+    conn = http.client.HTTPConnection("127.0.0.1", server, timeout=10)
+    conn.putrequest("POST", path, skip_host=True)
+    conn.putheader("Host", f"127.0.0.1:{server}")
+    conn.putheader("Content-Type", "application/json")
+    conn.putheader("Content-Length", str((64 << 20) + 1))
+    conn.endheaders()
+    assert conn.getresponse().status == 413
+    conn.close()

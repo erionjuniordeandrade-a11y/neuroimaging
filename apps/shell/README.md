@@ -60,6 +60,31 @@ The Case tab loads all layers into one NiiVue view in scanner RAS millimetres. I
   vessels), one fusion volume with opacity, a 2D slab control and a 3D clip plane.
 - **Tools.** Point (V), Window drag (W), Pan/zoom (Z), Distance (M), Angle (N), Clear measurements
   (Delete), Cursor on/off (X), Reset (0) and PNG export (P).
+- **Menu.** File (save ⌘S, case summary, PNG), View (layouts, probe, cursor, reset), Tools (every tool) and Export (report, NIfTI, CSV).
+
+### Segment
+
+- **Brush (B)** and **Erase (E)** paint the active structure on the base volume. Brush size and
+  undo (⌘Z, six steps) are in the Segment panel.
+- **Grow (F)** fills from the cursor: 6-connected voxels whose value lies in the 3×3×3 median ± the
+  tolerance (percent of the window), inside the radius in mm. It adds only to empty or active voxels.
+- Each structure is a named object with a colour, an eye toggle and its volume in cm³.
+
+### Plan
+
+- **Target (T)** and **Entry (Y)** set the two ends of the active trajectory at the cursor.
+  The panel shows length, angles to the axial and sagittal planes, and the closest distance from
+  the path to every structure ("crosses" when the path enters it). The path shows in every 2D view and in 3D.
+- **Probe (J)** opens a view across the path (60 mm field, 5 mm ring) and along it, with a depth slider.
+
+### Findings and export
+
+- **Findings** lists drawn structures, trajectories, points (L) and measurements. Names are editable.
+- The case saves itself to `<cache>/annotations/` (archive studies: `<archive>/annotations/`):
+  hashed file names, folder 0700, files 0600.
+- **Export** writes a structure as NIfTI (one label file plus a JSON key), the findings as CSV, or a
+  one-page report with snapshots and tables (Print / Save as PDF). The report repeats that drawn
+  objects are not reviewed.
 
 A capsule is decoded once into `<cache>/scenes/capsule-<hash>/`. A TractLab manifest
 is served in place, by layer key only; files outside the scene list return 404.

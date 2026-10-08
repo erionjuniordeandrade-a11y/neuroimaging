@@ -125,6 +125,71 @@
   .rail button.active { color: var(--accent); background: var(--accent-soft); border-color: rgba(201,168,76,.35); }
   .rail button kbd { font: 9px var(--mono); color: var(--faint); }
   .rail .sp { flex: 1; }
+
+  /* Menu bar */
+  .menubar { top: 10px; left: 10px; display: flex; gap: 1px; padding: 3px; }
+  .menu { position: relative; }
+  .menu > button { height: 26px; padding: 0 11px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; font-size: 12px; }
+  .menu > button:hover, .menu.open > button { color: var(--text); background: var(--hover); }
+  .menu .items { display: none; position: absolute; top: 30px; left: 0; min-width: 220px; padding: 4px; z-index: 5;
+                 background: rgba(14,17,23,.97); border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+  .menu.open .items { display: block; }
+  .items button { display: flex; width: 100%; align-items: center; gap: 10px; padding: 6px 10px; border: 0; border-radius: 7px; background: none;
+                  color: var(--text); cursor: pointer; font-size: 12.5px; text-align: left; }
+  .items button:hover { background: var(--accent-soft); }
+  .items button kbd { margin-left: auto; font: 10.5px var(--mono); color: var(--faint); }
+  .items hr { border: 0; border-top: 1px solid var(--line); margin: 4px 6px; }
+  .toast { top: 10px; right: 12px; padding: 6px 11px; font-size: 12px; color: var(--muted); }
+  .toast[hidden] { display: none; }
+
+  /* Path, points and probe overlays */
+  svg.over { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible; }
+  svg.over text { font: 600 11px var(--sans); paint-order: stroke; stroke: #000; stroke-width: 3px; }
+  .probe { right: 12px; top: 48px; width: 236px; padding: 8px; }
+  .probe[hidden] { display: none; }
+  .probe .ph2 { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); margin-bottom: 6px; }
+  .probe .ph2 b { color: var(--text); font-weight: 600; }
+  .probe .ph2 button { margin-left: auto; background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; }
+  .probe canvas { position: static; width: 220px; height: 220px; border-radius: 8px; background: #000; display: block; }
+  .probe .cap { font: 10.5px var(--mono); color: var(--faint); margin: 3px 0 7px; }
+
+  /* Editable rows */
+  .obj input.name { width: 100%; background: transparent; border: 1px solid transparent; border-radius: 5px; color: var(--text); font: inherit; padding: 0 3px; margin-left: -4px; }
+  .obj input.name:hover { border-color: var(--line); } .obj input.name:focus { border-color: var(--accent); outline: none; background: rgba(0,0,0,.3); }
+  .obj.active { border-color: rgba(201,168,76,.55); }
+  .obj .x { width: 22px; height: 22px; border: 0; background: none; color: var(--faint); cursor: pointer; border-radius: 6px; font-size: 14px; flex: none; }
+  .obj .x:hover { color: var(--warn); background: var(--hover); }
+  .obj .dot { width: 18px; height: 18px; flex: none; display: grid; place-items: center; color: var(--c); font-size: 13px; }
+  .btnrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .btn { background: rgba(255,255,255,.04); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+  .btn:hover { border-color: var(--line2); } .btn.primary { color: var(--accent); border-color: rgba(201,168,76,.5); background: var(--accent-soft); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 11.5px; margin-top: 8px; }
+  .kv span { color: var(--faint); } .kv b { font: 500 11.5px var(--mono); color: var(--text); text-align: right; }
+  .dist { margin-top: 8px; font-size: 11.5px; }
+  .dist div { display: flex; gap: 6px; align-items: center; padding: 2px 0; }
+  .dist i { width: 8px; height: 8px; border-radius: 2px; background: var(--c); flex: none; }
+  .dist b { margin-left: auto; font: 500 11.5px var(--mono); }
+  .dist .hit b { color: var(--warn); }
+  .hint { color: var(--faint); font-size: 11.5px; margin-top: 6px; }
+
+  /* Case summary sheet (also the print layout) */
+  .report { position: fixed; inset: 0; z-index: 10; overflow: auto; background: rgba(0,0,0,.6); padding: 24px; }
+  .report[hidden] { display: none; }
+  .sheet { max-width: 780px; margin: 0 auto; background: #fff; color: #111; border-radius: 6px; padding: 28px 34px; font: 12px/1.45 var(--sans); }
+  .sheet h1 { font: 600 20px var(--serif); margin: 0; } .sheet h2 { font: 600 13px var(--sans); margin: 16px 0 4px; text-transform: uppercase; letter-spacing: .08em; color: #555; }
+  .sheet .meta { color: #555; margin: 2px 0 10px; } .sheet img { width: 100%; border-radius: 4px; background: #000; }
+  .sheet .imgs { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; } .sheet .imgs div img { margin-bottom: 6px; }
+  .sheet table { width: 100%; border-collapse: collapse; } .sheet td, .sheet th { border-bottom: 1px solid #ddd; padding: 3px 6px; text-align: left; }
+  .sheet th { font-weight: 600; color: #555; } .sheet td.n { text-align: right; font-family: var(--mono); }
+  .sheet .warn { margin-top: 14px; padding: 6px 10px; border: 1px solid #c55; color: #a33; border-radius: 4px; }
+  .sheet .bar2 { display: flex; gap: 8px; justify-content: flex-end; margin: -10px -14px 10px; }
+  .sheet .bar2 button { padding: 5px 12px; border: 1px solid #bbb; border-radius: 6px; background: #f4f4f4; cursor: pointer; color: #111; }
+  @media print {
+    html, body { background: #fff; height: auto; } .app { display: none; }
+    .report { position: static; background: none; padding: 0; overflow: visible; } .sheet { max-width: none; padding: 0; border-radius: 0; }
+    .sheet .bar2 { display: none; }
+  }
   @media (max-width: 860px) {
     .app { grid-template-columns: 1fr; grid-template-rows: 58vh auto auto; }
     .rail { order: 2; flex-direction: row; flex-wrap: wrap; border-left: 0; border-top: 1px solid var(--line); }
@@ -153,11 +218,62 @@
   <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M4 4l16 16"/><path d="M9.9 5.8A9 9 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3 3.6M6.4 7.4A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 4-.9"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></symbol>
+  <symbol id="i-brush" viewBox="0 0 24 24"><path d="M14.5 4.5l5 5-8 8-5-5z"/><path d="M6.5 12.5c-2 0-3 1.5-3 3.5 0 1.5-.5 2.5-1 3 3 .5 6-.5 7-3.5"/></symbol>
+  <symbol id="i-eraser2" viewBox="0 0 24 24"><path d="M4 15.5l9-9 6 6-7 7H8z"/><path d="M8.5 11l6 6"/></symbol>
+  <symbol id="i-grow" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.8" fill="currentColor"/><path d="M12 5.5a6.5 6.5 0 1 1-6.2 4.5" stroke-dasharray="2.2 2"/><path d="M12 2.5a9.5 9.5 0 1 1-9 6.5" opacity=".55"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></symbol>
+  <symbol id="i-entry" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M12 9v6M9 12h6"/></symbol>
+  <symbol id="i-probe" viewBox="0 0 24 24"><path d="M4 20L15 9"/><circle cx="17.5" cy="6.5" r="3.5"/><path d="M17.5 4.5v4M15.5 6.5h4"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 15.5h6M9 9h3"/></symbol>
 </svg>
 <div class="app">
   <div class="view">
     <canvas id="gl"></canvas>
     <div class="tiles" id="tiles"></div>
+    <svg class="over" id="over"></svg>
+    <div class="float menubar" id="menubar">
+      <div class="menu"><button>File</button><div class="items">
+        <button data-act="save">Save annotations now<kbd>⌘S</kbd></button>
+        <hr><button data-act="report">Case summary (PDF)…</button>
+        <button data-act="shot">Save view as PNG<kbd>P</kbd></button>
+      </div></div>
+      <div class="menu"><button>View</button><div class="items">
+        <button data-act="layout:grid">2×2<kbd>G</kbd></button><button data-act="layout:axial">Axial<kbd>A</kbd></button>
+        <button data-act="layout:coronal">Coronal<kbd>C</kbd></button><button data-act="layout:sagittal">Sagittal<kbd>S</kbd></button>
+        <button data-act="layout:render">3D<kbd>R</kbd></button><hr>
+        <button data-act="probe">Probe view along the trajectory<kbd>J</kbd></button>
+        <button data-act="cross">Cursor on/off<kbd>X</kbd></button><button data-act="reset">Reset view<kbd>0</kbd></button>
+      </div></div>
+      <div class="menu"><button>Tools</button><div class="items">
+        <button data-act="tool:pointer">Point<kbd>V</kbd></button><button data-act="tool:window">Window<kbd>W</kbd></button>
+        <button data-act="tool:pan">Pan / zoom<kbd>Z</kbd></button><hr>
+        <button data-act="tool:measure">Distance<kbd>M</kbd></button><button data-act="tool:angle">Angle<kbd>N</kbd></button>
+        <button data-act="mark">Mark a point at the cursor<kbd>L</kbd></button><hr>
+        <button data-act="newobj">New structure</button>
+        <button data-act="tool:brush">Brush<kbd>B</kbd></button><button data-act="tool:erase">Erase<kbd>E</kbd></button>
+        <button data-act="tool:grow">Grow from a seed<kbd>F</kbd></button><button data-act="undo">Undo the last stroke<kbd>⌘Z</kbd></button><hr>
+        <button data-act="newtraj">New trajectory</button>
+        <button data-act="target">Set target at the cursor<kbd>T</kbd></button><button data-act="entry">Set entry at the cursor<kbd>Y</kbd></button>
+      </div></div>
+      <div class="menu"><button>Export</button><div class="items">
+        <button data-act="report">Case summary (PDF)…</button>
+        <button data-act="nii-all">Drawn structures as one label NIfTI</button>
+        <button data-act="nii-one">Selected structure as NIfTI</button>
+        <button data-act="csv">Findings as CSV</button>
+        <button data-act="shot">View as PNG<kbd>P</kbd></button>
+      </div></div>
+    </div>
+    <div class="float toast" id="toast" hidden></div>
+    <div class="float probe" id="probe" hidden>
+      <div class="ph2"><b id="probe-title">Probe view</b><span id="probe-depth"></span><button id="probe-close" title="Close">×</button></div>
+      <canvas id="probe-eye" width="220" height="220"></canvas>
+      <div class="cap">Across the path · 60 mm field</div>
+      <canvas id="probe-inline" width="220" height="220"></canvas>
+      <div class="cap">Along the path · entry at top, target at bottom</div>
+      <input id="probe-slider" type="range" min="0" max="1000" value="1000" aria-label="Depth along the path">
+    </div>
     <div class="float layouts" id="layouts">
       <button data-layout="grid" class="active" title="2×2 (G)"><svg class="i"><use href="#i-grid"/></svg>2×2</button>
       <button data-layout="axial" title="Axial (A)"><svg class="i"><use href="#i-ax"/></svg>Axial</button>
@@ -178,6 +294,22 @@
     <div class="objects" id="labels"></div>
     <div class="group" id="g-tracts">Fibre bundles</div>
     <div class="objects" id="tracts"></div>
+    <div class="group">Findings</div>
+    <div class="objects" id="findings"></div>
+    <details open id="d-seg">
+      <summary><svg class="i"><use href="#i-chev"/></svg>Segment</summary>
+      <div class="sec">
+        <div class="btnrow" style="margin-top:0"><button class="btn primary" id="seg-new">+ New structure</button><button class="btn" id="seg-undo">Undo</button></div>
+        <div class="field"><span>Brush size <em id="pen-val">3 voxels</em></span><input id="pen" type="range" min="1" max="15" value="3"></div>
+        <div class="field"><span>Grow range around the seed <em id="tol-val">±12% of window</em></span><input id="tol" type="range" min="1" max="50" value="12"></div>
+        <div class="field"><span>Grow limit <em id="rad-val">25 mm from the seed</em></span><input id="rad" type="range" min="3" max="80" value="25"></div>
+        <div class="hint" id="seg-hint">Brush paints on 2D slices. Grow fills the connected voxels inside the range, in 3D, from the clicked point. Painting never overwrites another structure.</div>
+      </div>
+    </details>
+    <details open id="d-plan">
+      <summary><svg class="i"><use href="#i-chev"/></svg>Trajectory</summary>
+      <div class="sec" id="plan"></div>
+    </details>
     <details open>
       <summary><svg class="i"><use href="#i-chev"/></svg>Images</summary>
       <div class="sec">
@@ -205,12 +337,22 @@
     <button data-tool="measure" title="Distance: drag a line (M)"><svg class="i"><use href="#i-ruler"/></svg>Distance<kbd>M</kbd></button>
     <button data-tool="angle" title="Angle: drag two lines (N)"><svg class="i"><use href="#i-angle"/></svg>Angle<kbd>N</kbd></button>
     <button id="t-clear" title="Clear measurements (Del)"><svg class="i"><use href="#i-erase"/></svg>Clear</button>
+    <button id="t-mark" title="Mark a point at the cursor (L)"><svg class="i"><use href="#i-pin"/></svg>Point<kbd>L</kbd></button>
+    <div class="lbl">Segment</div>
+    <button data-tool="brush" title="Brush: paint the selected structure (B)"><svg class="i"><use href="#i-brush"/></svg>Brush<kbd>B</kbd></button>
+    <button data-tool="erase" title="Erase: remove painted voxels (E)"><svg class="i"><use href="#i-eraser2"/></svg>Erase<kbd>E</kbd></button>
+    <button data-tool="grow" title="Grow: click a seed, the structure grows inside the range (F)"><svg class="i"><use href="#i-grow"/></svg>Grow<kbd>F</kbd></button>
+    <div class="lbl">Plan</div>
+    <button id="t-target" title="Set the trajectory target at the cursor (T)"><svg class="i"><use href="#i-target"/></svg>Target<kbd>T</kbd></button>
+    <button id="t-entry" title="Set the trajectory entry at the cursor (Y)"><svg class="i"><use href="#i-entry"/></svg>Entry<kbd>Y</kbd></button>
+    <button id="t-probe" title="Probe view along the trajectory (J)"><svg class="i"><use href="#i-probe"/></svg>Probe<kbd>J</kbd></button>
     <div class="sp"></div>
     <button id="t-cross" class="active" title="Crosshair (X)"><svg class="i"><use href="#i-cross"/></svg>Cursor<kbd>X</kbd></button>
     <button id="t-reset" title="Reset view (0)"><svg class="i"><use href="#i-reset"/></svg>Reset<kbd>0</kbd></button>
     <button id="t-shot" title="Save PNG (P)"><svg class="i"><use href="#i-shot"/></svg>PNG<kbd>P</kbd></button>
   </nav>
 </div>
+<div class="report" id="report" hidden></div>
 <script src="/vendor/niivue.js"></script>
 <script>
 const caseId = location.pathname.split("/")[2];
@@ -218,7 +360,7 @@ const $ = (id) => document.getElementById(id);
 const CT_PRESETS = [["Brain", 0, 80], ["Soft tissue", -160, 240], ["Bone", -500, 1500], ["Vessels", 100, 600]];
 const OVERLAY_COLORMAP = { CTA: "warm", CT: "warm", FA: "hot" };
 // NiiVue drag modes for the primary button: crosshair 8, windowing 9, pan 3, measurement 2, angle 7.
-const TOOLS = { pointer: 8, window: 9, pan: 3, measure: 2, angle: 7 };
+const TOOLS = { pointer: 8, window: 9, pan: 3, measure: 2, angle: 7, brush: 8, erase: 8, grow: 8 };
 // Screen edges per view (top, bottom, left, right) in radiological convention with the nose to the right on sagittal.
 const VIEWS = { 0: ["Axial", "ax", ["A", "P", "R", "L"]], 1: ["Coronal", "cor", ["S", "I", "R", "L"]],
                 2: ["Sagittal", "sag", ["S", "I", "P", "A"]], 4: ["3D", "3d", null] };
@@ -268,14 +410,17 @@ function applyLayers() {
   nv.volumes = list; nv.back = list[0]; nv.overlays = list.slice(1);
   nv.updateGLVolume();
   applyTracts();
+  showSeg();
 }
 
 function applyTracts() {
   // NiiVue 0.69 still draws meshes flagged visible=false, so hidden tracts are detached from nv.meshes.
-  nv.meshes = [...S.tracts].filter(([id]) => S.showTract[id]).map(([, t]) => t.mesh);
+  const tracts = [...S.tracts].filter(([id]) => S.showTract[id]).map(([, t]) => t.mesh);
+  nv.meshes = tracts;
   nv.opts.meshThicknessOn2D = Number($("slab").value);
   nv.updateGLVolume();
   S.tileSig = "";
+  trajMeshes().then((paths) => { if (paths.length) { nv.meshes = [...tracts, ...paths]; nv.updateGLVolume(); } });
 }
 
 // One label block per NiiVue tile: orientation glyph, series, study date, and the four edge letters.
@@ -299,6 +444,8 @@ function placeTiles() {
     txt.append(el("span", "", sub));
     id.append(icon(glyph), txt);
     if (edges) id.style.top = "22px";
+    // Keep the first tile label clear of the floating menu bar.
+    if (l < 300 && t < 26) id.style.top = `${48 - t}px`;
     tile.append(id);
     return tile;
   }));
@@ -398,6 +545,8 @@ function setTool(name) {
   S.tool = name;
   nv.opts.dragModePrimary = TOOLS[name];
   document.querySelectorAll("[data-tool]").forEach((b) => b.classList.toggle("active", b.dataset.tool === name));
+  if ((name === "brush" || name === "erase") && !(S.seg?.active && segObj(S.seg.active))) newStructure();
+  setPen();
 }
 
 function setClip(on) { nv.setClipPlane(on ? [0, 180, 0] : [2, 0, 0]); }
@@ -482,8 +631,605 @@ async function load() {
   nv.onIntensityChange = syncWindow;
   $("gl").addEventListener("pointerup", syncWindow);
   setInterval(placeTiles, 250);
+  setInterval(drawOverlay, 120);
+  await loadAnnotations();
   setStatus("");
 }
+
+// ---------- Shared geometry ----------
+const PALETTE = ["#e8665a", "#58b4e8", "#7bd389", "#e8c14f", "#b58be8", "#e88fc7", "#5fd6c8", "#f0a35a"];
+const TRAJ_COLOR = "#C9A84C";
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const mul3 = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const len3 = (a) => Math.hypot(a[0], a[1], a[2]);
+const norm3 = (a) => mul3(a, 1 / (len3(a) || 1));
+const fmt1 = (v) => (Math.abs(v) < 10 ? v.toFixed(1) : v.toFixed(0));
+const fmtMM = (p) => p.map((v) => v.toFixed(1)).join(", ");
+const cursorMM = () => [...nv.frac2mm(nv.scene.crosshairPos)].slice(0, 3);
+function toast(text) {
+  const t = $("toast"); t.textContent = text; t.hidden = false;
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => (t.hidden = true), 2600);
+}
+
+// Voxel grid of an image in RAS order (the order of img2RAS and of the drawing bitmap), with its voxel/mm affine.
+function grid(img) {
+  if (img._grid) return img._grid;
+  const d = img.dimsRAS, o = img.vox2mm([0, 0, 0], img.matRAS);
+  const ex = sub3(img.vox2mm([1, 0, 0], img.matRAS), o), ey = sub3(img.vox2mm([0, 1, 0], img.matRAS), o),
+        ez = sub3(img.vox2mm([0, 0, 1], img.matRAS), o);
+  const det = dot3(ex, cross3(ey, ez));
+  const inv = [cross3(ey, ez), cross3(ez, ex), cross3(ex, ey)].map((r) => mul3(r, 1 / det));
+  img._grid = { nx: d[1], ny: d[2], nz: d[3], o: [...o].slice(0, 3), ex, ey, ez, inv,
+                vox: Math.abs(det) };
+  return img._grid;
+}
+function rasData(img) {
+  if (img._ras) return img._ras;
+  const raw = img.img2RAS(), slope = img.hdr.scl_slope || 1, inter = img.hdr.scl_inter || 0;
+  const out = new Float32Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw[i] * slope + inter;
+  return (img._ras = out);
+}
+function mm2idx(g, p) {
+  const q = sub3(p, g.o);
+  const i = Math.round(dot3(g.inv[0], q)), j = Math.round(dot3(g.inv[1], q)), k = Math.round(dot3(g.inv[2], q));
+  if (i < 0 || j < 0 || k < 0 || i >= g.nx || j >= g.ny || k >= g.nz) return -1;
+  return i + g.nx * (j + g.ny * k);
+}
+function idx2mm(g, n) {
+  const i = n % g.nx, j = Math.floor(n / g.nx) % g.ny, k = Math.floor(n / (g.nx * g.ny));
+  return [g.o[0] + i * g.ex[0] + j * g.ey[0] + k * g.ez[0], g.o[1] + i * g.ex[1] + j * g.ey[1] + k * g.ez[1],
+          g.o[2] + i * g.ex[2] + j * g.ey[2] + k * g.ez[2]];
+}
+
+// ---------- Segment: drawn structures ----------
+// S.seg.bitmap is the truth; NiiVue's drawing layer shows a copy with hidden structures removed.
+S.seg = null; S.undo = []; S.traj = []; S.tsel = -1; S.points = []; S.mnames = {}; S.probe = false; S.depth = 1;
+
+function segEnsure() {
+  if (S.seg) return S.seg.ref === S.base;
+  const img = S.vols.get(S.base).img, g = grid(img);
+  S.seg = { ref: S.base, dims: [g.nx, g.ny, g.nz], bitmap: new Uint8Array(g.nx * g.ny * g.nz), objects: [], active: 0, counts: {} };
+  return true;
+}
+function segObj(k) { return S.seg?.objects.find((o) => o.k === k); }
+function newStructure() {
+  if (!segEnsure()) return toast(`Structures are drawn on ${S.vols.get(S.seg.ref)?.meta.label}. Show it as the base image first.`);
+  const used = new Set(S.seg.objects.map((o) => o.k));
+  let k = 1; while (used.has(k)) k++;
+  if (k > 250) return toast("Too many structures.");
+  S.seg.objects.push({ k, name: `Structure ${k}`, color: PALETTE[(k - 1) % PALETTE.length], visible: true });
+  S.seg.active = k;
+  showSeg(); renderFindings(); setPen(); scheduleSave();
+  return k;
+}
+function showSeg() {
+  const seg = S.seg;
+  if (!seg || seg.ref !== S.base || !nv.back) { if (nv.drawBitmap) nv.closeDrawing(); nv.drawScene(); return; }
+  const max = Math.max(1, ...seg.objects.map((o) => o.k));
+  const lut = { R: [0], G: [0], B: [0], A: [0], I: [0], labels: [""] };
+  for (let k = 1; k <= max; k++) {
+    const o = segObj(k), [r, g, b] = rgb(o?.color || "#ffffff");
+    lut.R.push(r); lut.G.push(g); lut.B.push(b); lut.A.push(o ? 255 : 0); lut.I.push(k); lut.labels.push(o?.name || "");
+  }
+  nv.setDrawColormap(lut);
+  nv.drawOpacity = 0.5;
+  const hidden = new Set(seg.objects.filter((o) => !o.visible).map((o) => o.k));
+  const view = seg.bitmap.slice();
+  if (hidden.size) for (let i = 0; i < view.length; i++) if (hidden.has(view[i])) view[i] = 0;
+  if (!nv.drawBitmap || nv.drawBitmap.length !== view.length) nv.createEmptyDrawing();
+  nv.drawBitmap.set(view);
+  nv.refreshDrawing(true);
+}
+function pushUndo() { S.undo.push(S.seg.bitmap.slice()); if (S.undo.length > 6) S.undo.shift(); }
+function segUndo() {
+  if (!S.undo.length) return toast("Nothing to undo.");
+  S.seg.bitmap = S.undo.pop(); segChanged();
+}
+// A brush stroke may only add to empty voxels or change the selected structure; other structures stay intact.
+function mergeStroke() {
+  const seg = S.seg, d = nv.drawBitmap;
+  if (!seg || !d || seg.ref !== S.base || d.length !== seg.bitmap.length) return;
+  pushUndo();
+  const a = seg.active, t = seg.bitmap;
+  for (let i = 0; i < t.length; i++) {
+    const v = t[i];
+    if (v === 0 || v === a) t[i] = d[i] === a || d[i] === 0 ? d[i] : v;
+  }
+  segChanged();
+}
+function segCounts() {
+  const c = {}, t = S.seg.bitmap;
+  for (let i = 0; i < t.length; i++) if (t[i]) c[t[i]] = (c[t[i]] || 0) + 1;
+  S.seg.counts = c;
+}
+function segCm3(k) { return ((S.seg.counts[k] || 0) * grid(S.vols.get(S.seg.ref).img).vox) / 1000; }
+function segChanged() { segCounts(); showSeg(); renderFindings(); scheduleSave(); invalidateDist(); drawOverlay(true); drawProbe(); }
+function setPen() {
+  const draw = S.tool === "brush" || S.tool === "erase";
+  if (draw && S.seg?.ref === S.base) {
+    nv.opts.penSize = Number($("pen").value);
+    nv.setPenValue(S.tool === "erase" ? 0 : S.seg.active, false);
+    nv.setDrawingEnabled(true);
+    showSeg();
+  } else if (nv.opts.drawingEnabled) { nv.setDrawingEnabled(false); showSeg(); }
+}
+
+// Seed grow: 6-connected 3D flood fill from the cursor, inside seed ± range, within a radius; empty voxels only.
+function growFromCursor() {
+  if (!segEnsure()) return toast(`Structures are drawn on ${S.vols.get(S.seg.ref)?.meta.label}. Show it as the base image first.`);
+  if (!S.seg.active || !segObj(S.seg.active)) newStructure();
+  const img = S.vols.get(S.base).img, g = grid(img), data = rasData(img), t = S.seg.bitmap, a = S.seg.active;
+  const seed = mm2idx(g, cursorMM());
+  if (seed < 0) return toast("The cursor is outside the image.");
+  // Median of the 3×3×3 neighbourhood resists a noisy seed voxel.
+  const near = [];
+  for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    const n = seed + dx + g.nx * (dy + g.ny * dz); if (n >= 0 && n < data.length) near.push(data[n]);
+  }
+  near.sort((x, y) => x - y);
+  const c = near[near.length >> 1], [wl, wh] = S.win[S.base];
+  const tol = (Math.abs(wh - wl) * Number($("tol").value)) / 100, lo = c - tol, hi = c + tol;
+  const r = Number($("rad").value), r2 = r * r, sm = idx2mm(g, seed);
+  pushUndo();
+  const seen = new Uint8Array(t.length), queue = new Int32Array(t.length);
+  let head = 0, tail = 0, added = 0;
+  queue[tail++] = seed; seen[seed] = 1;
+  while (head < tail) {
+    const n = queue[head++];
+    if (t[n] !== 0 && t[n] !== a) continue;
+    if (t[n] === 0) { t[n] = a; added++; }
+    const i = n % g.nx, j = Math.floor(n / g.nx) % g.ny, k = Math.floor(n / (g.nx * g.ny));
+    for (const [di, dj, dk] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) {
+      const ii = i + di, jj = j + dj, kk = k + dk;
+      if (ii < 0 || jj < 0 || kk < 0 || ii >= g.nx || jj >= g.ny || kk >= g.nz) continue;
+      const m = ii + g.nx * (jj + g.ny * kk);
+      if (seen[m]) continue;
+      seen[m] = 1;
+      const v = data[m];
+      if (v < lo || v > hi || (t[m] !== 0 && t[m] !== a)) continue;
+      const p = sub3(idx2mm(g, m), sm);
+      if (dot3(p, p) > r2) continue;
+      queue[tail++] = m;
+    }
+  }
+  segChanged();
+  toast(`Grew ${segObj(a).name}: +${((added * g.vox) / 1000).toFixed(2)} cm³ (range ${fmt1(lo)} to ${fmt1(hi)}).`);
+}
+
+function rle(b) {
+  const out = []; let v = b[0], n = 0;
+  for (let i = 0; i < b.length; i++) { if (b[i] === v) n++; else { out.push(v, n); v = b[i]; n = 1; } }
+  out.push(v, n); return out;
+}
+function unrle(runs, size) {
+  const b = new Uint8Array(size); let p = 0;
+  for (let i = 0; i < runs.length; i += 2) { b.fill(runs[i], p, p + runs[i + 1]); p += runs[i + 1]; }
+  return p === size ? b : null;
+}
+
+// ---------- Trajectory ----------
+function curTraj() { return S.traj[S.tsel]; }
+function newTrajectory() {
+  S.traj.push({ name: `Trajectory ${S.traj.length + 1}`, target: null, entry: null });
+  S.tsel = S.traj.length - 1; trajChanged();
+}
+function setTrajPoint(which) {
+  if (!curTraj()) newTrajectory();
+  curTraj()[which] = cursorMM();
+  trajChanged();
+  const t = curTraj();
+  toast(t.target && t.entry ? `${t.name}: ${len3(sub3(t.target, t.entry)).toFixed(1)} mm` : `${which === "target" ? "Target" : "Entry"} set. Now set the ${which === "target" ? "entry (Y)" : "target (T)"}.`);
+}
+function trajChanged() { invalidateDist(); applyTracts(); renderPlan(); renderFindings(); drawOverlay(true); drawProbe(); scheduleSave(); }
+// One-streamline TCK so NiiVue draws the path in 3D like a tract.
+async function trajMeshes() {
+  const out = [];
+  for (const t of S.traj) {
+    if (!t.target || !t.entry) continue;
+    const key = `${t.entry}|${t.target}`;
+    if (t._mesh && t._key === key) { out.push(t._mesh); continue; }
+    const head0 = "mrtrix tracks\ndatatype: Float32LE\nfile: . 000\ncount: 1\nEND\n";
+    const off = head0.length, head = head0.replace("000", String(off).padStart(3, "0"));
+    const pts = [];
+    for (let s = 0; s <= 20; s++) pts.push(...add3(t.entry, mul3(sub3(t.target, t.entry), s / 20)));
+    const buf = new ArrayBuffer(off + 4 * (pts.length + 6));
+    new Uint8Array(buf).set(new TextEncoder().encode(head));
+    new Float32Array(buf, off).set([...pts, NaN, NaN, NaN, Infinity, Infinity, Infinity]);
+    const [r, g, b] = rgb(TRAJ_COLOR);
+    const mesh = await niivue.NVMesh.readMesh(buf, "trajectory.tck", nv.gl, 1, new Uint8Array([r, g, b, 255]), true);
+    mesh.fiberColor = "Fixed"; mesh.fiberRadius = 1; mesh.rgba255 = new Uint8Array([r, g, b, 255]); mesh.updateMesh?.(nv.gl);
+    t._mesh = mesh; t._key = key; out.push(mesh);
+  }
+  return out;
+}
+
+// Closest distance from each trajectory segment to each structure, from voxel centres.
+let distCache = null;
+function invalidateDist() { distCache = null; }
+function segDist(p, a, u, L) { const s = Math.max(0, Math.min(L, dot3(sub3(p, a), u))); return len3(sub3(p, add3(a, mul3(u, s)))); }
+function structureSources() {
+  const out = [];
+  if (S.seg) {
+    const g = grid(S.vols.get(S.seg.ref).img);
+    for (const o of S.seg.objects) out.push({ name: o.name, color: o.color, g, data: S.seg.bitmap, match: o.k });
+  }
+  for (const l of S.labels.values()) out.push({ name: l.meta.label, color: l.meta.color, g: grid(l.img), data: rasData(l.img), match: null });
+  return out;
+}
+function distances(t) {
+  if (!t?.target || !t?.entry) return [];
+  distCache ??= new Map();
+  const key = `${t.entry}|${t.target}`;
+  if (distCache.has(key)) return distCache.get(key);
+  const a = t.entry, L = len3(sub3(t.target, a)), u = norm3(sub3(t.target, a));
+  const res = structureSources().map((s) => {
+    let best = Infinity; const g = s.g, d = s.data;
+    for (let n = 0; n < d.length; n++) {
+      if (s.match === null ? !(d[n] > 0) : d[n] !== s.match) continue;
+      const dd = segDist(idx2mm(g, n), a, u, L); if (dd < best) best = dd;
+    }
+    const half = Math.cbrt(g.vox) * 0.87;
+    return { name: s.name, color: s.color, mm: best === Infinity ? null : Math.max(0, best - half), hit: best <= half };
+  }).filter((r) => r.mm !== null);
+  distCache.set(key, res);
+  return res;
+}
+
+function renderPlan() {
+  const box = $("plan"), t = curTraj();
+  const sel = el("select"); sel.style.width = "100%";
+  S.traj.forEach((x, i) => sel.append(new Option(x.name, i, false, i === S.tsel)));
+  sel.onchange = () => { S.tsel = Number(sel.value); trajChanged(); };
+  const buttons = el("div", "btnrow");
+  const b = (text, fn, primary, dis) => { const x = el("button", "btn" + (primary ? " primary" : ""), text); x.onclick = fn; x.disabled = !!dis; return x; };
+  buttons.append(b("+ New", newTrajectory, !S.traj.length), b("Target ⌖ T", () => setTrajPoint("target")), b("Entry Y", () => setTrajPoint("entry")),
+                 b("Probe J", toggleProbe, false, !(t?.target && t?.entry)));
+  const kids = [];
+  if (S.traj.length) kids.push(sel);
+  kids.push(buttons);
+  if (!t) kids.push(el("div", "hint", "Place the cursor on the target and press T, then on the entry and press Y. The path appears on every view."));
+  else {
+    const kv = el("div", "kv");
+    const row = (k, v) => kv.append(el("span", "", k), el("b", "", v));
+    row("Target", t.target ? fmtMM(t.target) : "not set");
+    row("Entry", t.entry ? fmtMM(t.entry) : "not set");
+    if (t.target && t.entry) {
+      const d = sub3(t.target, t.entry), L = len3(d), u = mul3(d, 1 / L);
+      row("Length", `${L.toFixed(1)} mm`);
+      row("Angle to axial", `${(Math.asin(Math.abs(u[2])) * 180 / Math.PI).toFixed(0)}°`);
+      row("Angle to sagittal", `${(Math.asin(Math.abs(u[0])) * 180 / Math.PI).toFixed(0)}°`);
+    }
+    kids.push(kv);
+    const dl = distances(t);
+    if (dl.length) {
+      const dist = el("div", "dist");
+      dist.append(el("div", "hint", "Closest distance from the path"));
+      for (const r of dl.sort((x, y) => x.mm - y.mm)) {
+        const line = el("div", r.hit ? "hit" : ""); line.style.setProperty("--c", r.color);
+        line.append(el("i"), el("span", "", r.name), el("b", "", r.hit ? "crosses" : `${r.mm.toFixed(1)} mm`));
+        dist.append(line);
+      }
+      kids.push(dist);
+    }
+  }
+  box.replaceChildren(...kids);
+}
+
+// ---------- Points and the findings list ----------
+function markPoint() {
+  S.points.push({ name: `Point ${S.points.length + 1}`, mm: cursorMM() });
+  renderFindings(); drawOverlay(true); scheduleSave();
+}
+function measurements() {
+  const doc = nv.document || {};
+  const m = (doc.completedMeasurements || []).map((x, i) => ({ key: `m${i}`, kind: "Distance", value: `${len3(sub3(x.endMM, x.startMM)).toFixed(1)} mm`, x }));
+  const a = (doc.completedAngles || []).map((x, i) => ({ key: `a${i}`, kind: "Angle", value: `${Number(x.angle).toFixed(1)}°`, x }));
+  return [...m, ...a];
+}
+function goTo(mm) { nv.scene.crosshairPos = nv.mm2frac(mm); nv.updateGLVolume(); drawOverlay(true); }
+function findingRow({ color, glyph, name, onName, value, sub, onClick, onDelete, active, eye }) {
+  const row = el("div", "obj" + (active ? " active" : "")); row.style.setProperty("--c", color);
+  const top = el("div", "top");
+  if (eye) {
+    const e = el("button", "eye"); e.append(icon(eye.on ? "eye" : "eyeoff")); e.title = eye.on ? "Hide" : "Show";
+    e.onclick = (ev) => { ev.stopPropagation(); eye.toggle(); }; top.append(e);
+  } else top.append(el("span", "dot", glyph));
+  const txt = el("div", "txt");
+  const inp = el("input", "name"); inp.value = name; inp.title = "Rename";
+  inp.onclick = (ev) => ev.stopPropagation();
+  inp.onchange = () => onName(inp.value.trim() || name);
+  inp.onkeydown = (ev) => { ev.stopPropagation(); if (ev.key === "Enter") inp.blur(); };
+  txt.append(inp, el("div", "sub", sub));
+  top.append(txt, el("span", "val", value));
+  if (onDelete) { const x = el("button", "x", "×"); x.title = "Delete"; x.onclick = (ev) => { ev.stopPropagation(); onDelete(); }; top.append(x); }
+  top.onclick = onClick || null;
+  row.append(top); return row;
+}
+function renderFindings() {
+  const rows = [];
+  for (const o of S.seg?.objects || []) rows.push(findingRow({
+    color: o.color, name: o.name, value: `${segCm3(o.k).toFixed(2)} cm³`, active: o.k === S.seg.active,
+    sub: o.k === S.seg.active ? "Drawn structure · selected" : "Drawn structure · click to select",
+    eye: { on: o.visible, toggle: () => { o.visible = !o.visible; showSeg(); renderFindings(); scheduleSave(); } },
+    onName: (v) => { o.name = v; renderFindings(); renderPlan(); scheduleSave(); },
+    onClick: () => { S.seg.active = o.k; setPen(); renderFindings(); },
+    onDelete: () => {
+      if (!confirm(`Delete ${o.name}?`)) return;
+      pushUndo(); const t = S.seg.bitmap; for (let i = 0; i < t.length; i++) if (t[i] === o.k) t[i] = 0;
+      S.seg.objects = S.seg.objects.filter((x) => x !== o);
+      if (S.seg.active === o.k) S.seg.active = S.seg.objects[0]?.k || 0;
+      segChanged(); setPen();
+    },
+  }));
+  S.traj.forEach((t, i) => rows.push(findingRow({
+    color: TRAJ_COLOR, glyph: "⟋", name: t.name, active: i === S.tsel,
+    value: t.target && t.entry ? `${len3(sub3(t.target, t.entry)).toFixed(1)} mm` : "incomplete", sub: "Trajectory",
+    onName: (v) => { t.name = v; renderPlan(); renderFindings(); scheduleSave(); },
+    onClick: () => { S.tsel = i; trajChanged(); if (t.target) goTo(t.target); },
+    onDelete: () => { S.traj.splice(i, 1); S.tsel = Math.min(S.tsel, S.traj.length - 1); trajChanged(); },
+  })));
+  S.points.forEach((p, i) => rows.push(findingRow({
+    color: "#f2f2f2", glyph: "◉", name: p.name, value: "", sub: fmtMM(p.mm) + " mm",
+    onName: (v) => { p.name = v; scheduleSave(); drawOverlay(true); },
+    onClick: () => goTo(p.mm),
+    onDelete: () => { S.points.splice(i, 1); renderFindings(); drawOverlay(true); scheduleSave(); },
+  })));
+  for (const m of measurements()) rows.push(findingRow({
+    color: "#C9A84C", glyph: m.kind === "Angle" ? "∠" : "↔", name: S.mnames[m.key] || `${m.kind} ${m.key.slice(1) * 1 + 1}`,
+    value: m.value, sub: m.kind, onName: (v) => { S.mnames[m.key] = v; },
+  }));
+  if (!rows.length) rows.push(el("div", "hint", "Measurements, points (L), structures and trajectories appear here."));
+  $("findings").replaceChildren(...rows);
+}
+
+// ---------- 2D overlay: path, entry, target and points on every slice view ----------
+const AXES = { 0: [0, 1, 2], 1: [0, 2, 1], 2: [1, 2, 0] }; // screen u, screen v, slice normal
+let overlaySig = "";
+function drawOverlay(force) {
+  const svg = $("over"), canvas = $("gl"), k = canvas.clientWidth / (canvas.width || 1);
+  const c = nv.back ? cursorMM() : [0, 0, 0];
+  const tiles = (nv.screenSlices || []).filter((s) => AXES[s.axCorSag] && s.fovMM);
+  const sig = JSON.stringify([c, tiles.map((s) => [s.leftTopWidthHeight, s.leftTopMM, s.fovMM]), k, S.tsel]);
+  if (!force && sig === overlaySig) return;
+  overlaySig = sig;
+  const NS = "http://www.w3.org/2000/svg", mk = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const a in attrs) e.setAttribute(a, attrs[a]); return e; };
+  const kids = [], defs = mk("defs", {});
+  kids.push(defs);
+  tiles.forEach((s, ti) => {
+    const [l, t, w, h] = s.leftTopWidthHeight.map((v) => v * k), [ui, vi, ni] = AXES[s.axCorSag];
+    const P = (p) => [l + ((p[ui] - s.leftTopMM[0]) / s.fovMM[0]) * w, t + (1 - (p[vi] - s.leftTopMM[1]) / s.fovMM[1]) * h];
+    const cp = mk("clipPath", { id: `cl${ti}` }); cp.append(mk("rect", { x: l, y: t, width: w, height: h })); defs.append(cp);
+    const g = mk("g", { "clip-path": `url(#cl${ti})` });
+    S.traj.forEach((tr, i) => {
+      const sel = i === S.tsel, col = TRAJ_COLOR, op = sel ? 1 : 0.5;
+      if (tr.target && tr.entry) {
+        const [x1, y1] = P(tr.entry), [x2, y2] = P(tr.target);
+        g.append(mk("line", { x1, y1, x2, y2, stroke: "#000", "stroke-width": 4, opacity: 0.5 * op }));
+        g.append(mk("line", { x1, y1, x2, y2, stroke: col, "stroke-width": 1.6, opacity: op }));
+        // Where the path pierces the current slice.
+        const dn = tr.target[ni] - tr.entry[ni];
+        if (Math.abs(dn) > 1e-6) {
+          const f = (c[ni] - tr.entry[ni]) / dn;
+          if (f >= 0 && f <= 1) { const [x, y] = P(add3(tr.entry, mul3(sub3(tr.target, tr.entry), f))); g.append(mk("circle", { cx: x, cy: y, r: 5, fill: "none", stroke: "#fff", "stroke-width": 1.4, opacity: op })); }
+        }
+      }
+      if (tr.entry) { const [x, y] = P(tr.entry); g.append(mk("rect", { x: x - 4, y: y - 4, width: 8, height: 8, fill: "none", stroke: col, "stroke-width": 1.8, opacity: op })); }
+      if (tr.target) {
+        const [x, y] = P(tr.target), near = Math.abs(tr.target[ni] - c[ni]) < 2;
+        g.append(mk("circle", { cx: x, cy: y, r: 6, fill: near ? col : "none", "fill-opacity": 0.35, stroke: col, "stroke-width": 1.8, opacity: op }));
+        g.append(mk("circle", { cx: x, cy: y, r: 1.5, fill: col, opacity: op }));
+      }
+    });
+    for (const p of S.points) {
+      const dz = Math.abs(p.mm[ni] - c[ni]);
+      if (dz > 3) continue;
+      const [x, y] = P(p.mm);
+      g.append(mk("circle", { cx: x, cy: y, r: 4, fill: "#fff", stroke: "#000", "stroke-width": 1, opacity: 1 - dz / 4 }));
+      const tx = mk("text", { x: x + 7, y: y - 6, fill: "#fff" }); tx.textContent = p.name; g.append(tx);
+    }
+    kids.push(g);
+  });
+  svg.replaceChildren(...kids);
+}
+
+// ---------- Probe view: reslices across and along the selected path ----------
+function toggleProbe() {
+  const t = curTraj();
+  if (!S.probe && !(t?.target && t?.entry)) return toast("Set a target (T) and an entry (Y) first.");
+  S.probe = !S.probe; $("probe").hidden = !S.probe; drawProbe();
+}
+function sampler() {
+  const base = S.vols.get(S.base), g = grid(base.img), data = rasData(base.img), [wl, wh] = S.win[S.base];
+  const layers = [];
+  if (S.seg && S.seg.ref === S.base) {
+    const vis = {}; for (const o of S.seg.objects) if (o.visible) vis[o.k] = rgb(o.color);
+    layers.push({ g, data: S.seg.bitmap, color: (v) => vis[v] });
+  }
+  for (const [id, l] of S.labels) if (S.showLabel[id]) { const c = rgb(l.meta.color); layers.push({ g: grid(l.img), data: rasData(l.img), color: (v) => (v > 0 ? c : null) }); }
+  return (p) => {
+    const n = mm2idx(g, p);
+    let v = n < 0 ? 0 : Math.max(0, Math.min(255, ((data[n] - wl) / (wh - wl)) * 255));
+    let r = v, gg = v, b = v;
+    for (const L of layers) {
+      const m = mm2idx(L.g, p); if (m < 0) continue;
+      const c = L.color(L.data[m]); if (!c) continue;
+      r = r * 0.45 + c[0] * 0.55; gg = gg * 0.45 + c[1] * 0.55; b = b * 0.45 + c[2] * 0.55;
+    }
+    return [r, gg, b];
+  };
+}
+function drawProbe() {
+  if (!S.probe) return;
+  const t = curTraj();
+  if (!(t?.target && t?.entry) || !S.vols.get(S.base)) { S.probe = false; $("probe").hidden = true; return; }
+  const d = sub3(t.target, t.entry), L = len3(d), u = mul3(d, 1 / L);
+  const ref = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [0, 0, 1];
+  const a = norm3(cross3(ref, u)), b = norm3(cross3(u, a));
+  const depth = S.depth * (L + 10), at = add3(t.entry, mul3(u, depth));
+  $("probe-title").textContent = t.name;
+  $("probe-depth").textContent = depth <= L ? `${(L - depth).toFixed(1)} mm to target` : `${(depth - L).toFixed(1)} mm past target`;
+  const sample = sampler();
+  const paint = (cv, fn) => {
+    const ctx = cv.getContext("2d"), W = cv.width, H = cv.height, im = ctx.createImageData(W, H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const [r, g, bb] = sample(fn(x / W, y / H)), o = 4 * (y * W + x);
+      im.data[o] = r; im.data[o + 1] = g; im.data[o + 2] = bb; im.data[o + 3] = 255;
+    }
+    ctx.putImageData(im, 0, 0); return ctx;
+  };
+  // Across: 60 mm field centred on the path at the chosen depth.
+  const F = 60;
+  let ctx = paint($("probe-eye"), (x, y) => add3(at, add3(mul3(a, (x - 0.5) * F), mul3(b, (0.5 - y) * F))));
+  const W = $("probe-eye").width, px = W / F;
+  ctx.strokeStyle = TRAJ_COLOR; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(W / 2, W / 2, Math.max(2, px), 0, 7); ctx.stroke();
+  ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.arc(W / 2, W / 2, 5 * px, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+  ctx.fillStyle = "#ddd"; ctx.font = "10px sans-serif"; ctx.fillText("ring 5 mm", 6, W - 6);
+  // Along: the plane holding the path, entry at the top.
+  const span = Math.max(L + 20, 60), mid = add3(t.entry, mul3(u, L / 2));
+  ctx = paint($("probe-inline"), (x, y) => add3(mid, add3(mul3(a, (x - 0.5) * span), mul3(u, (y - 0.5) * span))));
+  const H = $("probe-inline").height, yOf = (s) => (0.5 + (s - L / 2) / span) * H;
+  ctx.strokeStyle = TRAJ_COLOR; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(H / 2, yOf(0)); ctx.lineTo(H / 2, yOf(L)); ctx.stroke();
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(H / 2 - 14, yOf(depth)); ctx.lineTo(H / 2 + 14, yOf(depth)); ctx.stroke();
+}
+
+// ---------- Save and load with the study ----------
+let saveTimer = null, loading = false;
+function scheduleSave() { if (loading) return; clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 800); }
+async function saveNow(manual) {
+  clearTimeout(saveTimer);
+  const doc = {
+    version: 1,
+    seg: S.seg && { ref: S.seg.ref, dims: S.seg.dims, rle: rle(S.seg.bitmap), objects: S.seg.objects.map(({ k, name, color, visible }) => ({ k, name, color, visible })), active: S.seg.active },
+    trajectories: S.traj.map(({ name, target, entry }) => ({ name, target, entry })),
+    points: S.points,
+  };
+  try {
+    const r = await fetch(`/api/case/${caseId}/annotations`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(doc) });
+    if (!r.ok) throw Error(r.status);
+    if (manual) toast("Annotations saved with the study.");
+  } catch (e) { toast(`Could not save the annotations (${e.message}).`); }
+}
+async function loadAnnotations() {
+  let doc = {};
+  try { doc = await (await fetch(`/api/case/${caseId}/annotations`, { cache: "no-store" })).json(); } catch { return; }
+  loading = true;
+  const sg = doc.seg, ref = sg && S.vols.get(sg.ref);
+  if (ref) {
+    const g = grid(ref.img), bm = unrle(sg.rle || [], g.nx * g.ny * g.nz);
+    if (bm && sg.dims?.join() === [g.nx, g.ny, g.nz].join()) {
+      S.seg = { ref: sg.ref, dims: sg.dims, bitmap: bm, objects: sg.objects || [], active: sg.active || 0, counts: {} };
+      segCounts();
+    }
+  }
+  S.traj = (doc.trajectories || []).filter((t) => t && t.name);
+  S.tsel = S.traj.length ? 0 : -1;
+  S.points = (doc.points || []).filter((p) => p && Array.isArray(p.mm));
+  loading = false;
+  showSeg(); applyTracts(); renderPlan(); renderFindings(); drawOverlay(true);
+}
+
+// ---------- Exports ----------
+function download(name, blob) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 500);
+}
+async function exportNifti(one) {
+  if (!S.seg || !S.seg.objects.length) return toast("Draw a structure first.");
+  const ref = S.vols.get(S.seg.ref).img;
+  let data = S.seg.bitmap, name = "structures";
+  if (one) {
+    const o = segObj(S.seg.active); if (!o) return toast("Select a structure first.");
+    data = S.seg.bitmap.map((v) => (v === o.k ? 1 : 0)); name = o.name.replace(/[^\w-]+/g, "_");
+  }
+  await ref.saveToDisk(`${caseId}-${name}.nii.gz`, data);
+  if (!one) download(`${caseId}-structures.json`, new Blob([JSON.stringify(S.seg.objects.map(({ k, name, color }) => ({ value: k, name, color, cm3: Number(segCm3(k).toFixed(3)) })), null, 1)], { type: "application/json" }));
+}
+function findingsTable() {
+  const rows = [["type", "name", "value", "unit", "detail"]];
+  for (const o of S.seg?.objects || []) rows.push(["structure", o.name, segCm3(o.k).toFixed(3), "cm3", `label ${o.k} on ${S.vols.get(S.seg.ref)?.meta.label}`]);
+  for (const l of S.labels.values()) if (l.cm3 !== null) rows.push(["structure", l.meta.label, l.cm3.toFixed(3), "cm3", l.meta.reviewed ? "reviewed" : "not reviewed"]);
+  for (const t of S.traj) {
+    if (!(t.target && t.entry)) continue;
+    rows.push(["trajectory", t.name, len3(sub3(t.target, t.entry)).toFixed(1), "mm", `entry ${fmtMM(t.entry)}; target ${fmtMM(t.target)}`]);
+    for (const d of distances(t)) rows.push(["clearance", `${t.name} to ${d.name}`, d.hit ? "0" : d.mm.toFixed(1), "mm", d.hit ? "path crosses the structure" : ""]);
+  }
+  for (const p of S.points) rows.push(["point", p.name, "", "mm", fmtMM(p.mm)]);
+  for (const m of measurements()) rows.push([m.kind.toLowerCase(), S.mnames[m.key] || m.kind, m.value.replace(/[^0-9.\-]/g, ""), m.kind === "Angle" ? "deg" : "mm", ""]);
+  return rows;
+}
+function exportCsv() {
+  const csv = findingsTable().map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  download(`${caseId}-findings.csv`, new Blob([csv], { type: "text/csv" }));
+}
+function snapshot() { nv.drawScene(); return $("gl").toDataURL("image/png"); }
+function openReport() {
+  const R = $("report"), sheet = el("div", "sheet");
+  const bar = el("div", "bar2"), pr = el("button", "", "Print / Save as PDF"), cl = el("button", "", "Close");
+  pr.onclick = () => window.print(); cl.onclick = () => (R.hidden = true);
+  bar.append(pr, cl);
+  const base = S.vols.get(S.base);
+  sheet.append(bar, el("h1", "", S.scene?.title || "Case summary"),
+    el("div", "meta", [base?.meta.label, fmtDate(S.scene?.date), `printed ${new Date().toISOString().slice(0, 16).replace("T", " ")}`].filter(Boolean).join(" · ")));
+  const imgs = el("div", "imgs"), main = el("img"); main.src = snapshot(); imgs.append(main);
+  if (S.probe) { const side = el("div"); for (const id of ["probe-eye", "probe-inline"]) { const i = el("img"); i.src = $(id).toDataURL(); side.append(i); } imgs.append(side); }
+  else imgs.style.gridTemplateColumns = "1fr";
+  sheet.append(imgs);
+  const rows = findingsTable(), groups = [["Structures", ["structure"]], ["Trajectories", ["trajectory", "clearance"]], ["Points", ["point"]], ["Measurements", ["distance", "angle"]]];
+  for (const [title, types] of groups) {
+    const rs = rows.slice(1).filter((r) => types.includes(r[0]));
+    if (!rs.length) continue;
+    const tb = el("table"), hd = el("tr");
+    for (const h of ["Name", "Value", "Detail"]) hd.append(el("th", "", h));
+    tb.append(hd);
+    for (const r of rs) { const tr = el("tr"); tr.append(el("td", "", r[1]), el("td", "n", r[2] === "" ? "" : `${r[2]} ${r[3].replace("cm3", "cm³").replace("deg", "°")}`), el("td", "", r[4])); tb.append(tr); }
+    sheet.append(el("h2", "", title), tb);
+  }
+  const open = [...S.labels.values(), ...S.tracts.values()].filter((o) => !o.meta.reviewed).length;
+  if (open) sheet.append(el("div", "warn", `${open} imported object(s) are not reviewed. Drawn structures and trajectories are the user's own and are not checked by Eidos.`));
+  sheet.append(el("div", "warn", "Eidos is for research and teaching only. Not for clinical use or surgical planning."));
+  R.replaceChildren(sheet); R.hidden = false;
+}
+
+// ---------- Menu ----------
+function act(a) {
+  const [k, v] = a.split(":");
+  ({
+    save: () => saveNow(true), report: openReport, shot: screenshot, probe: toggleProbe, cross: () => setCrosshair(!S.cross), reset: resetView,
+    layout: () => setLayout(v), tool: () => setTool(v), mark: markPoint, newobj: newStructure, undo: segUndo, newtraj: newTrajectory,
+    target: () => setTrajPoint("target"), entry: () => setTrajPoint("entry"), "nii-all": () => exportNifti(false), "nii-one": () => exportNifti(true), csv: exportCsv,
+  })[k]?.();
+}
+document.querySelectorAll(".menu").forEach((m) => {
+  m.querySelector(":scope > button").onclick = (e) => {
+    e.stopPropagation(); const open = !m.classList.contains("open");
+    document.querySelectorAll(".menu.open").forEach((x) => x.classList.remove("open")); m.classList.toggle("open", open);
+  };
+  m.querySelectorAll(".items button").forEach((b) => (b.onclick = () => { m.classList.remove("open"); act(b.dataset.act); }));
+});
+document.addEventListener("click", () => document.querySelectorAll(".menu.open").forEach((x) => x.classList.remove("open")));
+
+$("seg-new").onclick = newStructure;
+$("seg-undo").onclick = segUndo;
+$("pen").oninput = (e) => { $("pen-val").textContent = `${e.target.value} voxel${e.target.value > 1 ? "s" : ""}`; nv.opts.penSize = Number(e.target.value); };
+$("tol").oninput = (e) => ($("tol-val").textContent = `±${e.target.value}% of window`);
+$("rad").oninput = (e) => ($("rad-val").textContent = `${e.target.value} mm from the seed`);
+$("t-mark").onclick = markPoint;
+$("t-target").onclick = () => setTrajPoint("target");
+$("t-entry").onclick = () => setTrajPoint("entry");
+$("t-probe").onclick = toggleProbe;
+$("probe-close").onclick = toggleProbe;
+$("probe-slider").oninput = (e) => { S.depth = Number(e.target.value) / 1000; drawProbe(); };
+nv.onDrawingChanged = (what) => { if (what === "draw") mergeStroke(); };
+$("gl").addEventListener("pointerup", () => {
+  if (S.tool === "grow") setTimeout(growFromCursor, 0);
+  setTimeout(() => { renderFindings(); drawOverlay(true); if (S.probe) drawProbe(); }, 30);
+});
 
 $("base").onchange = (e) => { S.base = e.target.value; if (S.overlay === S.base) S.overlay = ""; renderControls(); applyLayers(); };
 $("overlay").onchange = (e) => { S.overlay = e.target.value; applyLayers(); };
@@ -497,15 +1243,23 @@ $("t-clear").onclick = clearMeasures;
 document.querySelectorAll("[data-layout]").forEach((b) => (b.onclick = () => setLayout(b.dataset.layout)));
 document.querySelectorAll("[data-tool]").forEach((b) => (b.onclick = () => setTool(b.dataset.tool)));
 const KEYS = { g: "grid", a: "axial", c: "coronal", s: "sagittal", r: "render" };
-const TOOL_KEYS = { v: "pointer", w: "window", z: "pan", m: "measure", n: "angle" };
+const TOOL_KEYS = { v: "pointer", w: "window", z: "pan", m: "measure", n: "angle", b: "brush", e: "erase", f: "grow" };
 document.addEventListener("keydown", (e) => {
-  if (e.metaKey || e.ctrlKey || e.altKey || e.target.matches?.("input, select, textarea") || !S.base) return;
+  if (e.target.matches?.("input, select, textarea") || !S.base) return;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveNow(true); return; }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); segUndo(); return; }
+  if (e.key === "Escape") { $("report").hidden = true; return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key.toLowerCase();
   if (KEYS[k]) setLayout(KEYS[k]);
   else if (TOOL_KEYS[k]) setTool(TOOL_KEYS[k]);
   else if (k === "x") setCrosshair(!S.cross);
   else if (k === "0") resetView();
   else if (k === "p") screenshot();
+  else if (k === "l") markPoint();
+  else if (k === "t") setTrajPoint("target");
+  else if (k === "y") setTrajPoint("entry");
+  else if (k === "j") toggleProbe();
   else if (k === "delete" || k === "backspace") clearMeasures();
   else if (/^[1-4k]$/.test(k)) parent?.postMessage({ workbenchKey: k }, location.origin);
 });
