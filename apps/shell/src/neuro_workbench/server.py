@@ -145,7 +145,7 @@ class Workbench:
             self._add_case(_short_id("tracts", path), {
                 "title": path.parent.name,
                 "subtitle": "TractLab case",
-                "scope": "Tract evidence only. No capsule is linked to this manifest.",
+                "scope": "MR inputs and tract banks from one TractLab manifest. No capsule is linked to it.",
                 "synthetic": False,
             }, tracts=Job(lambda job, p=path: self._start_manifest_viewer(job, p)),
                 scene=Job(lambda job, p=path, c=_short_id("tracts", path): self._scene(job, c, [("tractlab", p)])))
