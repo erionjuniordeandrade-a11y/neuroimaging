@@ -49,13 +49,17 @@ Eidos never scans a patient folder by itself. A study appears only after you imp
 
 ## Case tab
 
-The Case tab loads all layers into one NiiVue view in scanner RAS millimetres:
+The Case tab loads all layers into one NiiVue view in scanner RAS millimetres. It has three columns:
 
-- base volume (CT first) with window presets: brain, soft tissue, bone, vessels;
-- one fusion volume with opacity and colour map;
-- structure masks, flagged "unreviewed" until a reviewer signs them;
-- tracts with streamline counts, a 2D slab control and a 3D clip plane;
-- layouts 2×2, axial, coronal, sagittal and 3D.
+- **Views.** Layouts 2×2, axial, coronal, sagittal and 3D (keys G, A, C, S, R). Each view shows
+  orientation letters and a label with the series name, the view and the study date.
+- **Objects.** One row per structure mask and tract, with a colour stripe, an eye toggle and a value:
+  volume in cm³ for masks (from the capsule, or counted from the mask voxels), streamline count for tracts.
+  A click on a row opens its opacity slider. Masks stay flagged "not reviewed" until a reviewer signs them;
+  the header counts them. Below the list: base volume with window presets (brain, soft tissue, bone,
+  vessels), one fusion volume with opacity, a 2D slab control and a 3D clip plane.
+- **Tools.** Point (V), Window drag (W), Pan/zoom (Z), Distance (M), Angle (N), Clear measurements
+  (Delete), Cursor on/off (X), Reset (0) and PNG export (P).
 
 A capsule is decoded once into `<cache>/scenes/capsule-<hash>/`. A TractLab manifest
 is served in place, by layer key only; files outside the scene list return 404.

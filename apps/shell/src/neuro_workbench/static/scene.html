@@ -6,41 +6,50 @@
 <title>Eidos · Case</title>
 <style>
   :root {
-    --bg: #07090d; --bg2: #0d1017; --glass: rgba(16,19,26,.78); --hover: rgba(255,255,255,.05);
+    --bg: #07090d; --bg2: #0d1017; --bg3: #11151d; --glass: rgba(16,19,26,.78); --hover: rgba(255,255,255,.05);
     --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.14);
     --text: #ece9e2; --muted: #8f8c85; --faint: #5f5d58; --accent: #C9A84C; --accent-soft: rgba(201,168,76,.13); --warn: #e0764f;
     --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --serif: "Playfair Display", "Iowan Old Style", Georgia, serif;
+    --mono: ui-monospace, Menlo, monospace;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.45 var(--sans); }
   button { font: inherit; color: inherit; }
   svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-  .app { display: grid; grid-template-columns: 1fr 300px; height: 100%; }
-  .view { position: relative; min-width: 0; background: #000; }
+  .app { display: grid; grid-template-columns: 1fr 292px 78px; height: 100%; }
+  .view { position: relative; min-width: 0; background: #000; overflow: hidden; }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
-  /* Floating tools */
+  /* Layout switcher, floating over the views */
   .float { position: absolute; z-index: 2; background: var(--glass); border: 1px solid var(--line); border-radius: 12px;
            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-  .tools { top: 12px; left: 12px; display: flex; align-items: center; gap: 2px; padding: 4px; }
-  .tools button { width: 34px; height: 30px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 8px;
-                  background: none; color: var(--muted); cursor: pointer; position: relative; }
-  .tools button:hover { color: var(--text); background: var(--hover); }
-  .tools button.active { color: var(--accent); background: var(--accent-soft); border-color: rgba(201,168,76,.35); }
-  .tools .div { width: 1px; height: 20px; background: var(--line); margin: 0 4px; }
-  .tools button[data-tip]:hover::after { content: attr(data-tip); position: absolute; top: 36px; left: 50%; transform: translateX(-50%);
-                  white-space: nowrap; font-size: 11px; color: var(--text); background: #000; border: 1px solid var(--line);
-                  padding: 3px 7px; border-radius: 6px; pointer-events: none; }
-  .legend { left: 12px; bottom: 12px; padding: 8px 10px; max-width: min(340px, 60%); }
-  .legend .readout { font: 11.5px ui-monospace, Menlo, monospace; color: var(--muted); }
-  .legend .items { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; font-size: 11.5px; }
-  .legend .items:empty { display: none; }
-  .legend .items span { display: inline-flex; align-items: center; gap: 5px; }
-  .legend .items i { width: 9px; height: 9px; border-radius: 2px; }
-  .banner { right: 12px; top: 12px; max-width: 44%; padding: 7px 11px; font-size: 12px; color: #ffd9cc;
+  .layouts { bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 3px; }
+  .layouts button { height: 28px; padding: 0 10px; display: flex; align-items: center; gap: 6px; border: 1px solid transparent; border-radius: 8px;
+                    background: none; color: var(--muted); cursor: pointer; font-size: 12px; }
+  .layouts button svg { width: 15px; height: 15px; }
+  .layouts button:hover { color: var(--text); background: var(--hover); }
+  .layouts button.active { color: var(--accent); background: var(--accent-soft); border-color: rgba(201,168,76,.35); }
+  .banner { right: 12px; bottom: 12px; max-width: 44%; padding: 7px 11px; font-size: 12px; color: #ffd9cc;
             border-color: rgba(224,118,79,.5); background: rgba(80,24,14,.8); }
   .banner[hidden] { display: none; }
+  .readout { left: 12px; bottom: 12px; max-width: 30%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 5px 9px; font: 11px var(--mono); color: var(--muted); border-radius: 8px; }
+
+  /* Per-view labels drawn over each NiiVue tile */
+  .tiles { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .tile { position: absolute; }
+  .tile .id { position: absolute; top: 6px; left: 8px; display: flex; gap: 7px; align-items: center; max-width: calc(100% - 30px);
+              padding: 3px 9px 3px 3px; border-radius: 9px; background: rgba(5,7,10,.72); border: 1px solid var(--line);
+              font-size: 11.5px; line-height: 1.3; text-shadow: 0 1px 2px #000; }
+  .tile .id svg { width: 24px; height: 24px; color: var(--accent); stroke-width: 1.3; }
+  .tile .id > div { min-width: 0; }
+  .tile .id b { display: block; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .id span { display: block; color: var(--muted); font-size: 10.5px; white-space: nowrap; }
+  .tile .o { position: absolute; font: 600 12px var(--mono); color: var(--accent); text-shadow: 0 1px 2px #000; }
+  .tile .o.t { top: 4px; left: 50%; transform: translateX(-50%); }
+  .tile .o.b { bottom: 4px; left: 50%; transform: translateX(-50%); }
+  .tile .o.l { left: 6px; top: 50%; transform: translateY(-50%); }
+  .tile .o.r { right: 6px; top: 50%; transform: translateY(-50%); }
 
   /* Loading */
   .status { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; padding: 24px; background: var(--bg); }
@@ -52,14 +61,41 @@
   .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s ease; }
   .status.error h3 { color: var(--warn); } .status.error .bar { display: none; }
 
-  /* Layer panel */
-  aside { border-left: 1px solid var(--line); background: var(--bg2); overflow-y: auto; display: flex; flex-direction: column; }
-  details { border-bottom: 1px solid var(--line); }
+  /* Object panel */
+  aside { border-left: 1px solid var(--line); background: var(--bg2); overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
+  .ph { display: flex; align-items: baseline; gap: 8px; padding: 14px 14px 10px; }
+  .ph h2 { margin: 0; font: 600 16px var(--serif); }
+  .ph .count { margin-left: auto; color: var(--faint); font-size: 11.5px; }
+  .review { margin: 0 10px 6px; padding: 6px 10px; border-radius: 8px; font: 600 10.5px var(--sans); letter-spacing: .12em; text-transform: uppercase;
+            color: var(--warn); background: rgba(224,118,79,.1); border: 1px solid rgba(224,118,79,.3); display: flex; align-items: center; gap: 8px; }
+  .review.ok { color: var(--muted); background: var(--hover); border-color: var(--line); }
+  .review[hidden] { display: none; }
+  .group { padding: 8px 14px 3px; font: 600 10px var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+  .objects { padding: 0 8px 8px; }
+  .obj { position: relative; border-radius: 8px; margin-bottom: 2px; background: var(--bg3); border: 1px solid var(--line); overflow: hidden; }
+  .obj::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c); }
+  .obj:hover { border-color: var(--line2); }
+  .obj .top { display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 10px; cursor: pointer; }
+  .obj .txt { flex: 1; min-width: 0; }
+  .obj .name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .obj .sub { display: flex; gap: 6px; align-items: center; color: var(--faint); font-size: 10.5px; }
+  .obj .val { font: 11.5px var(--mono); color: var(--muted); white-space: nowrap; }
+  .obj.off .name, .obj.off .val { opacity: .45; } .obj.off::before { opacity: .35; }
+  .obj .more { display: none; padding: 0 10px 8px 42px; }
+  .obj.open .more { display: block; }
+  .obj .more span { display: block; color: var(--faint); font-size: 10.5px; margin-bottom: 2px; }
+  .eye { width: 26px; height: 24px; display: grid; place-items: center; background: none; border: 0; border-radius: 6px; color: var(--muted); cursor: pointer; flex: none; }
+  .eye:hover { color: var(--text); background: var(--hover); }
+  .obj.off .eye { color: var(--faint); }
+  .flag { font-size: 9px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--warn);
+          border: 1px solid rgba(224,118,79,.45); border-radius: 4px; padding: 0 4px; line-height: 14px; }
+  .empty { color: var(--faint); font-size: 12px; padding: 2px 6px 6px; }
+
+  details { border-top: 1px solid var(--line); }
   summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 11px 14px; cursor: pointer; user-select: none;
             font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
   summary::-webkit-details-marker { display: none; }
   summary:hover { color: var(--text); }
-  summary .count { margin-left: auto; font-weight: 500; letter-spacing: 0; color: var(--faint); }
   summary svg { width: 14px; height: 14px; transition: transform .15s; }
   details[open] summary svg { transform: rotate(90deg); }
   .sec { padding: 0 14px 12px; }
@@ -72,96 +108,108 @@
   .seg button:hover { color: var(--text); }
   .seg button.active { color: var(--accent); border-color: rgba(201,168,76,.5); background: var(--accent-soft); }
   input[type=range] { width: 100%; accent-color: var(--accent); height: 14px; margin: 0; }
-  .layer { border: 1px solid transparent; border-radius: 10px; padding: 6px 6px 6px 4px; margin: 0 -6px 2px -4px; }
-  .layer:hover { background: var(--hover); }
-  .layer .top { display: flex; align-items: center; gap: 8px; }
-  .eye { width: 26px; height: 24px; display: grid; place-items: center; background: none; border: 0; border-radius: 6px; color: var(--muted); cursor: pointer; }
-  .eye:hover { color: var(--text); }
-  .layer.off .eye { color: var(--faint); }
-  .layer.off .name, .layer.off .sw { opacity: .45; }
-  .sw { width: 10px; height: 10px; border-radius: 3px; flex: none; }
-  .name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .meta { color: var(--faint); font-size: 11px; white-space: nowrap; }
-  .layer input[type=range] { margin: 6px 0 2px 34px; width: calc(100% - 34px); }
-  .layer.off input[type=range] { display: none; }
-  .flag { font-size: 9.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--warn);
-          border: 1px solid rgba(224,118,79,.45); border-radius: 4px; padding: 0 4px; line-height: 15px; }
-  .empty { color: var(--faint); font-size: 12px; }
   .check { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
   .check input { accent-color: var(--accent); }
   .note { margin-top: auto; padding: 12px 14px; color: var(--faint); font-size: 11.5px; border-top: 1px solid var(--line); }
   .note b { color: var(--warn); font-weight: 600; }
-  kbd { font: 10.5px ui-monospace, Menlo, monospace; color: var(--muted); border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
-  @media (max-width: 760px) { .app { grid-template-columns: 1fr; grid-template-rows: 62vh auto; } aside { border-left: 0; } .banner { max-width: 70%; top: 56px; } }
+
+  /* Tool rail */
+  .rail { border-left: 1px solid var(--line); background: var(--bg); display: flex; flex-direction: column; align-items: stretch;
+          gap: 2px; padding: 8px 6px; overflow-y: auto; }
+  .rail .lbl { font: 600 9px var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); text-align: center; margin: 6px 0 2px; }
+  .rail .lbl:first-child { margin-top: 0; }
+  .rail button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px 6px; border: 1px solid transparent;
+                 border-radius: 10px; background: none; color: var(--muted); cursor: pointer; font-size: 10.5px; line-height: 1.1; }
+  .rail button svg { width: 22px; height: 22px; }
+  .rail button:hover { color: var(--text); background: var(--hover); }
+  .rail button.active { color: var(--accent); background: var(--accent-soft); border-color: rgba(201,168,76,.35); }
+  .rail button kbd { font: 9px var(--mono); color: var(--faint); }
+  .rail .sp { flex: 1; }
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: 58vh auto auto; }
+    .rail { order: 2; flex-direction: row; flex-wrap: wrap; border-left: 0; border-top: 1px solid var(--line); }
+    .rail .lbl, .rail .sp { display: none; } .rail button { flex: 1 0 60px; }
+    aside { order: 3; border-left: 0; } .banner { max-width: 70%; }
+  }
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2"/></symbol>
-  <symbol id="i-ax" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="6"/><path d="M3.5 12h17"/></symbol>
-  <symbol id="i-cor" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="6"/><path d="M12 3.5v17"/></symbol>
-  <symbol id="i-sag" viewBox="0 0 24 24"><path d="M6 18c-1.5-2-2-4.5-2-7a8 8 0 0 1 16 0c0 2-1 3.5-2 4.5V20h-6v-2z"/></symbol>
+  <symbol id="i-ax" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.6"/><path d="M12 8.6v6M8 11h8M12 14.6l-3 5.4M12 14.6l3 5.4"/><path d="M3.5 11h17" stroke-dasharray="2 2"/></symbol>
+  <symbol id="i-cor" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.6"/><path d="M12 8.6v6M8 11h8M12 14.6l-3 5.4M12 14.6l3 5.4"/><path d="M12 2.5v19" stroke-dasharray="2 2"/></symbol>
+  <symbol id="i-sag" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.6"/><path d="M12 8.6v6M12 11h3.5M12 14.6v5.4"/><path d="M5 4.5l14 15" stroke-dasharray="2 2"/></symbol>
   <symbol id="i-3d" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></symbol>
+  <symbol id="i-pointer" viewBox="0 0 24 24"><path d="M6 3.5l12 7.2-5.2 1.3 3 6.2-2.4 1.2-3-6.2L6 17z"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-pan" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-2.5 2.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5"/></symbol>
+  <symbol id="i-ruler" viewBox="0 0 24 24"><path d="M3.5 16.5l13-13 4 4-13 13z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></symbol>
+  <symbol id="i-angle" viewBox="0 0 24 24"><path d="M4 19.5h16M4 19.5L15 5"/><path d="M10 19.5a6 6 0 0 0-2-4.6"/></symbol>
+  <symbol id="i-erase" viewBox="0 0 24 24"><path d="M4 15.5l9-9 6 6-7 7H8z"/><path d="M8.5 11l6 6M12 19.5h8"/></symbol>
   <symbol id="i-cross" viewBox="0 0 24 24"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/><circle cx="12" cy="12" r="1.2"/></symbol>
   <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></symbol>
   <symbol id="i-shot" viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
   <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M4 4l16 16"/><path d="M9.9 5.8A9 9 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-3 3.6M6.4 7.4A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 4-.9"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></symbol>
 </svg>
 <div class="app">
   <div class="view">
     <canvas id="gl"></canvas>
-    <div class="float tools" id="tools">
-      <button data-layout="grid" data-tip="2×2 (G)" class="active"><svg class="i"><use href="#i-grid"/></svg></button>
-      <button data-layout="axial" data-tip="Axial (A)"><svg class="i"><use href="#i-ax"/></svg></button>
-      <button data-layout="coronal" data-tip="Coronal (C)"><svg class="i"><use href="#i-cor"/></svg></button>
-      <button data-layout="sagittal" data-tip="Sagittal (S)"><svg class="i"><use href="#i-sag"/></svg></button>
-      <button data-layout="render" data-tip="3D (R)"><svg class="i"><use href="#i-3d"/></svg></button>
-      <span class="div"></span>
-      <button id="t-cross" class="active" data-tip="Crosshair (X)"><svg class="i"><use href="#i-cross"/></svg></button>
-      <button id="t-reset" data-tip="Reset view (0)"><svg class="i"><use href="#i-reset"/></svg></button>
-      <button id="t-shot" data-tip="Save PNG (P)"><svg class="i"><use href="#i-shot"/></svg></button>
+    <div class="tiles" id="tiles"></div>
+    <div class="float layouts" id="layouts">
+      <button data-layout="grid" class="active" title="2×2 (G)"><svg class="i"><use href="#i-grid"/></svg>2×2</button>
+      <button data-layout="axial" title="Axial (A)"><svg class="i"><use href="#i-ax"/></svg>Axial</button>
+      <button data-layout="coronal" title="Coronal (C)"><svg class="i"><use href="#i-cor"/></svg>Coronal</button>
+      <button data-layout="sagittal" title="Sagittal (S)"><svg class="i"><use href="#i-sag"/></svg>Sagittal</button>
+      <button data-layout="render" title="3D (R)"><svg class="i"><use href="#i-3d"/></svg>3D</button>
     </div>
+    <div class="float readout" id="readout">—</div>
     <div class="float banner" id="alignment" hidden></div>
-    <div class="float legend"><div class="readout" id="readout">—</div><div class="items" id="legend"></div></div>
     <div class="status" id="status">
       <div class="card"><h3 id="status-title">Loading the case</h3><p id="status-text">Fetching the scene description.</p><div class="bar"><i id="progress"></i></div></div>
     </div>
   </div>
   <aside>
+    <div class="ph"><h2>Objects</h2><span class="count" id="obj-count"></span></div>
+    <div class="review" id="review" hidden></div>
+    <div class="group" id="g-labels">Structures</div>
+    <div class="objects" id="labels"></div>
+    <div class="group" id="g-tracts">Fibre bundles</div>
+    <div class="objects" id="tracts"></div>
     <details open>
-      <summary><svg class="i"><use href="#i-chev"/></svg>Image</summary>
+      <summary><svg class="i"><use href="#i-chev"/></svg>Images</summary>
       <div class="sec">
         <select id="base" aria-label="Base image"></select>
         <div class="field" id="presets-field"><span>Window</span><div class="seg" id="presets"></div></div>
-      </div>
-    </details>
-    <details open>
-      <summary><svg class="i"><use href="#i-chev"/></svg>Fusion</summary>
-      <div class="sec">
-        <select id="overlay" aria-label="Fusion overlay"></select>
-        <div class="field"><span>Opacity <em id="overlay-val">45%</em></span><input id="overlay-opacity" type="range" min="0" max="100" value="45"></div>
-      </div>
-    </details>
-    <details open>
-      <summary><svg class="i"><use href="#i-chev"/></svg>Structures<span class="count" id="labels-count"></span></summary>
-      <div class="sec" id="labels"></div>
-    </details>
-    <details open>
-      <summary><svg class="i"><use href="#i-chev"/></svg>Tracts<span class="count" id="tracts-count"></span></summary>
-      <div class="sec">
-        <div id="tracts"></div>
-        <div class="field"><span>Slab on 2D slices <em id="slab-val">4 mm</em></span><input id="slab" type="range" min="1" max="20" value="4"></div>
+        <div class="field"><span>Fusion</span><select id="overlay" aria-label="Fusion overlay"></select></div>
+        <div class="field"><span>Fusion opacity <em id="overlay-val">45%</em></span><input id="overlay-opacity" type="range" min="0" max="100" value="45"></div>
       </div>
     </details>
     <details>
-      <summary><svg class="i"><use href="#i-chev"/></svg>3D</summary>
-      <div class="sec"><label class="check"><input type="checkbox" id="clip" checked> Cut away the front half</label></div>
+      <summary><svg class="i"><use href="#i-chev"/></svg>Display</summary>
+      <div class="sec">
+        <div class="field"><span>Fibre slab on 2D slices <em id="slab-val">4 mm</em></span><input id="slab" type="range" min="1" max="20" value="4"></div>
+        <label class="check"><input type="checkbox" id="clip" checked> Cut away the front half in 3D</label>
+      </div>
     </details>
-    <div class="note" id="note"><b>Research and teaching only</b>, not for clinical use. Scroll moves the slice; right-drag sets the window.
-      Keys: <kbd>G</kbd> <kbd>A</kbd> <kbd>C</kbd> <kbd>S</kbd> <kbd>R</kbd> layout, <kbd>X</kbd> crosshair, <kbd>0</kbd> reset, <kbd>P</kbd> PNG.</div>
+    <div class="note" id="note"><b>Research and teaching only</b>, not for clinical use. Volumes are voxel counts of each mask. The wheel moves the slice in every tool.</div>
   </aside>
+  <nav class="rail" id="rail" aria-label="Tools">
+    <div class="lbl">View</div>
+    <button data-tool="pointer" class="active" title="Point: click sets the cursor (V)"><svg class="i"><use href="#i-pointer"/></svg>Point<kbd>V</kbd></button>
+    <button data-tool="window" title="Window: drag sets level and width (W)"><svg class="i"><use href="#i-window"/></svg>Window<kbd>W</kbd></button>
+    <button data-tool="pan" title="Pan: drag moves, wheel zooms (Z)"><svg class="i"><use href="#i-pan"/></svg>Pan/zoom<kbd>Z</kbd></button>
+    <div class="lbl">Measure</div>
+    <button data-tool="measure" title="Distance: drag a line (M)"><svg class="i"><use href="#i-ruler"/></svg>Distance<kbd>M</kbd></button>
+    <button data-tool="angle" title="Angle: drag two lines (N)"><svg class="i"><use href="#i-angle"/></svg>Angle<kbd>N</kbd></button>
+    <button id="t-clear" title="Clear measurements (Del)"><svg class="i"><use href="#i-erase"/></svg>Clear</button>
+    <div class="sp"></div>
+    <button id="t-cross" class="active" title="Crosshair (X)"><svg class="i"><use href="#i-cross"/></svg>Cursor<kbd>X</kbd></button>
+    <button id="t-reset" title="Reset view (0)"><svg class="i"><use href="#i-reset"/></svg>Reset<kbd>0</kbd></button>
+    <button id="t-shot" title="Save PNG (P)"><svg class="i"><use href="#i-shot"/></svg>PNG<kbd>P</kbd></button>
+  </nav>
 </div>
 <script src="/vendor/niivue.js"></script>
 <script>
@@ -169,8 +217,13 @@ const caseId = location.pathname.split("/")[2];
 const $ = (id) => document.getElementById(id);
 const CT_PRESETS = [["Brain", 0, 80], ["Soft tissue", -160, 240], ["Bone", -500, 1500], ["Vessels", 100, 600]];
 const OVERLAY_COLORMAP = { CTA: "warm", CT: "warm", FA: "hot" };
+// NiiVue drag modes for the primary button: crosshair 8, windowing 9, pan 3, measurement 2, angle 7.
+const TOOLS = { pointer: 8, window: 9, pan: 3, measure: 2, angle: 7 };
+// Screen edges per view (top, bottom, left, right) in radiological convention with the nose to the right on sagittal.
+const VIEWS = { 0: ["Axial", "ax", ["A", "P", "R", "L"]], 1: ["Coronal", "cor", ["S", "I", "R", "L"]],
+                2: ["Sagittal", "sag", ["S", "I", "P", "A"]], 4: ["3D", "3d", null] };
 const S = { scene: null, vols: new Map(), labels: new Map(), tracts: new Map(), base: null, overlay: "",
-            showLabel: {}, showTract: {}, win: {}, layout: "grid", cross: true };
+            showLabel: {}, showTract: {}, win: {}, layout: "grid", cross: true, tool: "pointer", tileSig: "" };
 
 function rgb(hex) { const n = parseInt(hex.replace("#", ""), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
 async function bytes(url) { const r = await fetch(url, { cache: "no-store" }); if (!r.ok) throw Error(`${r.status} ${url}`); return r.arrayBuffer(); }
@@ -186,12 +239,14 @@ function setStatus(title, text, fraction, error) {
   $("status-text").textContent = text || "";
   $("progress").style.width = `${Math.round((fraction || 0) * 100)}%`;
 }
+function fmtDate(d) { return /^\d{8}$/.test(d || "") ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : (d || ""); }
 
 const nv = new niivue.Niivue({
   backColor: [0, 0, 0, 1], crosshairColor: [.79, .66, .3, 1], crosshairWidth: 1, show3Dcrosshair: true,
   isRadiologicalConvention: true, multiplanarShowRender: niivue.SHOW_RENDER.ALWAYS, multiplanarLayout: 2,
   dragAndDropEnabled: false, isColorbar: false, loadingText: "", logLevel: "error", meshThicknessOn2D: 4,
-  fontColor: [.86, .84, .78, 1], isOrientationTextVisible: true, clipPlaneColor: [0, 0, 0, 0], isAlphaClipDark: true,
+  fontColor: [.86, .84, .78, 1], isOrientationTextVisible: false, clipPlaneColor: [0, 0, 0, 0], isAlphaClipDark: true,
+  measureTextColor: [.79, .66, .3, 1], measureLineColor: [.79, .66, .3, 1], showMeasureUnits: true,
 });
 
 function applyLayers() {
@@ -220,18 +275,32 @@ function applyTracts() {
   nv.meshes = [...S.tracts].filter(([id]) => S.showTract[id]).map(([, t]) => t.mesh);
   nv.opts.meshThicknessOn2D = Number($("slab").value);
   nv.updateGLVolume();
-  renderLegend();
+  S.tileSig = "";
 }
 
-function renderLegend() {
-  const items = [];
-  const base = S.vols.get(S.base);
-  if (base) items.push([null, base.meta.label]);
-  if (S.overlay && S.overlay !== S.base) items.push([null, `+ ${S.vols.get(S.overlay).meta.label}`]);
-  for (const [id, l] of S.labels) if (S.showLabel[id]) items.push([l.meta.color, l.meta.label]);
-  for (const [id, t] of S.tracts) if (S.showTract[id]) items.push([t.meta.color, t.meta.label]);
-  $("legend").replaceChildren(...items.map(([c, text]) => {
-    const s = el("span"); if (c) { const i = el("i"); i.style.background = c; s.append(i); } s.append(text); return s;
+// One label block per NiiVue tile: orientation glyph, series, study date, and the four edge letters.
+function placeTiles() {
+  const canvas = $("gl"), k = canvas.clientWidth / (canvas.width || 1);
+  const tiles = (nv.screenSlices || []).filter((s) => VIEWS[s.axCorSag] && s.leftTopWidthHeight[2] * k > 60);
+  const sig = tiles.map((s) => `${s.axCorSag}:${s.leftTopWidthHeight.map(Math.round)}`).join("|") + `|${k}`;
+  if (sig === S.tileSig) return;
+  S.tileSig = sig;
+  const base = S.vols.get(S.base), over = S.overlay && S.vols.get(S.overlay);
+  const date = fmtDate(S.scene?.date);
+  $("tiles").replaceChildren(...tiles.map((s) => {
+    const [name, glyph, edges] = VIEWS[s.axCorSag];
+    const [l, t, w, h] = s.leftTopWidthHeight.map((v) => v * k);
+    const tile = el("div", "tile");
+    Object.assign(tile.style, { left: `${l}px`, top: `${t}px`, width: `${w}px`, height: `${h}px` });
+    if (edges) ["t", "b", "l", "r"].forEach((side, i) => tile.append(el("span", `o ${side}`, edges[i])));
+    const id = el("div", "id"), txt = el("div");
+    txt.append(el("b", "", s.axCorSag === 4 ? "3D volume render" : base?.meta.label || ""));
+    const sub = [name, over ? `+ ${over.meta.label}` : "", date].filter(Boolean).join(" · ");
+    txt.append(el("span", "", sub));
+    id.append(icon(glyph), txt);
+    if (edges) id.style.top = "22px";
+    tile.append(id);
+    return tile;
   }));
 }
 
@@ -253,25 +322,37 @@ function renderPresets() {
   }));
 }
 
-function flag(text) { return el("span", "flag", text); }
+function maskVolumeCm3(img) {
+  const d = img.img, p = img.hdr?.pixDims;
+  if (!d || !p) return null;
+  let n = 0;
+  for (let i = 0; i < d.length; i++) if (d[i] > 0) n++;
+  return (n * Math.abs(p[1] * p[2] * p[3])) / 1000;
+}
 
-// One row per layer: eye toggle, swatch, name, flags, and an opacity slider while visible.
-function layerRow({ color, label, meta, visible, opacity, onToggle, onOpacity }) {
-  const row = el("div", "layer" + (visible ? "" : " off"));
+// One row per object: colour stripe, eye toggle, name with review state, size; a click on the row shows its opacity.
+function objectRow({ color, label, kind, reviewed, value, visible, opacity, onToggle, onOpacity }) {
+  const row = el("div", "obj" + (visible ? "" : " off"));
+  row.style.setProperty("--c", color);
   const top = el("div", "top");
   const eye = el("button", "eye"); eye.title = visible ? "Hide" : "Show"; eye.append(icon(visible ? "eye" : "eyeoff"));
-  const sw = el("span", "sw"); sw.style.background = color;
-  top.append(eye, sw, el("span", "name", label));
-  for (const m of meta) top.append(m);
-  const slider = el("input"); slider.type = "range"; slider.min = 0; slider.max = 100; slider.value = Math.round(opacity * 100);
-  slider.title = "Opacity";
+  const txt = el("div", "txt"), sub = el("div", "sub");
+  sub.append(kind);
+  if (!reviewed) sub.append(el("span", "flag", "not reviewed"));
+  txt.append(el("span", "name", label), sub);
+  top.append(eye, txt, el("span", "val", value));
+  const more = el("div", "more"), slider = el("input");
+  slider.type = "range"; slider.min = 0; slider.max = 100; slider.value = Math.round(opacity * 100);
   slider.oninput = () => onOpacity(Number(slider.value) / 100);
-  eye.onclick = () => {
+  more.append(el("span", "", "Opacity"), slider);
+  eye.onclick = (e) => {
+    e.stopPropagation();
     const on = row.classList.toggle("off") === false;
     eye.replaceChildren(icon(on ? "eye" : "eyeoff")); eye.title = on ? "Hide" : "Show";
     onToggle(on);
   };
-  row.append(top, slider);
+  top.onclick = () => row.classList.toggle("open");
+  row.append(top, more);
   return row;
 }
 
@@ -279,24 +360,30 @@ function renderControls() {
   const vols = [...S.vols.values()];
   $("base").replaceChildren(...vols.map((v) => new Option(`${v.meta.label} · ${v.meta.kind}`, v.meta.id, false, v.meta.id === S.base)));
   $("overlay").replaceChildren(new Option("None", ""), ...vols.map((v) => new Option(`${v.meta.label} · ${v.meta.kind}`, v.meta.id, false, v.meta.id === S.overlay)));
-  $("labels").replaceChildren(...[...S.labels.values()].map((l) => layerRow({
-    color: l.meta.color, label: l.meta.label, visible: !!S.showLabel[l.meta.id], opacity: l.img.opacity,
-    meta: [l.meta.volume_ml ? el("span", "meta", `${Number(l.meta.volume_ml).toFixed(1)} mL`) : "", l.meta.reviewed ? "" : flag("unreviewed")].filter(Boolean),
+  $("labels").replaceChildren(...[...S.labels.values()].map((l) => objectRow({
+    color: l.meta.color, label: l.meta.label, kind: "Structure", reviewed: !!l.meta.reviewed,
+    value: l.cm3 === null ? "" : `${l.cm3.toFixed(l.cm3 < 10 ? 2 : 1)} cm³`,
+    visible: !!S.showLabel[l.meta.id], opacity: l.img.opacity,
     onToggle: (on) => { S.showLabel[l.meta.id] = on; applyLayers(); },
     onOpacity: (v) => { l.img.opacity = v; nv.updateGLVolume(); },
   })));
-  if (!S.labels.size) $("labels").replaceChildren(el("div", "empty", "None in this case."));
-  $("labels-count").textContent = S.labels.size || "";
-  $("tracts").replaceChildren(...[...S.tracts.values()].map((t) => layerRow({
-    color: t.meta.color, label: t.meta.label, visible: !!S.showTract[t.meta.id], opacity: t.mesh.opacity ?? 1,
-    meta: [t.meta.n_streamlines ? el("span", "meta", `${t.meta.n_streamlines}`) : "", t.meta.reviewed ? "" : flag("unreviewed")].filter(Boolean),
+  $("tracts").replaceChildren(...[...S.tracts.values()].map((t) => objectRow({
+    color: t.meta.color, label: t.meta.label, kind: "Fibre bundle", reviewed: !!t.meta.reviewed,
+    value: t.meta.n_streamlines ? `${Number(t.meta.n_streamlines).toLocaleString("en")} fib` : "",
+    visible: !!S.showTract[t.meta.id], opacity: t.mesh.opacity ?? 1,
     onToggle: (on) => { S.showTract[t.meta.id] = on; applyTracts(); },
     onOpacity: (v) => { t.mesh.opacity = v; nv.updateGLVolume(); },
   })));
-  if (!S.tracts.size) $("tracts").replaceChildren(el("div", "empty", "None in this case."));
-  $("tracts-count").textContent = S.tracts.size || "";
+  $("g-labels").hidden = $("labels").hidden = !S.labels.size;
+  $("g-tracts").hidden = $("tracts").hidden = !S.tracts.size;
+  const all = [...S.labels.values(), ...S.tracts.values()];
+  const open = all.filter((o) => !o.meta.reviewed).length;
+  $("obj-count").textContent = all.length ? `${all.length} in this case` : "";
+  const review = $("review");
+  review.hidden = false;
+  review.classList.toggle("ok", !open);
+  review.replaceChildren(...(open ? [icon("alert"), `${open} not reviewed`] : [all.length ? "All reviewed" : "No objects in this case"]));
   renderPresets();
-  renderLegend();
 }
 
 function setLayout(name) {
@@ -305,6 +392,12 @@ function setLayout(name) {
   S.layout = name;
   nv.setSliceType(types[name]);
   document.querySelectorAll("[data-layout]").forEach((b) => b.classList.toggle("active", b.dataset.layout === name));
+}
+
+function setTool(name) {
+  S.tool = name;
+  nv.opts.dragModePrimary = TOOLS[name];
+  document.querySelectorAll("[data-tool]").forEach((b) => b.classList.toggle("active", b.dataset.tool === name));
 }
 
 function setClip(on) { nv.setClipPlane(on ? [0, 180, 0] : [2, 0, 0]); }
@@ -323,6 +416,8 @@ function resetView() {
   nv.setRenderAzimuthElevation(120, 15);
   nv.drawScene();
 }
+
+function clearMeasures() { nv.clearAllMeasurements?.(); nv.drawScene(); }
 
 function screenshot() {
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
@@ -350,7 +445,8 @@ async function load() {
     const [r, g, b] = rgb(meta.color);
     img.setColormapLabel({ R: [0, r], G: [0, g], B: [0, b], A: [0, 255], I: [0, 1], labels: ["", meta.label] });
     img.opacity = .55;
-    S.labels.set(meta.id, { meta, img });
+    const cm3 = meta.volume_ml ? Number(meta.volume_ml) : maskVolumeCm3(img);
+    S.labels.set(meta.id, { meta, img, cm3 });
     S.showLabel[meta.id] = meta.reviewed || /lesion|tumou?r/i.test(meta.id + meta.label);
   }
   for (const meta of S.scene.tracts) {
@@ -371,8 +467,21 @@ async function load() {
   renderControls();
   applyLayers();
   setLayout("grid");
+  setTool("pointer");
   setClip(true);
   nv.onLocationChange = (d) => { $("readout").textContent = d?.string || "—"; };
+  // Windowing with the mouse changes cal_min/cal_max on the image without a callback in every drag mode,
+  // so the stored window is read back after each drag; otherwise the next layer change would undo it.
+  const syncWindow = () => {
+    for (const id of [S.base, S.overlay]) {
+      const v = S.vols.get(id);
+      if (v) S.win[id] = [v.img.cal_min, v.img.cal_max];
+    }
+    renderPresets();
+  };
+  nv.onIntensityChange = syncWindow;
+  $("gl").addEventListener("pointerup", syncWindow);
+  setInterval(placeTiles, 250);
   setStatus("");
 }
 
@@ -384,15 +493,20 @@ $("clip").onchange = (e) => setClip(e.target.checked);
 $("t-cross").onclick = () => setCrosshair(!S.cross);
 $("t-reset").onclick = resetView;
 $("t-shot").onclick = screenshot;
+$("t-clear").onclick = clearMeasures;
 document.querySelectorAll("[data-layout]").forEach((b) => (b.onclick = () => setLayout(b.dataset.layout)));
+document.querySelectorAll("[data-tool]").forEach((b) => (b.onclick = () => setTool(b.dataset.tool)));
 const KEYS = { g: "grid", a: "axial", c: "coronal", s: "sagittal", r: "render" };
+const TOOL_KEYS = { v: "pointer", w: "window", z: "pan", m: "measure", n: "angle" };
 document.addEventListener("keydown", (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey || e.target.matches?.("input, select, textarea") || !S.base) return;
   const k = e.key.toLowerCase();
   if (KEYS[k]) setLayout(KEYS[k]);
+  else if (TOOL_KEYS[k]) setTool(TOOL_KEYS[k]);
   else if (k === "x") setCrosshair(!S.cross);
   else if (k === "0") resetView();
   else if (k === "p") screenshot();
+  else if (k === "delete" || k === "backspace") clearMeasures();
   else if (/^[1-4k]$/.test(k)) parent?.postMessage({ workbenchKey: k }, location.origin);
 });
 load().catch((e) => setStatus("Could not open this case", e.message, 0, true));

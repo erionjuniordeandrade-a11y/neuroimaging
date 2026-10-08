@@ -210,7 +210,7 @@ class Archive:
             series = db.execute("""SELECT s.*, COUNT(i.sop_uid) AS n FROM series s JOIN instances i ON i.series_uid=s.uid
                                    WHERE s.study_uid=? GROUP BY s.uid ORDER BY s.number""", (study_uid,)).fetchall()
         scene = {"schema": SCENE_SCHEMA, "frame": "scanner RAS mm", "source": "archive",
-                 "title": study["description"] or "Study", "volumes": [], "labels": [], "tracts": []}
+                 "title": study["description"] or "Study", "date": study["date"] or "", "volumes": [], "labels": [], "tracts": []}
         files: dict[str, Path] = {}
         skipped = 0
         for s in series:
