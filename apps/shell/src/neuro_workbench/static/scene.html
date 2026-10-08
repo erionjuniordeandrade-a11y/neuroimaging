@@ -98,6 +98,7 @@
   .obj .txt { flex: 1; min-width: 0; }
   .obj .name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .obj .sub { display: flex; gap: 6px; align-items: center; color: var(--faint); font-size: 10.5px; }
+  .obj .sub .warn { color: #f0b49c; }
   .obj .val { font: 11.5px var(--mono); color: var(--muted); white-space: nowrap; }
   .obj.off .name, .obj.off .val { opacity: .45; } .obj.off::before { opacity: .35; }
   .obj .more { display: none; padding: 0 10px 8px 42px; }
@@ -158,6 +159,12 @@
   .items button:hover { background: var(--accent-soft); }
   .items button kbd { margin-left: auto; font: 10.5px var(--mono); color: var(--faint); }
   .items hr { border: 0; border-top: 1px solid var(--line); margin: 4px 6px; }
+  .save-state { height: 26px; margin-left: 6px; padding: 0 10px 0 8px; display: flex; align-items: center; gap: 6px; border: 1px solid transparent; border-radius: 8px;
+                background: none; color: var(--faint); cursor: default; font: 11.5px var(--sans); white-space: nowrap; }
+  .save-state i { width: 7px; height: 7px; border-radius: 50%; background: #5fbf7f; flex: none; }
+  .save-state.dirty i, .save-state.saving i { background: #d9b44a; }
+  .save-state.failed { color: #f0b49c; border-color: rgba(224,118,79,.5); background: rgba(224,118,79,.12); cursor: pointer; }
+  .save-state.failed i { background: #e0764f; }
   .toast { top: 10px; right: 12px; padding: 6px 11px; font-size: 12px; color: var(--muted); }
   .toast[hidden] { display: none; }
 
@@ -283,6 +290,7 @@
         <button data-act="csv">Findings as CSV</button>
         <button data-act="shot">View as PNG<kbd>P</kbd></button>
       </div></div>
+      <button class="save-state" id="save-state" title="Annotations are saved with the study a moment after each change."><i></i><span id="save-text">Saved</span></button>
     </div>
     <div class="float toast" id="toast" hidden></div>
     <div class="float probe" id="probe" hidden>
@@ -880,12 +888,15 @@ function setPen() {
 }
 
 // Seed grow: 6-connected 3D flood fill from the cursor, inside seed ± range, within a radius; empty voxels only.
+const GROW_LIMIT_FRACTION = 0.3;
 function growFromCursor() {
   if (!segEnsure()) return toast(`Structures are drawn on ${S.vols.get(S.seg.ref)?.meta.label}. Show it as the base image first.`);
-  if (!S.seg.active || !segObj(S.seg.active)) newStructure();
-  const img = S.vols.get(S.base).img, g = grid(img), data = rasData(img), t = S.seg.bitmap, a = S.seg.active;
+  const img = S.vols.get(S.base).img, g = grid(img), data = rasData(img), t = S.seg.bitmap;
   const seed = mm2idx(g, cursorMM());
   if (seed < 0) return toast("The cursor is outside the image.");
+  if (t[seed] !== 0 && t[seed] !== S.seg.active) return toast(`The cursor is inside ${segObj(t[seed])?.name || "another structure"}. Select that structure to grow it.`);
+  if (!S.seg.active || !segObj(S.seg.active)) newStructure();
+  const a = S.seg.active;
   // Median of the 3×3×3 neighbourhood resists a noisy seed voxel.
   const near = [];
   for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
@@ -897,7 +908,8 @@ function growFromCursor() {
   const r = Number($("rad").value), r2 = r * r, sm = idx2mm(g, seed);
   pushUndo();
   const seen = new Uint8Array(t.length), queue = new Int32Array(t.length);
-  let head = 0, tail = 0, added = 0;
+  // Boundary faces stopped by the grow limit versus by intensity. A boundary mostly on the limit is a sphere, not anatomy.
+  let head = 0, tail = 0, added = 0, atLimit = 0, atEdge = 0;
   queue[tail++] = seed; seen[seed] = 1;
   while (head < tail) {
     const n = queue[head++];
@@ -909,16 +921,19 @@ function growFromCursor() {
       if (ii < 0 || jj < 0 || kk < 0 || ii >= g.nx || jj >= g.ny || kk >= g.nz) continue;
       const m = ii + g.nx * (jj + g.ny * kk);
       if (seen[m]) continue;
-      seen[m] = 1;
       const v = data[m];
-      if (v < lo || v > hi || (t[m] !== 0 && t[m] !== a)) continue;
+      if (v < lo || v > hi || (t[m] !== 0 && t[m] !== a)) { atEdge++; continue; }
       const p = sub3(idx2mm(g, m), sm);
-      if (dot3(p, p) > r2) continue;
+      if (dot3(p, p) > r2) { atLimit++; continue; }
+      seen[m] = 1;
       queue[tail++] = m;
     }
   }
+  const o = segObj(a), frac = atLimit / Math.max(1, atLimit + atEdge);
+  o.limit = frac > GROW_LIMIT_FRACTION ? { r, pct: Math.round(frac * 100) } : null;
   segChanged();
-  toast(`Grew ${segObj(a).name}: +${((added * g.vox) / 1000).toFixed(2)} cm³ (range ${fmt1(lo)} to ${fmt1(hi)}).`);
+  toast(o.limit ? `Grew ${o.name}: +${((added * g.vox) / 1000).toFixed(2)} cm³. ${o.limit.pct}% of the boundary is the ${r} mm grow limit, not anatomy. Check it before you use the volume.`
+    : `Grew ${o.name}: +${((added * g.vox) / 1000).toFixed(2)} cm³ (range ${fmt1(lo)} to ${fmt1(hi)}).`);
 }
 
 function rle(b) {
@@ -1065,7 +1080,7 @@ function findingRow({ color, glyph, name, onName, value, sub, onClick, onDelete,
   inp.onclick = (ev) => ev.stopPropagation();
   inp.onchange = () => onName(inp.value.trim() || name);
   inp.onkeydown = (ev) => { ev.stopPropagation(); if (ev.key === "Enter") inp.blur(); };
-  txt.append(inp, el("div", "sub", sub));
+  const subEl = el("div", "sub"); subEl.append(sub ?? ""); txt.append(inp, subEl);
   top.append(txt, el("span", "val", value));
   if (onDelete) { const x = el("button", "x", "×"); x.title = "Delete"; x.onclick = (ev) => { ev.stopPropagation(); onDelete(); }; top.append(x); }
   top.onclick = onClick || null;
@@ -1075,7 +1090,8 @@ function renderFindings() {
   const rows = [];
   for (const o of S.seg?.objects || []) rows.push(findingRow({
     color: o.color, name: o.name, value: `${segCm3(o.k).toFixed(2)} cm³`, active: o.k === S.seg.active,
-    sub: o.k === S.seg.active ? "Drawn structure · selected" : "Drawn structure · click to select",
+    sub: o.limit ? el("span", "warn", `Boundary = ${o.limit.r} mm grow limit (${o.limit.pct}%), not anatomy`)
+      : o.k === S.seg.active ? "Drawn structure · selected" : "Drawn structure · click to select",
     eye: { on: o.visible, toggle: () => { o.visible = !o.visible; showSeg(); renderFindings(); scheduleSave(); } },
     onName: (v) => { o.name = v; renderFindings(); renderPlan(); scheduleSave(); },
     onClick: () => { S.seg.active = o.k; setPen(); renderFindings(); },
@@ -1227,13 +1243,16 @@ function drawProbe() {
 }
 
 // ---------- Save and load with the study ----------
-let saveTimer = null, loading = false;
-function scheduleSave() { if (loading) return; clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 800); }
-async function saveNow(manual) {
-  clearTimeout(saveTimer);
-  const doc = {
+// Every change goes first to a write-ahead copy in this browser (localStorage), then to the server.
+// A failed save stays visible in the menu bar and retries with backoff until it succeeds.
+// The local copy holds annotation geometry and names only, and is removed once the server has it.
+let saveTimer = null, walTimer = null, retryTimer = null, loading = false;
+const SAVE = { gen: 0, savedGen: 0, inflight: false, tries: 0, error: "", at: "", walOk: true };
+const walKey = () => `eidos.wal.${caseId}`;
+function annotationDoc() {
+  return {
     version: 1,
-    seg: S.seg && { ref: S.seg.ref, dims: S.seg.dims, rle: rle(S.seg.bitmap), objects: S.seg.objects.map(({ k, name, color, visible }) => ({ k, name, color, visible })), active: S.seg.active },
+    seg: S.seg && { ref: S.seg.ref, dims: S.seg.dims, rle: rle(S.seg.bitmap), objects: S.seg.objects.map(({ k, name, color, visible, limit }) => ({ k, name, color, visible, limit: limit || null })), active: S.seg.active },
     trajectories: S.traj.map(({ name, target, entry }) => ({ name, target, entry })),
     points: S.points,
     measurements: (nv.document.completedMeasurements || []).map((x) => ({
@@ -1244,15 +1263,62 @@ async function saveNow(manual) {
       firstLineMM: { start: Array.from(x.firstLineMM.start), end: Array.from(x.firstLineMM.end) },
       secondLineMM: { start: Array.from(x.secondLineMM.start), end: Array.from(x.secondLineMM.end) } })),
   };
+}
+function walWrite(doc) {
+  try { localStorage.setItem(walKey(), JSON.stringify({ t: Date.now(), gen: SAVE.gen, doc })); SAVE.walOk = true; }
+  catch { SAVE.walOk = false; }
+}
+function walRead() { try { return JSON.parse(localStorage.getItem(walKey()) || "null"); } catch { return null; } }
+function walClear(gen) {
+  try { const w = walRead(); if (!w || w.gen <= gen) localStorage.removeItem(walKey()); } catch { /* storage blocked */ }
+}
+function showSaveState() {
+  const el = $("save-state"), dirty = SAVE.gen !== SAVE.savedGen;
+  el.className = "save-state" + (SAVE.error ? " failed" : SAVE.inflight ? " saving" : dirty ? " dirty" : "");
+  const backup = SAVE.walOk ? "a copy is kept in this browser" : "no copy in this browser (storage blocked)";
+  $("save-text").textContent = SAVE.error ? `Not saved (${SAVE.error}). Retrying…` : SAVE.inflight ? "Saving…" : dirty ? "Unsaved changes" : SAVE.at ? `Saved ${SAVE.at}` : "Saved";
+  el.title = SAVE.error ? `The server refused the last save: ${SAVE.error}. Attempt ${SAVE.tries}; ${backup}. Click to retry now.`
+    : dirty ? `Changes wait to be saved; ${backup}.` : "All annotations are saved with the study.";
+}
+function scheduleSave() {
+  if (loading) return;
+  SAVE.gen++; showSaveState();
+  clearTimeout(walTimer); walTimer = setTimeout(() => walWrite(annotationDoc()), 150);
+  clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 800);
+}
+async function saveNow(manual) {
+  clearTimeout(saveTimer); clearTimeout(retryTimer); clearTimeout(walTimer);
+  if (SAVE.inflight) { saveTimer = setTimeout(saveNow, 400); return; }
+  const gen = SAVE.gen, doc = annotationDoc();
+  walWrite(doc);
+  SAVE.inflight = true; showSaveState();
   try {
     const r = await fetch(`/api/case/${caseId}/annotations`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(doc) });
-    if (!r.ok) throw Error(r.status);
+    let out = {}; try { out = await r.json(); } catch { /* not JSON */ }
+    if (!r.ok) throw Error(out.error ? `${r.status}: ${out.error}` : String(r.status));
+    SAVE.savedGen = Math.max(SAVE.savedGen, gen); SAVE.error = ""; SAVE.tries = 0;
+    SAVE.at = (out.saved || "").slice(11, 16);
+    walClear(gen);
     if (manual) toast("Annotations saved with the study.");
-  } catch (e) { toast(`Could not save the annotations (${e.message}).`); }
+  } catch (e) {
+    SAVE.error = e.message === "Failed to fetch" ? "Eidos is not reachable" : e.message;
+    SAVE.tries++;
+    retryTimer = setTimeout(saveNow, Math.min(60, 2 ** SAVE.tries) * 1000);
+  } finally {
+    SAVE.inflight = false; showSaveState();
+    if (!SAVE.error && SAVE.gen !== SAVE.savedGen) saveTimer = setTimeout(saveNow, 400);
+  }
 }
+addEventListener("online", () => { if (SAVE.error) saveNow(); });
+addEventListener("beforeunload", (e) => { if (SAVE.gen !== SAVE.savedGen) { walWrite(annotationDoc()); e.preventDefault(); e.returnValue = ""; } });
 async function loadAnnotations() {
   let doc = {};
-  try { doc = await (await fetch(`/api/case/${caseId}/annotations`, { cache: "no-store" })).json(); } catch { return; }
+  try { doc = await (await fetch(`/api/case/${caseId}/annotations`, { cache: "no-store" })).json(); } catch { doc = {}; }
+  // A browser copy newer than the server copy holds changes that never reached the server: use it and save it.
+  const wal = walRead(), restored = wal && wal.doc && (!doc.saved_ms || wal.t > doc.saved_ms);
+  if (restored) doc = wal.doc;
+  else if (wal) walClear(Infinity);
+  SAVE.at = (doc.saved || "").slice(11, 16);
   loading = true;
   const sg = doc.seg, ref = sg && S.vols.get(sg.ref);
   if (ref) {
@@ -1276,7 +1342,8 @@ async function loadAnnotations() {
     return p.every(Boolean) && { ...x, firstLineMM: { start: p[0], end: p[1] }, secondLineMM: { start: p[2], end: p[3] } };
   }).filter(Boolean);
   loading = false;
-  showSeg(); applyTracts(); renderPlan(); renderFindings(); drawOverlay(true);
+  showSeg(); applyTracts(); renderPlan(); renderFindings(); drawOverlay(true); showSaveState();
+  if (restored) { toast("Restored changes that had not reached the server. Saving them now."); scheduleSave(); }
 }
 
 // ---------- Exports ----------
@@ -1304,7 +1371,7 @@ function trajState(t) {
 }
 function findingsTable() {
   const rows = [["type", "name", "value", "unit", "detail"]];
-  for (const o of S.seg?.objects || []) rows.push(["structure", o.name, segCm3(o.k).toFixed(3), "cm3", `label ${o.k} on ${S.vols.get(S.seg.ref)?.meta.label}`]);
+  for (const o of S.seg?.objects || []) rows.push(["structure", o.name, segCm3(o.k).toFixed(3), "cm3", `label ${o.k} on ${S.vols.get(S.seg.ref)?.meta.label}${o.limit ? `; boundary is the ${o.limit.r} mm grow limit (${o.limit.pct}%), not anatomy` : ""}`]);
   for (const l of S.labels.values()) if (l.cm3 !== null) rows.push(["structure", l.meta.label, l.cm3.toFixed(3), "cm3", l.meta.reviewed ? "reviewed" : "not reviewed"]);
   for (const t of S.traj) {
     if (!(t.target && t.entry)) continue;
@@ -1365,6 +1432,24 @@ document.querySelectorAll(".menu").forEach((m) => {
   m.querySelectorAll(".items button").forEach((b) => (b.onclick = () => { m.classList.remove("open"); act(b.dataset.act); }));
 });
 document.addEventListener("click", () => document.querySelectorAll(".menu.open").forEach((x) => x.classList.remove("open")));
+// While a menu is open, a press outside it only closes the menu. The whole gesture is kept from the viewer,
+// so it cannot move the cursor, draw, or start a grow.
+let swallow = false;
+addEventListener("pointerdown", (e) => {
+  const open = document.querySelectorAll(".menu.open");
+  if (!open.length || e.target.closest(".menu")) return;
+  open.forEach((x) => x.classList.remove("open"));
+  swallow = true; e.stopPropagation(); e.preventDefault();
+}, true);
+for (const type of ["mousedown", "pointermove", "mousemove", "pointerup", "mouseup", "click", "contextmenu", "dblclick"]) {
+  addEventListener(type, (e) => {
+    if (!swallow) return;
+    e.stopPropagation(); e.preventDefault();
+    if (type === "pointerup") setTimeout(() => (swallow = false), 250);
+    if (type === "click") swallow = false;
+  }, true);
+}
+$("save-state").onclick = () => { if (SAVE.error) saveNow(true); };
 
 $("seg-new").onclick = newStructure;
 $("seg-undo").onclick = segUndo;

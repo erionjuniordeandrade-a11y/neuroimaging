@@ -315,12 +315,14 @@ class Workbench:
 
     def save_annotations(self, case_id: str, doc: dict) -> dict:
         file = self._annotation_file(case_id)
-        doc = {**doc, "saved": time.strftime("%Y-%m-%dT%H:%M:%S")}
-        tmp = file.with_name(f".{file.name}.{os.getpid()}.tmp")
+        now = time.time()
+        doc = {**doc, "saved": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(now)), "saved_ms": int(now * 1000)}
+        # One temporary file per request: two saves of the same case on two threads must not share it.
+        tmp = file.with_name(f".{file.name}.{os.getpid()}.{threading.get_ident()}.tmp")
         tmp.write_text(json.dumps(doc))
         os.chmod(tmp, 0o600)
         os.replace(tmp, file)
-        return {"saved": doc["saved"]}
+        return {"saved": doc["saved"], "saved_ms": doc["saved_ms"]}
 
     # Archive edits and deletes ---------------------------------------------
     def edit_study(self, case_id: str, body: dict) -> dict:
@@ -494,10 +496,13 @@ def make_handler(bench: Workbench):
             size = int(self.headers.get("Content-Length") or 0)
             if size > (MAX_ANNOTATION_BYTES if annotations else MAX_JSON_BYTES):
                 return self._json(413, {"error": "too large"})
+            raw = self.rfile.read(size)
+            if len(raw) != size:
+                return self._json(400, {"error": f"body cut short ({len(raw)} of {size} bytes)"})
             try:
-                body = json.loads(self.rfile.read(size) or b"{}")
-            except ValueError:
-                return self._json(400, {"error": "bad json"})
+                body = json.loads(raw or b"{}")
+            except ValueError as exc:  # position only: never echo the body
+                return self._json(400, {"error": f"bad json at byte {getattr(exc, 'pos', '?')}"})
             if annotations:
                 if not bench.case_known(parts[2]) or not isinstance(body, dict):
                     return self._json(404, {"error": "not found"})

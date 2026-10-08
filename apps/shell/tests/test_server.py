@@ -146,3 +146,18 @@ def test_annotations_refuse_other_origins_unknown_cases_and_oversize(server):
     conn.endheaders()
     assert conn.getresponse().status == 413
     conn.close()
+
+
+def test_annotation_saves_survive_concurrency_and_explain_refusals(server):
+    from concurrent.futures import ThreadPoolExecutor
+
+    path = "/api/case/demo-phantom/annotations"
+    docs = [json.dumps({"version": 1, "points": [{"name": f"P{i}", "mm": [i, 0, 0]}]}).encode() for i in range(12)]
+    with ThreadPoolExecutor(6) as pool:
+        results = list(pool.map(lambda d: _post(server, path, d), docs))
+    assert [s for s, _ in results] == [200] * 12
+    assert all(isinstance(json.loads(b)["saved_ms"], int) for _, b in results)
+    back = json.loads(_get(server, path)[1])
+    assert back["points"][0]["name"] in {f"P{i}" for i in range(12)} and back["saved_ms"] > 0
+    status, body = _post(server, path, b'{"points": [1,')
+    assert status == 400 and json.loads(body)["error"].startswith("bad json at byte")
