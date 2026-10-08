@@ -1,10 +1,10 @@
-# Neuro Workbench
+# Eidos
 
-One local window for the neuroimaging apps. Research and teaching only, not for clinical use.
+Eidos (Greek εἶδος, "form, what is seen") is one local window for the neuroimaging apps. Research and teaching only, not for clinical use.
 
 ```bash
 uv sync --all-packages
-uv run neuro-workbench            # http://127.0.0.1:8790/
+uv run eidos                      # http://127.0.0.1:8790/  (alias: neuro-workbench)
 ```
 
 The window has a case list and four tabs per case:

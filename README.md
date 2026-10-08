@@ -14,7 +14,7 @@ that a surgeon can review and explain to a patient.
 | `capsule/` | Builds one offline HTML "case capsule" per case: CT/MR fusion, CTA vessels, DWI tractography, trust and QC gates, pt-BR patient tour. |
 | `tractlab/` | Loopback tractography workstation: ROI seeding, bundle banks, atlas, lesion-centred viewer, ingest and pipeline runner. |
 | `capsule-mac/` | Native macOS host app that finds and opens capsule files. |
-| `apps/shell/` | Neuro Workbench: one local window with a case list and one shared CT / MRI / CTA / tracts viewer. `uv run neuro-workbench`, then open http://127.0.0.1:8790/ (see `apps/shell/README.md`). |
+| `apps/shell/` | Eidos: one local window with a case list and one shared CT / MRI / CTA / tracts viewer. `uv run eidos`, then open http://127.0.0.1:8790/ (see `apps/shell/README.md`). |
 
 ## Install and test
 

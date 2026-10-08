@@ -1,4 +1,4 @@
-"""Neuro workbench: one local window for Capsule imaging and TractLab tract evidence.
+"""Eidos workbench: one local window for Capsule imaging and TractLab tract evidence.
 
 The workbench serves a single page on a loopback port. The page holds a case
 list and three views per case:

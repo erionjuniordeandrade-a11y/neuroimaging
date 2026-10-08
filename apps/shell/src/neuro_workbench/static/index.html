@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Neuro Workbench</title>
+<title>Eidos</title>
 <style>
   :root {
     --bg: #07090d; --bg2: #0d1017; --glass: rgba(20,24,33,.72); --hover: rgba(255,255,255,.05);
@@ -121,8 +121,8 @@
 </svg>
 <div class="app">
   <header>
-    <div class="brand"><div class="brand-mark">N</div></div>
-    <div class="app-name">Neuro <span>Workbench</span></div>
+    <div class="brand"><div class="brand-mark">E</div></div>
+    <div class="app-name">Ei<span>dos</span></div>
     <div class="sep"></div>
     <button class="case-switch" id="case-switch" title="Switch case (K)" aria-haspopup="dialog">
       <span class="t" id="case-title">…</span><span class="s" id="case-sub"></span>
@@ -216,7 +216,7 @@ function select(caseId, view) {
   $("case-title").textContent = c.title;
   if (c.synthetic) $("case-title").append(" ", el("span", "tag", "synthetic"));
   $("case-sub").textContent = c.subtitle;
-  document.title = `${c.title} · ${VIEW_NAME[view]}`;
+  document.title = `${c.title} · ${VIEW_NAME[view]} · Eidos`;
   document.querySelectorAll("nav button").forEach((b) => {
     b.disabled = !c.views[b.dataset.view];
     b.setAttribute("aria-selected", String(b.dataset.view === view));

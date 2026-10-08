@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = ["numpy>=1.26", "nibabel>=5", "case-capsule"]
 
 [project.scripts]
+eidos = "neuro_workbench.server:main"
 neuro-workbench = "neuro_workbench.server:main"
 
 [build-system]
