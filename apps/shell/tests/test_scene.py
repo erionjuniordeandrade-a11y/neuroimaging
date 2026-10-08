@@ -30,7 +30,7 @@ def _blob(key: str, data: bytes) -> str:
     return f'<script id="capsule-blob-{key}" type="application/octet-stream" data-encoding="gzip+base64">{text}</script>'
 
 
-def synthetic_capsule(path: Path, tmp: Path) -> Path:
+def synthetic_capsule(path: Path, tmp: Path, anatomy: bool = False) -> Path:
     nx, ny, nz = DIMS
     ct = np.arange(nx * ny * nz, dtype=np.int16).reshape((nz, ny, nx))
     lesion = np.zeros((nz, ny, nx), np.uint8)
@@ -44,10 +44,21 @@ def synthetic_capsule(path: Path, tmp: Path) -> Path:
                   {"id": "head", "label": "Head", "blob": "lesion", "role": "render"}],
         "tracts": [{"id": "cst", "label": "CST", "blob": "cst", "color": "#4FC3F7", "n_streamlines": 3}],
     }
+    extra = ""
+    if anatomy:
+        anat = np.zeros((nz, ny, nx), np.uint8)
+        anat[0:2] = 1
+        anat[2:4, 0:2] = 2
+        manifest["masks"].append({"id": "vessels", "label": "Vessels", "blob": "lesion", "role": "render", "color": "#D32F2F"})
+        manifest["anatomy"] = [{"id": "anat_mr", "blob": "anatomy_anat_mr", "method": "SynthSeg 2.0", "reviewed": False,
+                                "licence": "FreeSurfer", "labels": [
+                                    {"value": 1, "key": "lv_l", "name": "Ventrículo lateral esquerdo", "color": "#7851A9", "volume_ml": 0.06},
+                                    {"value": 2, "key": "thal_l", "name": "Tálamo esquerdo", "color": "#00760E", "volume_ml": 0.024}]}]
+        extra = _blob("anatomy_anat_mr", anat.tobytes())
     path.write_text("<!doctype html>"
                     f'<script id="capsule-manifest" type="application/json">{json.dumps(manifest)}</script>'
                     + _blob("ct", ct.tobytes()) + _blob("lesion", lesion.tobytes())
-                    + _blob("cst", (tmp / "t.tck").read_bytes()))
+                    + _blob("cst", (tmp / "t.tck").read_bytes()) + extra)
     return path
 
 
@@ -80,6 +91,17 @@ def test_capsule_becomes_volumes_labels_and_tracts_in_scanner_space(tmp_path):
     assert files["tract-cst"].read_bytes() == (tmp_path / "t.tck").read_bytes()
     again, _ = capsule_scene(capsule, tmp_path / "cache")  # second call reads the cache
     assert again == scene
+
+
+def test_capsule_vessels_and_automatic_anatomy_become_layers(tmp_path):
+    capsule = synthetic_capsule(tmp_path / "x.capsule.html", tmp_path, anatomy=True)
+    scene, files = capsule_scene(capsule, tmp_path / "cache")
+    assert [l["id"] for l in scene["labels"]] == ["mask-lesion", "mask-vessels", "anat-anat_mr"]
+    anat = scene["labels"][2]
+    assert anat["multi"] is True and anat["reviewed"] is False and anat["source"] == "SynthSeg 2.0"
+    assert [(lb["value"], lb["name"]) for lb in anat["labels"]] == [(1, "Ventrículo lateral esquerdo"), (2, "Tálamo esquerdo")]
+    data = np.asarray(nib.load(str(files["anat-anat_mr"])).dataobj)
+    assert data.shape == DIMS and set(np.unique(data)) == {0, 1, 2} and (data == 2).sum() == 2 * 2 * 6
 
 
 def test_tractlab_manifest_lists_images_lesion_and_banks_only(tmp_path):

@@ -26,6 +26,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import signal
 import socket
 import subprocess
@@ -38,7 +39,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from neuro_workbench.archive import Archive, default_archive_dir
 from neuro_workbench.derived import Derived
-from neuro_workbench import privacy
+from neuro_workbench import interactive, privacy
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 DEFAULT_REPO = Path(__file__).resolve().parents[4]
@@ -542,6 +543,19 @@ def make_handler(bench: Workbench):
                     return self._json(400, {"error": str(exc)})
                 except RuntimeError as exc:
                     return self._json(409, {"error": str(exc)})
+            if len(parts) == 4 and parts[:2] == ["api", "case"] and parts[3] == "segment-ai":
+                if not bench.case_known(parts[2]):
+                    return self._json(404, {"error": "not found"})
+                layer = str(body.get("layer") or "")
+                volume = bench.scene_file(parts[2], layer) if re.fullmatch(r"(s\d+-)?vol-[\w.-]+", layer) else None
+                if not volume or not volume.name.endswith((".nii", ".nii.gz")):
+                    return self._json(404, {"error": "that image is not open"})
+                try:
+                    return self._json(200, interactive.segment(volume, body.get("points")))
+                except ValueError as exc:
+                    return self._json(400, {"error": str(exc)})
+                except RuntimeError as exc:
+                    return self._json(409, {"error": str(exc)})
             if path == "/api/archive/choose":
                 return self._json(200, choose_folder("zip" if body.get("kind") == "zip" else "folder"))
             return self._json(404, {"error": "not found"})
@@ -565,6 +579,8 @@ def make_handler(bench: Workbench):
                 return self._send(200, (STATIC_DIR / "index.html").read_bytes(), "text/html; charset=utf-8")
             if path == "/vendor/niivue.js":
                 return self._send(200, (bench.repo / NIIVUE_JS).read_bytes(), "text/javascript; charset=utf-8")
+            if path == "/api/segment-ai":
+                return self._json(200, interactive.status())
             if path == "/api/atlas":
                 return self._json(200, {"state": "ready", "url": "/atlas/atlas.html"})
             if path.startswith("/atlas/"):

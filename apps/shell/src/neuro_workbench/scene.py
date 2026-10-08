@@ -32,6 +32,8 @@ SCENE_SCHEMA = "neuro-workbench-scene/1"
 TRACTLAB_VOLUME_KEYS = ("t1", "T1", "t2", "flair", "b0", "fa", "FA", "md")
 TRACTLAB_LABEL_KEYS = ("lesion", "tumour", "tumor", "mask")
 MASK_ROLES_SKIPPED = ("render",)
+# Render masks that are anatomy a reader needs (not the head/brain shells used for 3D cut-aways).
+RENDER_MASKS_SHOWN = ("vessel",)
 DEFAULT_COLOURS = ("#4FC3F7", "#7CFC00", "#FFB74D", "#BA68C8", "#F06292", "#4DB6AC", "#FFF176")
 
 
@@ -60,6 +62,15 @@ def _volume_kind(meta: dict) -> str:
     if "CTA" in text or "ANGIO" in text:
         return "CTA"
     return str(meta.get("kind") or "MR").upper()
+
+
+def _anatomy_title(item_id: str, method: str) -> str:
+    if item_id == "anat_mr_gyri":
+        return "Cortical gyri (auto)"
+    if item_id == "anat_mr":
+        return "Brain anatomy (auto)"
+    task = item_id.removeprefix("anat_ct_").replace("_", " ")
+    return f"CT {task} (auto)" if item_id.startswith("anat_ct_") else f"{item_id} (auto)"
 
 
 def capsule_scene(capsule: Path, cache_root: Path) -> tuple[dict, dict[str, Path]]:
@@ -105,7 +116,8 @@ def capsule_scene(capsule: Path, cache_root: Path) -> tuple[dict, dict[str, Path
                                  "units": meta.get("units"), **_window_for(kind, meta.get("label", ""))})
 
     for meta in manifest.get("masks", []):
-        if meta.get("role") in MASK_ROLES_SKIPPED or meta["blob"] not in blobs:
+        shown = any(w in f"{meta.get('id', '')} {meta.get('label', '')}".lower() for w in RENDER_MASKS_SHOWN)
+        if (meta.get("role") in MASK_ROLES_SKIPPED and not shown) or meta["blob"] not in blobs:
             continue
         data = np.frombuffer(blobs[meta["blob"]], dtype=np.uint8).reshape((nz, ny, nx))
         key = f"mask-{meta['id']}"
@@ -114,6 +126,21 @@ def capsule_scene(capsule: Path, cache_root: Path) -> tuple[dict, dict[str, Path
                                 "color": meta.get("color") or "#E4572E",
                                 "reviewed": bool(meta.get("reviewed")), "source": meta.get("source"),
                                 "volume_ml": meta.get("volume_ml")})
+
+    for meta in manifest.get("anatomy", []):
+        blob = blobs.get(meta.get("blob"))
+        labels = [lb for lb in meta.get("labels") or [] if 0 < int(lb.get("value", 0)) < 256]
+        if blob is None or not labels:
+            continue
+        key = f"anat-{meta['id']}"
+        nifti(key, np.frombuffer(blob, dtype=np.uint8).reshape((nz, ny, nx)))
+        method = str(meta.get("method") or "automatic")
+        scene["labels"].append({"id": key, "label": _anatomy_title(meta["id"], method), "multi": True,
+                                "color": "#B0BEC5", "reviewed": False, "source": method,
+                                "licence": meta.get("licence"),
+                                "labels": [{"value": int(lb["value"]), "name": lb.get("name") or lb.get("key"),
+                                            "color": lb.get("color") or "#B0BEC5",
+                                            "volume_ml": lb.get("volume_ml")} for lb in labels]})
 
     for i, meta in enumerate(manifest.get("tracts", [])):
         blob = blobs.get(meta.get("blob"))

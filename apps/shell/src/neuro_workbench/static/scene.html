@@ -246,6 +246,7 @@
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></symbol>
   <symbol id="i-brush" viewBox="0 0 24 24"><path d="M14.5 4.5l5 5-8 8-5-5z"/><path d="M6.5 12.5c-2 0-3 1.5-3 3.5 0 1.5-.5 2.5-1 3 3 .5 6-.5 7-3.5"/></symbol>
   <symbol id="i-eraser2" viewBox="0 0 24 24"><path d="M4 15.5l9-9 6 6-7 7H8z"/><path d="M8.5 11l6 6"/></symbol>
+  <symbol id="i-ai" viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z" opacity=".6"/></symbol>
   <symbol id="i-grow" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.8" fill="currentColor"/><path d="M12 5.5a6.5 6.5 0 1 1-6.2 4.5" stroke-dasharray="2.2 2"/><path d="M12 2.5a9.5 9.5 0 1 1-9 6.5" opacity=".55"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/></symbol>
@@ -331,7 +332,11 @@
         <div class="field"><span>Brush size <em id="pen-val">3 voxels</em></span><input id="pen" type="range" min="1" max="15" value="3"></div>
         <div class="field"><span>Grow range around the seed <em id="tol-val">±12% of window</em></span><input id="tol" type="range" min="1" max="50" value="12"></div>
         <div class="field"><span>Grow limit <em id="rad-val">25 mm from the seed</em></span><input id="rad" type="range" min="3" max="80" value="25"></div>
-        <div class="hint" id="seg-hint">Brush paints on 2D slices. Grow fills the connected voxels inside the range, in 3D, from the clicked point. Painting never overwrites another structure.</div>
+        <div class="ai" id="ai-box">
+          <div class="field"><span>AI segment (nnInteractive) <em id="ai-state">checking…</em></span></div>
+          <div class="btnrow"><button class="btn" id="ai-run" disabled>Segment from 0 points</button><button class="btn" id="ai-clear">Clear points</button></div>
+        </div>
+        <div class="hint" id="seg-hint">Brush paints on 2D slices. Grow fills the connected voxels inside the range, in 3D, from the clicked point. Painting never overwrites another structure. AI (I): click inside the structure, Shift-click outside it, then Segment. The AI result is a new structure, not reviewed.</div>
       </div>
     </details>
     <details open id="d-plan">
@@ -370,6 +375,7 @@
     <button data-tool="brush" title="Brush: paint the selected structure (B)"><svg class="i"><use href="#i-brush"/></svg>Brush<kbd>B</kbd></button>
     <button data-tool="erase" title="Erase: remove painted voxels (E)"><svg class="i"><use href="#i-eraser2"/></svg>Erase<kbd>E</kbd></button>
     <button data-tool="grow" title="Grow: click a seed, the structure grows inside the range (F)"><svg class="i"><use href="#i-grow"/></svg>Grow<kbd>F</kbd></button>
+    <button data-tool="ai" title="AI segment: click inside the structure, Shift-click outside, then Segment (I)"><svg class="i"><use href="#i-ai"/></svg>AI<kbd>I</kbd></button>
     <div class="lbl">Plan</div>
     <button id="t-target" title="Set the trajectory target at the cursor (T)"><svg class="i"><use href="#i-target"/></svg>Target<kbd>T</kbd></button>
     <button id="t-entry" title="Set the trajectory entry at the cursor (Y)"><svg class="i"><use href="#i-entry"/></svg>Entry<kbd>Y</kbd></button>
@@ -388,7 +394,7 @@ const $ = (id) => document.getElementById(id);
 const CT_PRESETS = [["Brain", 0, 80], ["Soft tissue", -160, 240], ["Bone", -500, 1500], ["Vessels", 100, 600]];
 const OVERLAY_COLORMAP = { CTA: "warm", CT: "warm", FA: "hot" };
 // NiiVue drag modes for the primary button: crosshair 8, windowing 9, pan 3, measurement 2, angle 7.
-const TOOLS = { pointer: 8, window: 9, pan: 3, measure: 2, angle: 7, brush: 8, erase: 8, grow: 8 };
+const TOOLS = { pointer: 8, window: 9, pan: 3, measure: 2, angle: 7, brush: 8, erase: 8, grow: 8, ai: 8 };
 // Screen edges per view (top, bottom, left, right) in radiological convention with the nose to the right on sagittal.
 const VIEWS = { 0: ["Axial", "ax", ["A", "P", "R", "L"]], 1: ["Coronal", "cor", ["S", "I", "R", "L"]],
                 2: ["Sagittal", "sag", ["S", "I", "P", "A"]], 4: ["3D", "3d", null] };
@@ -617,6 +623,11 @@ function updateReadout() {
   else parts.push(`voxel ${at.ijk ? at.ijk.join(", ") : "—"}`, `<b>${fmtVal(at.value, base.meta)}</b> in ${name(base.meta)}`);
   const ov = S.overlay && S.vols.get(S.overlay);
   if (ov) { const o = sampleAt(ov, mm); parts.push(`fusion ${o ? fmtVal(o.value, ov.meta) : "outside"} in ${name(ov.meta)}`); }
+  for (const [id, l] of S.labels) {
+    if (!l.lut || !S.showLabel[id]) continue;
+    const hit = l.lut.get(sampleAt(l, mm)?.value);
+    if (hit) parts.push(`<b>${esc(hit.name)}</b> (auto, not reviewed)`);
+  }
   el.innerHTML = parts.join(" · ");
   el.title = `LPS ${[-mm[0], -mm[1], mm[2]].map((v) => v.toFixed(1)).join(", ")} mm (DICOM patient axes). ` + el.textContent;
 }
@@ -627,7 +638,8 @@ function renderControls() {
   $("base").replaceChildren(...vols.map((v) => new Option(`${v.meta.label} · ${seriesLine(v.meta)}`, v.meta.id, false, v.meta.id === S.base)));
   $("overlay").replaceChildren(new Option("None", ""), ...vols.map((v) => new Option(`${v.meta.label} · ${seriesLine(v.meta)}`, v.meta.id, false, v.meta.id === S.overlay)));
   $("labels").replaceChildren(...[...S.labels.values()].map((l) => objectRow({
-    color: l.meta.color, label: l.meta.label, kind: "Structure", reviewed: !!l.meta.reviewed,
+    color: l.meta.color, label: l.meta.label, reviewed: !!l.meta.reviewed,
+    kind: l.lut ? `Anatomy · ${l.lut.size} labels · ${l.meta.source}` : l.meta.id.includes("vessel") ? "Vessels" : "Structure",
     value: l.cm3 === null ? "" : `${l.cm3.toFixed(l.cm3 < 10 ? 2 : 1)} cm³`,
     visible: !!S.showLabel[l.meta.id], opacity: l.img.opacity,
     onToggle: (on) => { S.showLabel[l.meta.id] = on; applyLayers(); },
@@ -719,12 +731,26 @@ async function load() {
   for (const meta of S.scene.labels) {
     step("Structure", meta.label);
     const img = await niivue.NVImage.new(await bytes(meta.url), `${meta.id}.nii.gz`, "gray", 1, null, 0, 1);
-    const [r, g, b] = rgb(meta.color);
-    img.setColormapLabel({ R: [0, r], G: [0, g], B: [0, b], A: [0, 255], I: [0, 1], labels: ["", meta.label] });
-    img.opacity = .55;
-    const cm3 = meta.volume_ml ? Number(meta.volume_ml) : maskVolumeCm3(img);
-    S.labels.set(meta.id, { meta, img, cm3 });
-    S.showLabel[meta.id] = meta.reviewed || /lesion|tumou?r/i.test(meta.id + meta.label);
+    let lut = null, cm3;
+    if (meta.multi) {
+      // Automatic anatomy: one label map, one colour and name per value.
+      lut = new Map(meta.labels.map((lb) => [lb.value, { name: lb.name, c: rgb(lb.color), ml: lb.volume_ml }]));
+      const n = Math.max(...lut.keys()) + 1, cm = { R: [], G: [], B: [], A: [], I: [], labels: [] };
+      for (let v = 0; v < n; v++) {
+        const e = lut.get(v), c = e ? e.c : [0, 0, 0];
+        cm.R.push(c[0]); cm.G.push(c[1]); cm.B.push(c[2]); cm.A.push(e ? 255 : 0); cm.I.push(v); cm.labels.push(e ? e.name : "");
+      }
+      img.setColormapLabel(cm);
+      img.opacity = .4;
+      cm3 = null;
+    } else {
+      const [r, g, b] = rgb(meta.color);
+      img.setColormapLabel({ R: [0, r], G: [0, g], B: [0, b], A: [0, 255], I: [0, 1], labels: ["", meta.label] });
+      img.opacity = .55;
+      cm3 = meta.volume_ml ? Number(meta.volume_ml) : maskVolumeCm3(img);
+    }
+    S.labels.set(meta.id, { meta, img, cm3, lut });
+    S.showLabel[meta.id] = !meta.multi && (meta.reviewed || /lesion|tumou?r/i.test(meta.id + meta.label));
   }
   for (const meta of S.scene.tracts) {
     step("Tract", meta.label);
@@ -762,6 +788,7 @@ async function load() {
   setInterval(placeTiles, 250);
   setInterval(drawOverlay, 120);
   await loadAnnotations();
+  aiCheck();
   setStatus("");
 }
 
@@ -877,6 +904,64 @@ function segCounts() {
 }
 function segCm3(k) { return ((S.seg.counts[k] || 0) * grid(S.vols.get(S.seg.ref).img).vox) / 1000; }
 function segChanged() { segCounts(); showSeg(); renderFindings(); scheduleSave(); invalidateDist(); drawOverlay(true); drawProbe(); }
+// ---------- AI segment: nnInteractive on the server, from clicked points ----------
+// Points are scanner RAS mm. The result arrives on the image's own voxel grid and is resampled
+// onto the drawing grid by voxel centre; it only fills empty voxels, like every other tool.
+S.ai = { points: [], status: null, busy: false };
+let aiShift = false;
+async function aiCheck() {
+  try { S.ai.status = await (await fetch("/api/segment-ai", { cache: "no-store" })).json(); }
+  catch { S.ai.status = { available: false, reason: "the server did not answer" }; }
+  aiShow();
+}
+function aiShow() {
+  const st = S.ai.status, n = S.ai.points.length, pos = S.ai.points.filter((p) => p.positive).length;
+  $("ai-state").textContent = !st ? "checking…" : S.ai.busy ? "running…" : st.available ? `ready (${st.device})` : `unavailable: ${st.reason}`;
+  $("ai-run").disabled = !st?.available || S.ai.busy || !pos;
+  $("ai-run").textContent = S.ai.busy ? "Segmenting…" : `Segment from ${n} point${n === 1 ? "" : "s"}${n > pos ? ` (${n - pos} outside)` : ""}`;
+}
+function aiAddPoint(positive) {
+  if (S.ai.points.length >= 32) return toast("At most 32 points. Run or clear them first.");
+  S.ai.points.push({ ras: cursorMM(), positive });
+  aiShow(); drawOverlay(true);
+  toast(positive ? "Point inside added. Shift-click marks a point outside." : "Point outside added.");
+}
+async function aiRun() {
+  if (S.ai.busy || !S.ai.points.length) return;
+  if (!segEnsure()) return toast(`Structures are drawn on ${S.vols.get(S.seg.ref)?.meta.label}. Show it as the base image first.`);
+  S.ai.busy = true; aiShow();
+  let res;
+  try {
+    const r = await fetch(`/api/case/${caseId}/segment-ai`, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ layer: S.seg.ref, points: S.ai.points }) });
+    res = await r.json();
+    if (!r.ok) throw new Error(res.error || `HTTP ${r.status}`);
+  } catch (err) {
+    S.ai.busy = false; aiShow();
+    return toast(`AI segment failed: ${err.message}`);
+  }
+  S.ai.busy = false;
+  const raw = atob(res.indices), bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  const idx = new Uint32Array(bytes.buffer), [nx, ny] = res.dims, A = res.affine;
+  const k = newStructure();
+  if (!k) return aiShow();
+  const o = segObj(k);
+  o.name = `AI structure ${k}`; o.source = res.source;
+  pushUndo();
+  const g = grid(S.vols.get(S.seg.ref).img), t = S.seg.bitmap;
+  let added = 0;
+  for (const n of idx) {
+    const i = n % nx, j = Math.floor(n / nx) % ny, kk = Math.floor(n / (nx * ny));
+    const mm = [0, 1, 2].map((r) => A[r][0] * i + A[r][1] * j + A[r][2] * kk + A[r][3]);
+    const m = mm2idx(g, mm);
+    if (m >= 0 && t[m] === 0) { t[m] = k; added++; }
+  }
+  S.ai.points = [];
+  segChanged(); aiShow();
+  toast(`${o.name}: ${((added * g.vox) / 1000).toFixed(2)} cm³ from ${res.points} point${res.points === 1 ? "" : "s"}. Automatic, not reviewed.`);
+}
+
 function setPen() {
   const draw = S.tool === "brush" || S.tool === "erase";
   if (draw && S.seg?.ref === S.base) {
@@ -993,7 +1078,7 @@ function structureSources() {
     const g = grid(S.vols.get(S.seg.ref).img);
     for (const o of S.seg.objects) out.push({ name: o.name, color: o.color, g, data: S.seg.bitmap, match: o.k });
   }
-  for (const l of S.labels.values()) out.push({ name: l.meta.label, color: l.meta.color, g: grid(l.img), data: rasData(l.img), match: null });
+  for (const l of S.labels.values()) if (!l.lut) out.push({ name: l.meta.label, color: l.meta.color, g: grid(l.img), data: rasData(l.img), match: null });
   return out;
 }
 function distances(t) {
@@ -1091,6 +1176,7 @@ function renderFindings() {
   for (const o of S.seg?.objects || []) rows.push(findingRow({
     color: o.color, name: o.name, value: `${segCm3(o.k).toFixed(2)} cm³`, active: o.k === S.seg.active,
     sub: o.limit ? el("span", "warn", `Boundary = ${o.limit.r} mm grow limit (${o.limit.pct}%), not anatomy`)
+      : o.source ? el("span", "warn", `${o.source} · automatic, not reviewed`)
       : o.k === S.seg.active ? "Drawn structure · selected" : "Drawn structure · click to select",
     eye: { on: o.visible, toggle: () => { o.visible = !o.visible; showSeg(); renderFindings(); scheduleSave(); } },
     onName: (v) => { o.name = v; renderFindings(); renderPlan(); scheduleSave(); },
@@ -1148,6 +1234,10 @@ function drawOverlay(force) {
     const P = (p) => [l + ((p[ui] - s.leftTopMM[0]) / s.fovMM[0]) * w, t + (1 - (p[vi] - s.leftTopMM[1]) / s.fovMM[1]) * h];
     const cp = mk("clipPath", { id: `cl${ti}` }); cp.append(mk("rect", { x: l, y: t, width: w, height: h })); defs.append(cp);
     const g = mk("g", { "clip-path": `url(#cl${ti})` });
+    for (const p of S.ai.points) if (Math.abs(p.ras[ni] - c[ni]) < 2) {
+      const [x, y] = P(p.ras);
+      g.append(mk("circle", { cx: x, cy: y, r: 4.5, fill: p.positive ? "#4CAF50" : "#E53935", stroke: "#fff", "stroke-width": 1.2 }));
+    }
     S.traj.forEach((tr, i) => {
       const sel = i === S.tsel, col = TRAJ_COLOR, op = sel ? 1 : 0.5;
       if (tr.target && tr.entry) {
@@ -1193,7 +1283,11 @@ function sampler() {
     const vis = {}; for (const o of S.seg.objects) if (o.visible) vis[o.k] = rgb(o.color);
     layers.push({ g, data: S.seg.bitmap, color: (v) => vis[v] });
   }
-  for (const [id, l] of S.labels) if (S.showLabel[id]) { const c = rgb(l.meta.color); layers.push({ g: grid(l.img), data: rasData(l.img), color: (v) => (v > 0 ? c : null) }); }
+  for (const [id, l] of S.labels) {
+    if (!S.showLabel[id]) continue;
+    const c = rgb(l.meta.color);
+    layers.push({ g: grid(l.img), data: rasData(l.img), color: l.lut ? (v) => l.lut.get(v)?.c : (v) => (v > 0 ? c : null) });
+  }
   return (p) => {
     const n = mm2idx(g, p);
     let v = n < 0 ? 0 : Math.max(0, Math.min(255, ((data[n] - wl) / (wh - wl)) * 255));
@@ -1252,7 +1346,7 @@ const walKey = () => `eidos.wal.${caseId}`;
 function annotationDoc() {
   return {
     version: 1,
-    seg: S.seg && { ref: S.seg.ref, dims: S.seg.dims, rle: rle(S.seg.bitmap), objects: S.seg.objects.map(({ k, name, color, visible, limit }) => ({ k, name, color, visible, limit: limit || null })), active: S.seg.active },
+    seg: S.seg && { ref: S.seg.ref, dims: S.seg.dims, rle: rle(S.seg.bitmap), objects: S.seg.objects.map(({ k, name, color, visible, limit, source }) => ({ k, name, color, visible, limit: limit || null, ...(source ? { source } : {}) })), active: S.seg.active },
     trajectories: S.traj.map(({ name, target, entry }) => ({ name, target, entry })),
     points: S.points,
     measurements: (nv.document.completedMeasurements || []).map((x) => ({
@@ -1371,8 +1465,9 @@ function trajState(t) {
 }
 function findingsTable() {
   const rows = [["type", "name", "value", "unit", "detail"]];
-  for (const o of S.seg?.objects || []) rows.push(["structure", o.name, segCm3(o.k).toFixed(3), "cm3", `label ${o.k} on ${S.vols.get(S.seg.ref)?.meta.label}${o.limit ? `; boundary is the ${o.limit.r} mm grow limit (${o.limit.pct}%), not anatomy` : ""}`]);
+  for (const o of S.seg?.objects || []) rows.push(["structure", o.name, segCm3(o.k).toFixed(3), "cm3", `label ${o.k} on ${S.vols.get(S.seg.ref)?.meta.label}${o.limit ? `; boundary is the ${o.limit.r} mm grow limit (${o.limit.pct}%), not anatomy` : ""}${o.source ? `; ${o.source}, automatic, not reviewed` : ""}`]);
   for (const l of S.labels.values()) if (l.cm3 !== null) rows.push(["structure", l.meta.label, l.cm3.toFixed(3), "cm3", l.meta.reviewed ? "reviewed" : "not reviewed"]);
+  for (const l of S.labels.values()) for (const e of l.lut?.values() || []) if (e.ml != null) rows.push(["anatomy", e.name, Number(e.ml).toFixed(3), "cm3", `${l.meta.source}; automatic, not reviewed`]);
   for (const t of S.traj) {
     if (!(t.target && t.entry)) continue;
     rows.push(["trajectory", t.name, len3(sub3(t.target, t.entry)).toFixed(1), "mm", `entry ${fmtMM(t.entry)}; target ${fmtMM(t.target)}`]);
@@ -1452,6 +1547,9 @@ for (const type of ["mousedown", "pointermove", "mousemove", "pointerup", "mouse
 $("save-state").onclick = () => { if (SAVE.error) saveNow(true); };
 
 $("seg-new").onclick = newStructure;
+$("ai-run").onclick = aiRun;
+$("ai-clear").onclick = () => { S.ai.points = []; aiShow(); drawOverlay(true); };
+$("gl").addEventListener("pointerdown", (e) => (aiShift = e.shiftKey), true);
 $("seg-undo").onclick = segUndo;
 $("pen").oninput = (e) => { $("pen-val").textContent = `${e.target.value} voxel${e.target.value > 1 ? "s" : ""}`; nv.opts.penSize = Number(e.target.value); };
 $("tol").oninput = (e) => ($("tol-val").textContent = `±${e.target.value}% of window`);
@@ -1465,6 +1563,7 @@ $("probe-slider").oninput = (e) => { S.depth = Number(e.target.value) / 1000; dr
 nv.onDrawingChanged = (what) => { if (what === "draw") mergeStroke(); };
 $("gl").addEventListener("pointerup", () => {
   if (S.tool === "grow") setTimeout(growFromCursor, 0);
+  if (S.tool === "ai") { const pos = !aiShift; setTimeout(() => aiAddPoint(pos), 0); }
   setTimeout(() => {
     const n = (nv.document.completedMeasurements || []).length + (nv.document.completedAngles || []).length;
     if (n !== S.nmeas) { S.nmeas = n; scheduleSave(); }
@@ -1485,7 +1584,7 @@ $("t-clear").onclick = clearMeasures;
 document.querySelectorAll("[data-layout]").forEach((b) => (b.onclick = () => setLayout(b.dataset.layout)));
 document.querySelectorAll("[data-tool]").forEach((b) => (b.onclick = () => setTool(b.dataset.tool)));
 const KEYS = { g: "grid", a: "axial", c: "coronal", s: "sagittal", r: "render" };
-const TOOL_KEYS = { v: "pointer", w: "window", z: "pan", m: "measure", n: "angle", b: "brush", e: "erase", f: "grow" };
+const TOOL_KEYS = { v: "pointer", w: "window", z: "pan", m: "measure", n: "angle", b: "brush", e: "erase", f: "grow", i: "ai" };
 document.addEventListener("keydown", (e) => {
   if (e.target.matches?.("input, select, textarea") || !S.base) return;
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); saveNow(true); return; }

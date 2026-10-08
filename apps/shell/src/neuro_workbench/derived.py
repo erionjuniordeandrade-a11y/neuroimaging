@@ -201,7 +201,7 @@ class Derived:
         log = out / "build.log"
         cmd = [sys.executable, "-m", "capsule.cli", "build", str(self.archive.study_dicom_dir(uid)),
                "--series", ",".join(str(n) for n in series), "--label", "Archive study",
-               "-o", str(tmp), "--anatomy", "none", "--brain-mask", "none"]
+               "-o", str(tmp), "--anatomy", "auto", "--brain-mask", "synthstrip"]
         code = self._run("capsule", cmd, self.repo / "capsule", log)
         if code != 0 or not tmp.is_file():
             tmp.unlink(missing_ok=True)

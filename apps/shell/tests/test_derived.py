@@ -107,6 +107,7 @@ def test_capsule_build_runs_the_cli_and_is_deleted_with_the_study(dti_archive, m
     cmd = calls[0]
     assert cmd[1:4] == ["-m", "capsule.cli", "build"] and cmd[cmd.index("--series") + 1] == "3,4"
     assert cmd[4] == str(archive.study_dicom_dir(uid))
+    assert cmd[cmd.index("--anatomy") + 1] == "auto" and cmd[cmd.index("--brain-mask") + 1] == "synthstrip"
     assert d.capsule_file(case_id).read_text() == "<html>capsule</html>"
     archive.delete_study(uid)
     assert not archive.derived_dir(case_id).exists()

@@ -161,3 +161,13 @@ def test_annotation_saves_survive_concurrency_and_explain_refusals(server):
     assert back["points"][0]["name"] in {f"P{i}" for i in range(12)} and back["saved_ms"] > 0
     status, body = _post(server, path, b'{"points": [1,')
     assert status == 400 and json.loads(body)["error"].startswith("bad json at byte")
+
+
+def test_ai_segment_reports_status_and_refuses_unopened_images(server):
+    status, body = _get(server, "/api/segment-ai")
+    assert status == 200 and "available" in json.loads(body)
+    origin = {"Origin": f"http://127.0.0.1:{server}"}
+    body = json.dumps({"layer": "../etc/passwd", "points": [{"ras": [0, 0, 0], "positive": True}]}).encode()
+    assert _post(server, "/api/case/demo-phantom/segment-ai", body, origin)[0] == 404
+    body = json.dumps({"layer": "vol-ct", "points": []}).encode()
+    assert _post(server, "/api/case/no-such-case/segment-ai", body, origin)[0] == 404
