@@ -314,10 +314,14 @@ class Archive:
         scene = {"schema": SCENE_SCHEMA, "frame": "scanner RAS mm", "source": "archive",
                  "title": study["description"] or "Study", "date": study["date"] or "", "volumes": [], "labels": [], "tracts": []}
         files: dict[str, Path] = {}
-        skipped = 0
+        skipped: list[dict] = []
+
+        def skip(s, reason):
+            skipped.append({"series": s["number"], "modality": s["modality"] or "", "label": s["description"] or "",
+                            "images": s["n"], "reason": reason})
         for s in series:
             if s["n"] < MIN_SLICES_FOR_VOLUME:
-                skipped += 1
+                skip(s, f"{s['n']} image{'s' if s['n'] != 1 else ''}: not a volume")
                 continue
             key = f"vol-{_h(s['uid'], 10)}"
             target = self.root / "cache" / f"{_h(s['uid'])}.nii.gz"
@@ -325,14 +329,14 @@ class Archive:
                 folder = str(self.root / s["folder"])
                 names = sitk.ImageSeriesReader.GetGDCMSeriesFileNames(folder, s["uid"])
                 if len(names) < MIN_SLICES_FOR_VOLUME:
-                    skipped += 1
+                    skip(s, "slices could not be ordered into a volume")
                     continue
                 reader = sitk.ImageSeriesReader()
                 reader.SetFileNames(names)
                 try:
                     image = reader.Execute()
                 except RuntimeError:
-                    skipped += 1
+                    skip(s, "could not be read as one volume")
                     continue
                 tmp = target.with_name(f".{target.stem}.{os.getpid()}.tmp.nii.gz")
                 sitk.WriteImage(image, str(tmp), useCompression=True)
@@ -341,10 +345,13 @@ class Archive:
             files[key] = target
             label = s["description"] or s["modality"] or "Series"
             kind = _volume_kind(s["modality"] or "", s["description"] or "")
-            scene["volumes"].append({"id": key, "label": label, "kind": kind,
+            scene["volumes"].append({"id": key, "label": label, "kind": kind, "series": s["number"],
+                                     "modality": s["modality"] or "", "images": s["n"],
+                                     "dti": is_diffusion(s["modality"] or "", s["description"] or "", s["n"]),
                                      **_window_for("CT" if kind in ("CT", "CTA") else kind, label)})
         if skipped:
-            scene["skipped_series"] = skipped
+            scene["skipped_series"] = len(skipped)
+            scene["not_drawn"] = skipped
         if not scene["volumes"]:
             raise ValueError("this study has no series with enough slices to draw")
         return scene, files

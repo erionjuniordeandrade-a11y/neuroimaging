@@ -112,6 +112,10 @@ def test_study_scene_draws_ct_and_mr_and_skips_the_scout(tmp_path, dicom_folder)
     scene, files = archive.study_scene(archive.study_uid(study["id"]))
     assert [(v["label"], v["kind"]) for v in scene["volumes"]] == [("CTA HEAD", "CTA"), ("T1 AX", "MR")]
     assert scene["volumes"][0]["cal_min"] == 100.0 and scene["skipped_series"] == 1
+    assert [(v["modality"], v["images"], v["dti"]) for v in scene["volumes"]] == [("CT", 5, False), ("MR", 4, False)]
+    assert all(isinstance(v["series"], int) for v in scene["volumes"])
+    (scout,) = scene["not_drawn"]
+    assert scout["images"] == 1 and scout["reason"] == "1 image: not a volume"
     import nibabel as nib
     assert nib.load(files[scene["volumes"][0]["id"]]).shape == (16, 16, 5)
 

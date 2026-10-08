@@ -33,7 +33,26 @@
   .banner { right: 12px; bottom: 12px; max-width: 44%; padding: 7px 11px; font-size: 12px; color: #ffd9cc;
             border-color: rgba(224,118,79,.5); background: rgba(80,24,14,.8); }
   .banner[hidden] { display: none; }
-  .readout { left: 12px; bottom: 12px; max-width: 30%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 5px 9px; font: 11px var(--mono); color: var(--muted); border-radius: 8px; }
+  .readout { left: 12px; bottom: 12px; max-width: calc(100% - 420px); min-width: 260px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 5px 9px; font: 11px var(--mono); color: var(--muted); border-radius: 8px; }
+  .readout b { color: var(--text); font-weight: 600; }
+  /* Series picker: every series of the case, drawn or not, over the views */
+  .series { left: 12px; bottom: 46px; width: 250px; max-height: 46%; display: flex; flex-direction: column; padding: 4px; font-size: 11.5px; }
+  .series > button.head { display: flex; justify-content: space-between; align-items: center; height: 24px; padding: 0 6px; border: 0; background: none;
+                          color: var(--muted); font: 600 11px var(--sans, inherit); letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
+  .series.closed .list { display: none; }
+  .series .list { overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  .series .s { display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: center; padding: 4px 4px 4px 7px; border-radius: 8px; border: 1px solid transparent; }
+  .series .s .pick { min-width: 0; text-align: left; border: 0; background: none; color: var(--text); cursor: pointer; padding: 0; }
+  .series .s .pick b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .series .s .pick span { display: block; color: var(--muted); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .series .s:hover { background: var(--hover); }
+  .series .s.base { border-color: rgba(201,168,76,.45); background: var(--accent-soft); }
+  .series .s .fuse { height: 22px; padding: 0 7px; border-radius: 6px; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; font-size: 10.5px; }
+  .series .s .fuse.on { color: var(--accent); border-color: rgba(201,168,76,.45); }
+  .series .s .fuse:disabled { opacity: .35; cursor: default; }
+  .series .s.off { opacity: .55; }
+  .series .s.off .pick { cursor: default; }
+  .series .tag { display: inline-block; margin-left: 4px; padding: 0 4px; border-radius: 4px; font-size: 9.5px; color: #9fd3ff; border: 1px solid rgba(120,180,240,.4); }
 
   /* Per-view labels drawn over each NiiVue tile */
   .tiles { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
@@ -281,7 +300,8 @@
       <button data-layout="sagittal" title="Sagittal (S)"><svg class="i"><use href="#i-sag"/></svg>Sagittal</button>
       <button data-layout="render" title="3D (R)"><svg class="i"><use href="#i-3d"/></svg>3D</button>
     </div>
-    <div class="float readout" id="readout">—</div>
+    <div class="float series" id="series"><button class="head" id="series-head" title="Show or hide the series list"><span id="series-title">Series</span><span id="series-chev">▾</span></button><div class="list" id="series-list"></div></div>
+    <div class="float readout" id="readout" title="Cursor position in scanner RAS millimetres (+x left→right, +y posterior→anterior, +z inferior→superior), the voxel index in the source series, and its value">—</div>
     <div class="float banner" id="alignment" hidden></div>
     <div class="status" id="status">
       <div class="card"><h3 id="status-title">Loading the case</h3><p id="status-text">Fetching the scene description.</p><div class="bar"><i id="progress"></i></div></div>
@@ -503,10 +523,101 @@ function objectRow({ color, label, kind, reviewed, value, visible, opacity, onTo
   return row;
 }
 
+// One line per series: label, modality, series number, image count. Click sets the base; Fuse sets the overlay.
+function seriesLine(m) {
+  return [m.modality || m.kind, m.series != null ? `series ${m.series}` : "", m.images ? `${m.images} images` : ""].filter(Boolean).join(" · ");
+}
+function renderSeries() {
+  const vols = [...S.vols.values()], off = S.scene.not_drawn || [];
+  $("series-title").textContent = `Series · ${vols.length} shown${off.length ? `, ${off.length} not drawn` : ""}`;
+  const rows = vols.map(({ meta: m }) => {
+    const row = document.createElement("div");
+    row.className = "s" + (m.id === S.base ? " base" : "");
+    const pick = document.createElement("button");
+    pick.className = "pick"; pick.title = "Show as the base image";
+    const b = document.createElement("b"); b.textContent = m.label;
+    if (m.dti) { const t = document.createElement("span"); t.className = "tag"; t.textContent = "DTI"; b.append(t); }
+    const sp = document.createElement("span"); sp.textContent = seriesLine(m);
+    pick.append(b, sp);
+    pick.onclick = () => setBase(m.id);
+    const fuse = document.createElement("button");
+    fuse.className = "fuse" + (m.id === S.overlay ? " on" : "");
+    fuse.textContent = m.id === S.overlay ? "Fused" : "Fuse";
+    fuse.title = m.id === S.base ? "This is the base image" : (m.id === S.overlay ? "Remove the fusion overlay" : "Fuse over the base image");
+    fuse.disabled = m.id === S.base;
+    fuse.onclick = () => setOverlay(m.id === S.overlay ? "" : m.id);
+    row.append(pick, fuse);
+    return row;
+  });
+  for (const n of off) {
+    const row = document.createElement("div");
+    row.className = "s off"; row.title = `Not drawn: ${n.reason}`;
+    const pick = document.createElement("div"); pick.className = "pick";
+    const b = document.createElement("b"); b.textContent = n.label || `Series ${n.series}`;
+    const sp = document.createElement("span"); sp.textContent = `${seriesLine({ ...n, kind: n.modality })} · ${n.reason}`;
+    pick.append(b, sp); row.append(pick, document.createElement("span"));
+    rows.push(row);
+  }
+  $("series-list").replaceChildren(...rows);
+}
+function setBase(id) {
+  if (!S.vols.has(id)) return;
+  S.base = id; if (S.overlay === S.base) S.overlay = "";
+  renderControls(); applyLayers(); updateReadout();
+}
+function setOverlay(id) {
+  S.overlay = id && id !== S.base ? id : "";
+  renderControls(); applyLayers(); updateReadout();
+}
+
+// Readout: scanner RAS mm, the voxel index in the source series, the value with its unit, and the series.
+function unitOf(meta) {
+  const m = (meta.modality || meta.kind || "").toUpperCase();
+  if (m.startsWith("CT")) return "HU";
+  if (m === "PT" || m === "PET") return "";
+  return "a.u.";
+}
+// Native voxel index (the file's own i, j, k) from the inverse of its NIfTI affine. NiiVue's mm2vox answers
+// in its RAS-reordered grid, which differs on flipped axes. The value is read from that same native voxel.
+function nativeInv(img) {
+  if (img._ninv) return img._ninv;
+  const A = img.hdr.affine, c = (r) => [A[0][r], A[1][r], A[2][r]];
+  const ex = c(0), ey = c(1), ez = c(2), det = dot3(ex, cross3(ey, ez));
+  return (img._ninv = { o: c(3), inv: [cross3(ey, ez), cross3(ez, ex), cross3(ex, ey)].map((r) => mul3(r, 1 / det)) });
+}
+function sampleAt(v, mm) {
+  const img = v.img, h = img.hdr, [nx, ny, nz] = [h.dims[1], h.dims[2], h.dims[3]];
+  const t = nativeInv(img), q = sub3(mm, t.o);
+  const ijk = t.inv.map((r) => Math.round(dot3(r, q)));
+  if (ijk.some((x, a) => x < 0 || x >= [nx, ny, nz][a])) return null;
+  const raw = img.img[ijk[0] + nx * (ijk[1] + ny * ijk[2])];
+  return { value: raw * (h.scl_slope || 1) + (h.scl_inter || 0), ijk };
+}
+function fmtVal(x, meta) {
+  if (x === null || x === undefined || !Number.isFinite(x)) return "—";
+  const u = unitOf(meta), v = Math.abs(x) >= 100 || Number.isInteger(x) ? x.toFixed(0) : x.toFixed(2);
+  return u ? `${v} ${u}` : v;
+}
+function updateReadout() {
+  const el = $("readout"), base = S.vols.get(S.base);
+  if (!base || !nv.back) { el.textContent = "—"; return; }
+  const mm = cursorMM(), at = sampleAt(base, mm);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const name = (m) => esc(`${m.label}${m.series != null ? ` (series ${m.series})` : ""}`);
+  const parts = [`RAS <b>${mm.map((v) => v.toFixed(1)).join(", ")}</b> mm`];
+  if (!at) parts.push(`outside ${name(base.meta)}`);
+  else parts.push(`voxel ${at.ijk ? at.ijk.join(", ") : "—"}`, `<b>${fmtVal(at.value, base.meta)}</b> in ${name(base.meta)}`);
+  const ov = S.overlay && S.vols.get(S.overlay);
+  if (ov) { const o = sampleAt(ov, mm); parts.push(`fusion ${o ? fmtVal(o.value, ov.meta) : "outside"} in ${name(ov.meta)}`); }
+  el.innerHTML = parts.join(" · ");
+  el.title = `LPS ${[-mm[0], -mm[1], mm[2]].map((v) => v.toFixed(1)).join(", ")} mm (DICOM patient axes). ` + el.textContent;
+}
+
 function renderControls() {
+  renderSeries();
   const vols = [...S.vols.values()];
-  $("base").replaceChildren(...vols.map((v) => new Option(`${v.meta.label} · ${v.meta.kind}`, v.meta.id, false, v.meta.id === S.base)));
-  $("overlay").replaceChildren(new Option("None", ""), ...vols.map((v) => new Option(`${v.meta.label} · ${v.meta.kind}`, v.meta.id, false, v.meta.id === S.overlay)));
+  $("base").replaceChildren(...vols.map((v) => new Option(`${v.meta.label} · ${seriesLine(v.meta)}`, v.meta.id, false, v.meta.id === S.base)));
+  $("overlay").replaceChildren(new Option("None", ""), ...vols.map((v) => new Option(`${v.meta.label} · ${seriesLine(v.meta)}`, v.meta.id, false, v.meta.id === S.overlay)));
   $("labels").replaceChildren(...[...S.labels.values()].map((l) => objectRow({
     color: l.meta.color, label: l.meta.label, kind: "Structure", reviewed: !!l.meta.reviewed,
     value: l.cm3 === null ? "" : `${l.cm3.toFixed(l.cm3 < 10 ? 2 : 1)} cm³`,
@@ -627,7 +738,8 @@ async function load() {
   setLayout("grid");
   setTool("pointer");
   setClip(true);
-  nv.onLocationChange = (d) => { $("readout").textContent = d?.string || "—"; };
+  nv.onLocationChange = updateReadout;
+  updateReadout();
   // Windowing with the mouse changes cal_min/cal_max on the image without a callback in every drag mode,
   // so the stored window is read back after each drag; otherwise the next layer change would undo it.
   const syncWindow = () => {
@@ -1275,8 +1387,9 @@ $("gl").addEventListener("pointerup", () => {
   }, 30);
 });
 
-$("base").onchange = (e) => { S.base = e.target.value; if (S.overlay === S.base) S.overlay = ""; renderControls(); applyLayers(); };
-$("overlay").onchange = (e) => { S.overlay = e.target.value; applyLayers(); };
+$("base").onchange = (e) => setBase(e.target.value);
+$("overlay").onchange = (e) => setOverlay(e.target.value);
+$("series-head").onclick = () => { const c = $("series").classList.toggle("closed"); $("series-chev").textContent = c ? "▸" : "▾"; };
 $("overlay-opacity").oninput = (e) => { $("overlay-val").textContent = `${e.target.value}%`; applyLayers(); };
 $("slab").oninput = (e) => { $("slab-val").textContent = `${e.target.value} mm`; applyTracts(); };
 $("clip").onchange = (e) => setClip(e.target.checked);
